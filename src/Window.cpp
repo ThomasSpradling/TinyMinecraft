@@ -3,7 +3,7 @@
 #include "gfx.h"
 
 Window::Window() {
-
+  
 }
 
 Window::~Window() {}
