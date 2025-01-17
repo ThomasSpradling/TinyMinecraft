@@ -70,25 +70,26 @@ void Game::ProcessInput() {
 
 void Game::Init() {
   window.Init(800, 450, "Basic Window!");
+  renderer.Init();
   
-  SetTargetFPS(60);
+  SetTargetFPS(120);
 
   camera = std::make_shared<Camera>();
 
-  camera->SetPosition(glm::vec3(0.f, 10.f, 10.f));
+  camera->SetPosition(glm::vec3(50.f, 50.f, 50.f));
   camera->SetTarget(glm::vec3(0.f, 0.f, 0.f));
   camera->SetUpVector(glm::vec3(0.f, 1.f, 0.f));
   
   camera->SetFOV(45.f);
   camera->SetAspectRatio(static_cast<float>(window.GetWidth()) / static_cast<float>(window.GetHeight()));
-
-  renderer.Init();
+  
 }
 
 void Game::Update() {
-  // float x = 10.f * glm::cos(2 * glm::pi<float>() * glfwGetTime());
-  // float z = 10.f * glm::sin(2 * glm::pi<float>() * glfwGetTime());
-  // camera->SetPosition(glm::vec3(x, 10.f, z));
+  float t = glfwGetTime() / 5.f;
+  float x = 50.f * glm::cos(2 * glm::pi<float>() * t);
+  float z = 50.f * glm::sin(2 * glm::pi<float>() * t);
+  camera->SetPosition(glm::vec3(x, 50.f, z));
 }
 
 void Game::Render(double) {
@@ -99,8 +100,19 @@ void Game::Render(double) {
     float t = glfwGetTime();
 
     renderer.Begin3D(camera);
-    
-      renderer.DrawCube(glm::vec3(0.0f, 0.f, 5.f), 2.f, 2.f, 2.f, glm::vec3(1.0f, 0.f, 0.f));
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+      for (int i = 0; i <= 16; ++i) {
+        for (int j = 0; j <= 16; ++j) {
+          for (int k = 0; k <= 16; ++k) {
+            float x = i * 2.f - 16.0f;
+            float y = j * 2.f - 16.0f;
+            float z = k * 2.f - 16.0f;
+            renderer.DrawCube(glm::vec3(x, y, z), 2.f, glm::vec3(1.0f, 0.f, 0.f));
+          }
+        }
+      }
+      renderer.DrawCube(glm::vec3(0.0f, 0.f, 0.f), 2.f, glm::vec3(1.0f, 0.f, 0.f));
 
     renderer.End3D();
 

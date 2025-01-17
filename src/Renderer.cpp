@@ -17,16 +17,16 @@ void Renderer::Init() {
   basicShader.uniform("uProjection", projection);
 
   // Set up buffers
-  glGenVertexArrays(1, &basicVAO);
-  glGenBuffers(1, &basicVBO);
-  glGenBuffers(1, &basicEBO);
+  glGenVertexArrays(1, &VAO_Solid2D);
+  glGenBuffers(1, &VBO_Solid2D);
+  glGenBuffers(1, &EBO_Solid2D);
 
-  glBindVertexArray(basicVAO);
+  glBindVertexArray(VAO_Solid2D);
 
-  glBindBuffer(GL_ARRAY_BUFFER, basicVBO);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO_Solid2D);
   glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat), nullptr, GL_DYNAMIC_DRAW);
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, basicEBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_Solid2D);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint), nullptr, GL_DYNAMIC_DRAW);
 
   // positions
@@ -43,12 +43,12 @@ void Renderer::Init() {
   modelShader.Init("../resources/shaders/models.vs", "../resources/shaders/models.fs");
 
   // Set up buffers
-  glGenVertexArrays(1, &modelVAO);
-  glGenBuffers(1, &modelVBO);
+  glGenVertexArrays(1, &VAO_Solid3D);
+  glGenBuffers(1, &VBO_Solid3D);
 
-  glBindVertexArray(modelVAO);
+  glBindVertexArray(VAO_Solid3D);
 
-  glBindBuffer(GL_ARRAY_BUFFER, modelVBO);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO_Solid3D);
   glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat), nullptr, GL_DYNAMIC_DRAW);
 
   // positions
@@ -73,9 +73,9 @@ void Renderer::StartDrawing() {
 
 void Renderer::StopDrawing() {
   //// 3D
-  glBindVertexArray(modelVAO);
+  glBindVertexArray(VAO_Solid3D);
 
-  glBindBuffer(GL_ARRAY_BUFFER, modelVBO);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO_Solid3D);
   glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(modelVertices.size() * sizeof(GLfloat)), modelVertices.data(), GL_DYNAMIC_DRAW);
 
   modelShader.use();
@@ -85,12 +85,12 @@ void Renderer::StopDrawing() {
   modelVertices.clear();
 
   //// 2D
-  glBindVertexArray(basicVAO);
+  glBindVertexArray(VAO_Solid2D);
 
-  glBindBuffer(GL_ARRAY_BUFFER, basicVBO);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO_Solid2D);
   glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(basicVertices.size() * sizeof(GLfloat)), basicVertices.data(), GL_DYNAMIC_DRAW);
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, basicEBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_Solid2D);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(basicIndices.size() * sizeof(GLuint)), basicIndices.data(), GL_DYNAMIC_DRAW);
 
   basicShader.use();
@@ -119,6 +119,7 @@ auto Renderer::HasCamera() const -> bool {
 }
 
 void Renderer::ClearBackground(const glm::vec3 &color) {
+  glClear(GL_COLOR_BUFFER_BIT);
   glClearColor(color.r, color.g, color.b, 1.f);
 }
 
@@ -140,16 +141,20 @@ void Renderer::DrawRectangle(GLfloat x, GLfloat y, GLfloat width, GLfloat height
   });
 }
 
-void Renderer::DrawCube(glm::vec3 position, GLfloat width, GLfloat height, GLfloat length, const glm::vec3 &color) {
+void Renderer::DrawCube(glm::vec3 position, GLfloat width, const glm::vec3 &color) {
+  DrawBox(position, width, width, width, color);
+};
+
+void Renderer::DrawBox(glm::vec3 position, GLfloat width, GLfloat height, GLfloat length, const glm::vec3 &color) {
   GLfloat x = position.x;
   GLfloat y = position.y;
   GLfloat z = position.z;
 
   modelVertices.insert(modelVertices.end(), {
-    // position                                  // color                       // normals
+    // position                                  // colors                   // normals
 
     // Front face
-    x - width/2, y - height/2, z + length/2,     color.r, color.g, color.b,    0.0f,  0.0f,  1.0f,   // bottom left
+    x - width/2, y - height/2, z + length/2,     color.r, color.g, color.b,    0.0f,  0.0f,  1.0f,       // bottom left
     x + width/2, y - height/2, z + length/2,     color.r, color.g, color.b,    0.0f,  0.0f,  1.0f,   // bottom right
     x - width/2, y + height/2, z + length/2,     color.r, color.g, color.b,    0.0f,  0.0f,  1.0f,   // top left
 

@@ -27,18 +27,20 @@ public:
   void ClearBackground(const glm::vec3 &color);
 
   void DrawRectangle(GLfloat x, GLfloat y, GLfloat width, GLfloat height, const glm::vec3 &color);
-  void DrawCube(glm::vec3 position, GLfloat width, GLfloat height, GLfloat length, const glm::vec3 &color);
+
+  void DrawCube(glm::vec3 position, GLfloat width, const glm::vec3 &color);
+  void DrawBox(glm::vec3 position, GLfloat width, GLfloat height, GLfloat length, const glm::vec3 &color);
 
 private:
   Window &window;
 
   Shader basicShader;
-  GLuint basicVAO, basicVBO, basicEBO;
+  GLuint VAO_Solid2D, VBO_Solid2D, EBO_Solid2D;
   std::vector<GLfloat> basicVertices;
   std::vector<GLuint> basicIndices;
 
   Shader modelShader;
-  GLuint modelVAO, modelVBO;
+  GLuint VAO_Solid3D, VBO_Solid3D;
   std::vector<GLfloat> modelVertices;
 
   std::shared_ptr<Camera> currentCamera = nullptr;
