@@ -1,5 +1,8 @@
 #include "Game.h"
+#include "GLFW/glfw3.h"
 #include "gfx.h"
+#include "glm/fwd.hpp"
+#include <memory>
 #include <unistd.h>
 
 Game::Game() : window(), renderer(window) {}
@@ -58,7 +61,7 @@ void Game::EventLoop() {
 //// Game Logic
 
 void Game::ProcessInput() {
-  glfwPollEvents();
+  window.PollEvents();
 
   if (window.IsKeyPressed(GLFW_KEY_ESCAPE)) {
     window.Close();
@@ -70,22 +73,38 @@ void Game::Init() {
   
   SetTargetFPS(60);
 
+  camera = std::make_shared<Camera>();
+
+  camera->SetPosition(glm::vec3(0.f, 10.f, 10.f));
+  camera->SetTarget(glm::vec3(0.f, 0.f, 0.f));
+  camera->SetUpVector(glm::vec3(0.f, 1.f, 0.f));
+  
+  camera->SetFOV(45.f);
+  camera->SetAspectRatio(static_cast<float>(window.GetWidth()) / static_cast<float>(window.GetHeight()));
+
   renderer.Init();
 }
 
 void Game::Update() {
-
+  // float x = 10.f * glm::cos(2 * glm::pi<float>() * glfwGetTime());
+  // float z = 10.f * glm::sin(2 * glm::pi<float>() * glfwGetTime());
+  // camera->SetPosition(glm::vec3(x, 10.f, z));
 }
 
 void Game::Render(double) {
 
   renderer.StartDrawing();
+    renderer.ClearBackground(glm::vec3(0.1f));
 
-  renderer.ClearBackground(glm::vec3(0.1f));
+    float t = glfwGetTime();
 
-  float t = glfwGetTime();
-  renderer.DrawRectangle(0, 0, window.GetWidth(), window.GetHeight(), glm::vec3(0.0f, 1.f, 0.f));
-  renderer.DrawRectangle(t * 50, 50, 50, 50, glm::vec3(1.0f, 0.f, 0.f));
+    renderer.Begin3D(camera);
+    
+      renderer.DrawCube(glm::vec3(0.0f, 0.f, 5.f), 2.f, 2.f, 2.f, glm::vec3(1.0f, 0.f, 0.f));
+
+    renderer.End3D();
+
+    renderer.DrawRectangle(t * 50, 50, 50, 50, glm::vec3(0.0f, 1.f, 0.f));
 
   renderer.StopDrawing();
 }

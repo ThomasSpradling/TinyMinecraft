@@ -31,6 +31,8 @@ public:
 
   auto ShouldClose() -> bool;
 
+  void PollEvents();
+
   void Close();
 
   int GetWidth();

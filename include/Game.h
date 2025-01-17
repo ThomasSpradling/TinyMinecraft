@@ -1,6 +1,7 @@
 #ifndef GAME_H_
 #define GAME_H_
 
+#include "Camera.h"
 #include "Renderer.h"
 #include "Window.h"
 
@@ -27,6 +28,8 @@ private:
 
   Window window;
   Renderer renderer;
+  
+  std::shared_ptr<Camera> camera;
 
   /* Game updating logic. */
   void Update();

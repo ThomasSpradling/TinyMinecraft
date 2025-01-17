@@ -66,6 +66,10 @@ auto Window::IsKeyUp(int key) -> bool {
   return !keyboard[key].isDown;
 }
 
+void Window::PollEvents() {
+  glfwPollEvents();
+}
+
 auto Window::ShouldClose() -> bool {
   return glfwWindowShouldClose(handle);
 }
