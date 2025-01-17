@@ -8,7 +8,10 @@ Window::Window() {
 
 Window::~Window() {}
 
-void Window::Init(int width, int height, const std::string &name) {
+void Window::Init(int initWidth, int initHeight, const std::string &name) {
+  width = initWidth;
+  height = initHeight;
+
   if (!glfwInit()) {
     std::cerr << "Error initializing GLFW." << std::endl;
     exit(1);
@@ -63,16 +66,6 @@ auto Window::IsKeyUp(int key) -> bool {
   return !keyboard[key].isDown;
 }
 
-void Window::StartDrawing() {
-  int width, height;
-  glfwGetFramebufferSize(handle, &width, &height);
-  glViewport(0, 0, width, height);
-}
-  
-void Window::StopDrawing() {
-  glfwSwapBuffers(handle);
-}
-
 auto Window::ShouldClose() -> bool {
   return glfwWindowShouldClose(handle);
 }
@@ -81,4 +74,16 @@ void Window::Close() {
   std::cout << "Destroying window." << std::endl;
 
   glfwSetWindowShouldClose(handle, GLFW_TRUE);
+}
+
+int Window::GetWidth() {
+  return width;
+}
+
+int Window::GetHeight() {
+  return height;
+}
+
+void Window::SwapBuffers() {
+  glfwSwapBuffers(handle);
 }

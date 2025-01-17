@@ -29,22 +29,20 @@ public:
   // Checks that key is currently held up.
   auto IsKeyUp(int key) -> bool;
 
-  void StartDrawing();
-
-  void StopDrawing();
-
   auto ShouldClose() -> bool;
 
   void Close();
 
+  int GetWidth();
+  int GetHeight();
+
+  void SwapBuffers();
+
 private:
+  int width, height;
 
   void static ErrorCallback(int code, const char *description) {
     std::cerr << "GLFW error " << code << ": " << description << std::endl;
-  }
-
-  void static SizeCallback(GLFWwindow *, int width, int height) {
-    glViewport(0, 0, width, height);
   }
 
   void static KeyCallback(GLFWwindow *handle, int key, int, int action, int) {

@@ -1,31 +1,13 @@
 #include "Game.h"
-#include "GLFW/glfw3.h"
 #include "gfx.h"
-#include <MacTypes.h>
-#include <cstdarg>
 #include <unistd.h>
 
-Game::Game() : window() {
-}
-
-Game::~Game() {
-
-}
+Game::Game() : window(), renderer(window) {}
+Game::~Game() {}
 
 void Game::SetTargetFPS(int fps) {
   targetFPS = fps;
-}
-
-void Game::SetTargetGameHz(int updatesPerSecond) {
-  targetGameHz = updatesPerSecond;
-  updateInterval = 1.f / static_cast<float>(targetGameHz);
-}
-
-void Game::Init() {
-  window.Init(800, 450, "Basic Window!");
-  
-  SetTargetGameHz(30);
-  SetTargetFPS(100);
+  updateInterval = 1.f / static_cast<float>(targetFPS);
 }
 
 void Game::EventLoop() {
@@ -52,7 +34,7 @@ void Game::EventLoop() {
 
     int iters = 0;
 
-    // If still behind, try to catch up
+    // If still behind, try to catch up. We use maxCatchUpIterations not to stall.
     while (lag >= updateInterval || iters < maxCatchUpIterations) {
       Update();
 
@@ -61,17 +43,19 @@ void Game::EventLoop() {
     }
 
     Render(lag / updateInterval);
-    lastRenderTime = glfwGetTime();
 
+    // Ensure we've waited enough time to adhere to our maximal FPS
+    lastRenderTime = glfwGetTime();
     while (currentTime - lastRenderTime < frameInterval && currentTime - lastRenderTime < updateInterval) {
       usleep(1000); // sleep for 1 ms
-
       currentTime = glfwGetTime();
     }
   }
 
   glfwTerminate();
 }
+
+//// Game Logic
 
 void Game::ProcessInput() {
   glfwPollEvents();
@@ -81,17 +65,27 @@ void Game::ProcessInput() {
   }
 }
 
-//// Game Logic
+void Game::Init() {
+  window.Init(800, 450, "Basic Window!");
+  
+  SetTargetFPS(60);
+
+  renderer.Init();
+}
 
 void Game::Update() {
 
 }
 
 void Game::Render(double) {
-  window.StartDrawing();
 
-  glClear(GL_COLOR_BUFFER_BIT);
-  // Stuff
+  renderer.StartDrawing();
 
-  window.StopDrawing();
+  renderer.ClearBackground(glm::vec3(0.1f));
+
+  float t = glfwGetTime();
+  renderer.DrawRectangle(0, 0, window.GetWidth(), window.GetHeight(), glm::vec3(0.0f, 1.f, 0.f));
+  renderer.DrawRectangle(t * 50, 50, 50, 50, glm::vec3(1.0f, 0.f, 0.f));
+
+  renderer.StopDrawing();
 }

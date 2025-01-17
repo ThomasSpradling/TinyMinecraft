@@ -1,32 +1,39 @@
 #ifndef GAME_H_
 #define GAME_H_
 
+#include "Renderer.h"
 #include "Window.h"
+
 class Game {
 public:
   Game();
   ~Game();
 
+  /* Sets the maximum frames per second (FPS) we hope to achieve. */
   void SetTargetFPS(int fps);
-  void SetTargetGameHz(int updatesPerSecond);
 
-  void Init();
+  /* Runs the Update() and Render() functions via a fixed-timestep game loop. */
   void EventLoop();
 
+  /* Initializes all main game logic. */
+  void Init();
+
+  /* Handles all game inputs. */
   void ProcessInput();
 
 private:
   int targetFPS = 60;
-  int targetGameHz = 30;
   double updateInterval;
 
   Window window;
+  Renderer renderer;
 
-  // Updates at a fixed time-step `updateInterval`, based on the target FPS.
+  /* Game updating logic. */
   void Update();
 
-  // Renders up to this frame and the fraction of a frame given.
-  void Render(double frameFraction);
+  /* Game rendering logic where `0 <= interpolation <= 1` is the fraction of a frame we intend to try
+    to render ahead of the current frame. */
+  void Render(double interpolation);
 };
 
 #endif // GAME_H_
