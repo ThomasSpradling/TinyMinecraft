@@ -1,6 +1,8 @@
 #include "Application/Game.h"
 #include "Application/InputHandler.h"
+#include "GLFW/glfw3.h"
 #include "Graphics/gfx.h"
+#include <algorithm>
 #include <unistd.h>
 
 namespace Application {
@@ -19,8 +21,8 @@ void Game::Initialize() {
   camera = std::make_shared<Scene::Camera>();
 
   camera->SetPosition(glm::vec3(50.f, 50.f, 50.f));
-  camera->SetTarget(glm::vec3(0.f, 32.f, 0.f));
-  camera->SetUpVector(glm::vec3(0.f, 1.f, 0.f));
+  // camera->SetTarget(glm::vec3(0.f, 32.f, 0.f));
+  // camera->SetUpVector(glm::vec3(0.f, 1.f, 0.f));
   
   camera->SetFOV(45.f);
   camera->SetAspectRatio(static_cast<float>(window.GetWidth()) / static_cast<float>(window.GetHeight()));
@@ -89,13 +91,43 @@ void Game::ProcessInput() {
   if (inputHandler.IsKeyPressed(GLFW_KEY_ESCAPE)) {
     window.Close();
   }
+
+  // Camera keyboard
+  glm::vec3 cameraDirection = glm::vec3(0.0f);
+  if (inputHandler.IsKeyDown(GLFW_KEY_W))
+    cameraDirection += camera->GetFront();
+  if (inputHandler.IsKeyDown(GLFW_KEY_S))
+    cameraDirection -= camera->GetFront();
+  if (inputHandler.IsKeyDown(GLFW_KEY_D))
+    cameraDirection += camera->GetRight();
+  if (inputHandler.IsKeyDown(GLFW_KEY_A))
+    cameraDirection -= camera->GetRight();
+
+  if (inputHandler.IsKeyDown(GLFW_KEY_LEFT_SHIFT))
+    cameraDirection -= glm::vec3(0.0f, 1.0f, 0.0f);
+  
+  if (inputHandler.IsKeyDown(GLFW_KEY_SPACE))
+    cameraDirection += glm::vec3(0.0f, 1.0f, 0.0f);
+
+  camera->Move(cameraDirection, updateInterval);
+
+  // Camera mouse
+
+  float yaw = camera->GetYaw();
+  yaw += inputHandler.GetMouseDeltaX();
+
+  float pitch = camera->GetPitch();
+  pitch -= inputHandler.GetMouseDeltaY();
+  pitch = std::clamp(pitch, -89.0f, 89.0f);
+
+  camera->UpdateViewDirection(yaw, pitch);
 }
 
 void Game::Update() {
-  float t = glfwGetTime() / 5.f;
-  float x = 50.f * glm::cos(2 * glm::pi<float>() * t);
-  float z = 50.f * glm::sin(2 * glm::pi<float>() * t);
-  camera->SetPosition(glm::vec3(x, 60.f, z));
+  // float t = glfwGetTime() / 5.f;
+  // float x = 50.f * glm::cos(2 * glm::pi<float>() * t);
+  // float z = 50.f * glm::sin(2 * glm::pi<float>() * t);
+  // camera->SetPosition(glm::vec3(x, 60.f, z));
 }
 
 void Game::Render(double) {
@@ -107,7 +139,7 @@ void Game::Render(double) {
 
   renderer.Begin3D(camera);
 
-    if (inputHandler.IsKeyPressed(GLFW_KEY_F3)) {
+    if (inputHandler.IsKeyPressed(GLFW_KEY_TAB)) {
       renderer.ToggleWireframeMode();
     }
 

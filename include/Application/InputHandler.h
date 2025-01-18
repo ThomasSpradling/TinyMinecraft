@@ -2,21 +2,41 @@
 #define INPUT_HANDLER_H_
 
 #include "Graphics/gfx.h"
-#include <unordered_map>
+#include "Utils/mathgl.h"
+#include <iostream>
 
 namespace Application {
 
-typedef struct KeyState {
-  bool pressed;
-  bool isDown;
-} KeyState;
+typedef struct Button {
+  bool pressed = false;
+  bool down = false;
+} ButtonState;
+
+typedef struct Keyboard {
+  Button keys[GLFW_KEY_LAST];
+} Keyboard;
+
+typedef struct Mouse {
+  Button buttons[GLFW_MOUSE_BUTTON_LAST];
+  glm::vec2 delta, position;
+  bool grabbed = false;
+  float offsetY = 0.0f;
+} Mouse;
 
 class InputHandler {
 public:
-  std::unordered_map<int, KeyState> keyboard;
+  Keyboard keyboard;
+  Mouse mouse;
 
   InputHandler() = default;
   ~InputHandler() = default;
+
+  void static KeyCallback(GLFWwindow *handle, int key, int, int action, int);
+  void static CursorCallback(GLFWwindow *handle, double x, double y);
+  void static MouseCallback(GLFWwindow *handle, int button, int action, int);
+  void static ScrollCallback(GLFWwindow *handle, double, double offsetY);
+
+  //// Keyboard input
 
   // Checks if key was presssed one time.
   bool IsKeyPressed(int key);
@@ -27,20 +47,25 @@ public:
   // Checks if key is currently up.
   bool IsKeyDown(int key);
 
-  void static KeyCallback(GLFWwindow *handle, int key, int, int action, int) {
-    InputHandler *inputHandler = static_cast<InputHandler *>(glfwGetWindowUserPointer(handle));
+  //// Mouse input
 
-    if (action == GLFW_PRESS) {
-      inputHandler->keyboard[key].pressed = true;
-      inputHandler->keyboard[key].isDown = true;
-    }
+  bool IsMouseButtonPressed(int button);
 
-    if (action == GLFW_RELEASE) {
-      inputHandler->keyboard[key].isDown = false;
-    }
-  }
+  bool IsMouseButtonUp(int button);
+
+  bool IsMouseButtonDown(int button);
+
+  glm::vec2 GetMousePosition();
+  int GetMousePositionX();
+  int GetMousePositionY();
+
+  float GetMouseDeltaX();
+  float GetMouseDeltaY();
+
+  float GetMouseWheelMove();
+
 private:
-
+  // const float mouseSensitivity = 0.3f;
 };
 
 }

@@ -26,6 +26,7 @@ public:
 
 private:
   int targetFPS = 60;
+
   double updateInterval;
 
   Window window;

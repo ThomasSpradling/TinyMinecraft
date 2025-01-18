@@ -29,9 +29,14 @@ void Window::Init(int initWidth, int initHeight, const std::string &name, InputH
     exit(1);
   }
 
+  glfwSetInputMode(handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
   glfwSetWindowUserPointer(handle, &inputHandler);
 
   glfwSetKeyCallback(handle, InputHandler::KeyCallback);
+  glfwSetCursorPosCallback(handle, InputHandler::CursorCallback);
+  glfwSetMouseButtonCallback(handle, InputHandler::MouseCallback);
+  glfwSetScrollCallback(handle, InputHandler::ScrollCallback);
 
   glfwMakeContextCurrent(handle);
 

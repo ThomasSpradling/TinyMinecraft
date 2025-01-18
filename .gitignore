@@ -58,5 +58,5 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-notes/
+todo_notes/
 resources/videos
