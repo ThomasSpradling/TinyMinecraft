@@ -1,5 +1,6 @@
-#include "Camera.h"
-#include "glm/ext/matrix_transform.hpp"
+#include "Scene/Camera.h"
+
+namespace Scene {
 
 void Camera::SetPosition(glm::vec3 pos) { position = pos; }
 void Camera::SetTarget(glm::vec3 pos) { target = pos; }
@@ -21,4 +22,6 @@ auto Camera::GetViewProjection() -> glm::mat4 {
   glm::mat4 view = glm::lookAt(position, target, up);
 
   return projection * view;
+}
+
 }

@@ -1,11 +1,13 @@
-#include "Game.h"
+#include "Application/Game.h"
 #include <iostream>
 
 int main(void) {
-  Game game {};
+  Application::Game game;
 
-  game.Init();
-  game.EventLoop();
+  game.Initialize();
+  game.Run();
+
+  game.Shutdown();
 
   return 0;
 }

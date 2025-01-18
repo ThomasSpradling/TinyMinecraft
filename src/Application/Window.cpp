@@ -1,14 +1,9 @@
-#include "Window.h"
-#include "GLFW/glfw3.h"
-#include "gfx.h"
+#include "Application/Window.h"
+#include "Graphics/gfx.h"
 
-Window::Window() {
-  
-}
+namespace Application {
 
-Window::~Window() {}
-
-void Window::Init(int initWidth, int initHeight, const std::string &name) {
+void Window::Init(int initWidth, int initHeight, const std::string &name, InputHandler &inputHandler) {
   width = initWidth;
   height = initHeight;
 
@@ -34,9 +29,9 @@ void Window::Init(int initWidth, int initHeight, const std::string &name) {
     exit(1);
   }
 
-  glfwSetWindowUserPointer(handle, this);
+  glfwSetWindowUserPointer(handle, &inputHandler);
 
-  glfwSetKeyCallback(handle, KeyCallback);
+  glfwSetKeyCallback(handle, InputHandler::KeyCallback);
 
   glfwMakeContextCurrent(handle);
 
@@ -51,26 +46,11 @@ void Window::Init(int initWidth, int initHeight, const std::string &name) {
   std::cout << "Initialized window." << std::endl;
 }
 
-auto Window::IsKeyPressed(int key) -> bool {
-  bool isPressed = keyboard[key].pressed;
-  keyboard[key].pressed = false;
-
-  return isPressed;
-}
-
-auto Window::IsKeyDown(int key) -> bool {
-  return keyboard[key].isDown;
-}
-
-auto Window::IsKeyUp(int key) -> bool {
-  return !keyboard[key].isDown;
-}
-
 void Window::PollEvents() {
   glfwPollEvents();
 }
 
-auto Window::ShouldClose() -> bool {
+bool Window::ShouldClose() {
   return glfwWindowShouldClose(handle);
 }
 
@@ -90,4 +70,6 @@ int Window::GetHeight() {
 
 void Window::SwapBuffers() {
   glfwSwapBuffers(handle);
+}
+
 }

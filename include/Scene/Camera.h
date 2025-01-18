@@ -1,8 +1,10 @@
 #ifndef CAMERA_H_
 #define CAMERA_H_
 
-#include "Window.h"
-#include "utils/math.h"
+#include "Application/Window.h"
+#include "Utils/mathgl.h"
+
+namespace Scene {
 
 class Camera {
 public:
@@ -30,5 +32,7 @@ private:
   float near = 0.1f;
   float far = 100.0f;
 };
+
+}
 
 #endif // CAMERA_H_
