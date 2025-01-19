@@ -2,10 +2,8 @@
 #define CHUNK_H_
 
 #include <memory>
-#define CHUNK_WIDTH 16
-#define CHUNK_HEIGHT 256
-#define CHUNK_LENGTH 16
 
+#include "Utils/defs.h"
 #include "World/Block.h"
 #include "World/BlockFace.h"
 #include "Graphics/gfx.h"

@@ -1,5 +1,6 @@
 #include "World/Chunk.h"
 #include "World/Block.h"
+#include "World/BlockAtlas.h"
 #include "World/BlockFace.h"
 #include "World/World.h"
 #include "glm/fwd.hpp"
@@ -31,15 +32,15 @@ void Chunk::Init() {
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint), nullptr, GL_DYNAMIC_DRAW);
 
   // positions
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (void *) 0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void *) 0);
   glEnableVertexAttribArray(0);
 
   // texture coords
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (void *) (3 * sizeof(GLfloat)));
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void *) (3 * sizeof(GLfloat)));
   glEnableVertexAttribArray(1);
 
   // normals
-  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (void *) (6 * sizeof(GLfloat)));
+  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void *) (5 * sizeof(GLfloat)));
   glEnableVertexAttribArray(2);
 
   glBindVertexArray(0);
@@ -59,12 +60,22 @@ void Chunk::UpdateMesh() {
           for (const BlockFace face : BlockFace::allFaces) {
             if (world.IsFaceVisible(face, glm::vec3(chunkPos.x * CHUNK_WIDTH + x, y, chunkPos.y * CHUNK_LENGTH + z))) {
               std::array<glm::vec3, 4> faceVertices = face.GetUnitVertices();
+              glm::vec2 topLeftTexCoord = BlockAtlas::GetNormalizedTextureCoords(block.GetType(), face);
+
+              glm::vec2 texSize = BlockAtlas::GetTextureSize();
               glm::vec3 normal = face.GetNormal();
+
+              std::array<glm::vec2, 4> faceTexCoords = {
+                topLeftTexCoord,                                                  // Top-left
+                { topLeftTexCoord.x, topLeftTexCoord.y + texSize.y },             // Bottom-left
+                { topLeftTexCoord.x + texSize.x, topLeftTexCoord.y + texSize.y }, // Bottom-right
+                { topLeftTexCoord.x + texSize.x, topLeftTexCoord.y }              // Top-right
+              };
 
               for (GLuint i = 0; i < 4; ++i) {
                 vertices.insert(vertices.end(),{
                   faceVertices[i].x + x, faceVertices[i].y + y, faceVertices[i].z + z,  // positions
-                  1.0f, 0.0f, 0.0f,     // color
+                  faceTexCoords[i].x, faceTexCoords[i].y,  // tex coords
                   normal.x, normal.y, normal.z  // normal
                 });
               }
@@ -136,26 +147,5 @@ bool Chunk::IsLoaded() {
 glm::ivec2 &Chunk::GetChunkPos() {
   return chunkPos;
 }
-
-/// Private methods
-
-// bool Chunk::FaceIsVisible(BlockFace face, const glm::vec3 &pos) {
-//   glm::vec3 neighbor = glm::vec3(pos) + face.GetNormal();
-
-//   // If outside chunk, always render
-//   if (neighbor.x >= CHUNK_WIDTH || neighbor.x < 0 ||
-//     neighbor.y >= CHUNK_HEIGHT || neighbor.y < 0 ||
-//     neighbor.z >= CHUNK_LENGTH || neighbor.z < 0
-//   ) {
-//     return true;
-//   }
-
-//   // If a solid block is in front of this face, do not render
-//   if (!GetBlockAt(neighbor).IsSolid()) {
-//     return true;
-//   }
-
-//   return false;
-// }
 
 }

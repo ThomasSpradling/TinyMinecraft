@@ -1,0 +1,12 @@
+#ifndef DEF_H_
+#define DEF_H_
+
+#define BLOCK_TEXTURE_WIDTH 32
+#define BLOCK_TEXTURE_ATLAS_WIDTH (32 * 4)
+#define BLOCK_TEXTURE_ATLAS_HEIGHT (32)
+
+#define CHUNK_WIDTH 16
+#define CHUNK_HEIGHT 256
+#define CHUNK_LENGTH 16
+
+#endif // DEF_H_

@@ -34,14 +34,13 @@ public:
 
 private:
   glm::vec3 position { 0.0f };
-  // glm::vec3 target { 0.0f };
 
   glm::vec3 up { 0.0f, 1.0f, 0.0f };
   glm::vec3 front { 0.0f, 0.0f, -1.0f };
 
   float pitch = 0.0f, yaw = -90.0f;
 
-  const float speed = 100.0f;
+  const float speed = 20.0f;
 
   float fov { 45.0f };
   float aspect { 1.6f };

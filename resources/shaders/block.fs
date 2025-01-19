@@ -1,9 +1,11 @@
 #version 330
 
-in vec3 fragColor;
+in vec2 texCoord;
+uniform sampler2D uBlockAtlas;
+
 out vec4 FragColor;
 
 void main()
 {
-  FragColor = vec4(fragColor, 1.0f);
+  FragColor = texture(uBlockAtlas, texCoord);
 }

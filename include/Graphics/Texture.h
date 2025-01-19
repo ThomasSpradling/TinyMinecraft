@@ -11,7 +11,7 @@ public:
   Texture() = default;
   ~Texture() = default;
 
-  void Initialize(const std::string &filePath);
+  void Load(const std::string &filePath);
   void Bind();
 
 private:

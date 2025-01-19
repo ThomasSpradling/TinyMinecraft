@@ -5,7 +5,9 @@ namespace World {
 
 typedef enum BlockType {
   AIR = 0,
+  GRASS,
   DIRT,
+  STONE
 } BlockType;
 
 class Block {

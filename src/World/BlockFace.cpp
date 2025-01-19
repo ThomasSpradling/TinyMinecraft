@@ -29,29 +29,28 @@ glm::vec3 BlockFace::GetNormal() const {
       return { 0, 0, 0 };
   }
 }
-
 std::array<glm::vec3, 4> BlockFace::GetUnitVertices() const {
   switch (direction) {
-    case Direction::Front:
-      return {glm::vec3(0, 0, 1), glm::vec3(1, 0, 1),
-              glm::vec3(1, 1, 1), glm::vec3(0, 1, 1)};
-    case Direction::Back:
-      return {glm::vec3(0, 0, 0), glm::vec3(0, 1, 0),
-              glm::vec3(1, 1, 0), glm::vec3(1, 0, 0)};
-    case Direction::Left:
-      return {glm::vec3(0, 0, 0), glm::vec3(0, 0, 1),
-              glm::vec3(0, 1, 1), glm::vec3(0, 1, 0)};
-    case Direction::Right:
-      return {glm::vec3(1, 0, 0), glm::vec3(1, 1, 0),
-              glm::vec3(1, 1, 1), glm::vec3(1, 0, 1)};
     case Direction::Top:
-      return {glm::vec3(0, 1, 0), glm::vec3(0, 1, 1),
-              glm::vec3(1, 1, 1), glm::vec3(1, 1, 0)};
+      return { glm::vec3(0, 1, 0), glm::vec3(0, 1, 1),
+               glm::vec3(1, 1, 1), glm::vec3(1, 1, 0) };
     case Direction::Bottom:
-      return {glm::vec3(0, 0, 0), glm::vec3(1, 0, 0),
-              glm::vec3(1, 0, 1), glm::vec3(0, 0, 1)};
+      return { glm::vec3(0, 0, 1), glm::vec3(0, 0, 0),
+               glm::vec3(1, 0, 0), glm::vec3(1, 0, 1) };
+    case Direction::Front:
+      return { glm::vec3(0, 1, 1), glm::vec3(0, 0, 1),
+               glm::vec3(1, 0, 1), glm::vec3(1, 1, 1) };
+    case Direction::Back:
+      return { glm::vec3(1, 1, 0), glm::vec3(1, 0, 0),
+               glm::vec3(0, 0, 0), glm::vec3(0, 1, 0) };
+    case Direction::Left:
+      return { glm::vec3(0, 1, 0), glm::vec3(0, 0, 0),
+               glm::vec3(0, 0, 1), glm::vec3(0, 1, 1) };
+    case Direction::Right:
+      return { glm::vec3(1, 1, 1), glm::vec3(1, 0, 1),
+               glm::vec3(1, 0, 0), glm::vec3(1, 1, 0) };
     default:
-      return {};
+      throw std::invalid_argument("Invalid face direction.");
   }
 }
 

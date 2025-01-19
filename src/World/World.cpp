@@ -15,8 +15,14 @@ void World::Generate() {
     for (GLuint x = 0; x < CHUNK_WIDTH; ++x) {
       for (GLuint y = 0; y < CHUNK_HEIGHT; ++y) {
         for (GLuint z = 0; z < CHUNK_LENGTH; ++z) {
-          if (y <= 32) {
+          if (y <= 27) {
+            chunk.SetBlockAt(x, y, z, Block(BlockType::STONE));
+          }
+          if (y > 27 && y <= 31) {
             chunk.SetBlockAt(x, y, z, Block(BlockType::DIRT));
+          }
+          if (y == 32) {
+            chunk.SetBlockAt(x, y, z, Block(BlockType::GRASS));
           }
         }
       }

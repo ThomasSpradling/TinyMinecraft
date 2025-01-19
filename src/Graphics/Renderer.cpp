@@ -8,6 +8,8 @@ void Renderer::Init(float width, float height) {
   viewportWidth = width;
   viewportHeight = height;
 
+  blockAtlasTexture.Load("../resources/textures/block_atlas.png");
+
   uiShader.Load("../resources/shaders/ui.vs", "../resources/shaders/ui.fs");
   blockShader.Load("../resources/shaders/block.vs", "../resources/shaders/block.fs");
 }
@@ -19,7 +21,11 @@ void Renderer::RenderWorld(World::World &world) {
 }
 
 void Renderer::RenderChunk(World::Chunk &chunk, const glm::vec2 &offset) {
+  blockAtlasTexture.Bind();
+
   blockShader.Use();
+
+  blockShader.Uniform("uBlockAtlas", 0);
 
   glm::mat4 model = glm::mat4(1.0f);
   model = glm::translate(model, glm::vec3(offset.x * CHUNK_WIDTH, 0.0f, offset.y * CHUNK_LENGTH));

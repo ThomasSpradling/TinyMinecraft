@@ -6,7 +6,7 @@
 
 namespace Graphics {
 
-void Texture::Initialize(const std::string &filePath) {
+void Texture::Load(const std::string &filePath) {
   glGenTextures(1, &handle);
 
   unsigned char *data = stbi_load(filePath.c_str(), &width, &height, &channelCount, 0);
@@ -32,11 +32,14 @@ void Texture::Initialize(const std::string &filePath) {
 
   glTexImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(format), width, height, 0, format, GL_UNSIGNED_BYTE, data);
 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+
+  // glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 void Texture::Bind() {

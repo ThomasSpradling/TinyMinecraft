@@ -1,6 +1,7 @@
 #ifndef RENDERER_H_
 #define RENDERER_H_
 
+#include "Graphics/Texture.h"
 #include "Scene/Camera.h"
 #include "Graphics/Shader.h"
 #include "UI/UserInterface.h"
@@ -30,6 +31,7 @@ public:
 
 private:
   Shader uiShader, blockShader;
+  Texture blockAtlasTexture;
 
   float viewportWidth, viewportHeight;
 
