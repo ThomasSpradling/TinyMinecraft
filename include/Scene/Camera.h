@@ -1,7 +1,7 @@
 #ifndef CAMERA_H_
 #define CAMERA_H_
 
-#include "Application/Window.h"
+#include "Graphics/gfx.h"
 #include "Utils/mathgl.h"
 
 namespace Scene {
@@ -32,6 +32,8 @@ public:
   void Move(const glm::vec3 &direction, float dt);
   void UpdateViewDirection(float newYaw, float newPitch);
 
+  glm::vec3 &GetPosition();
+
 private:
   glm::vec3 position { 0.0f };
 
@@ -45,7 +47,7 @@ private:
   float fov { 45.0f };
   float aspect { 1.6f };
   float near = 0.1f;
-  float far = 100.0f;
+  float far = 256.0f;
 };
 
 }

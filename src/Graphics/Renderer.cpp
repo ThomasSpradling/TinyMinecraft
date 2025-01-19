@@ -16,7 +16,9 @@ void Renderer::Init(float width, float height) {
 
 void Renderer::RenderWorld(World::World &world) {
   for (auto &[offset, chunk] : world.GetChunks()) {
-    RenderChunk(chunk, offset);
+    if (!chunk.IsHidden() && chunk.GetState() == World::ChunkState::Loaded) {
+      RenderChunk(chunk, offset);
+    }
   }
 }
 

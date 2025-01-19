@@ -1,80 +1,130 @@
 #include "World/World.h"
 #include "World/Block.h"
 #include "World/Chunk.h"
+#include "glm/fwd.hpp"
+#include <algorithm>
 #include <iostream>
-#include <memory>
 
 namespace World {
 
 void World::Generate() {
 
-  for (glm::ivec2 offset : { glm::ivec2(0, 0), glm::ivec2(-1, 0), glm::ivec2(0, -1), glm::ivec2(-1, -1) }) {
+  // for (glm::ivec2 offset : { glm::ivec2(0, 0), glm::ivec2(-1, 0), glm::ivec2(0, -1), glm::ivec2(-1, -1) }) {
 
-    Chunk chunk { *this, offset };
-    chunk.Init();
-    for (GLuint x = 0; x < CHUNK_WIDTH; ++x) {
-      for (GLuint y = 0; y < CHUNK_HEIGHT; ++y) {
-        for (GLuint z = 0; z < CHUNK_LENGTH; ++z) {
-          if (y <= 27) {
-            chunk.SetBlockAt(x, y, z, Block(BlockType::STONE));
-          }
-          if (y > 27 && y <= 31) {
-            chunk.SetBlockAt(x, y, z, Block(BlockType::DIRT));
-          }
-          if (y == 32) {
-            chunk.SetBlockAt(x, y, z, Block(BlockType::GRASS));
-          }
+  //   GenerateChunk(offset);
+
+  //   // Chunk chunk { *this, offset };
+  //   // chunk.Init();
+  //   // for (GLuint x = 0; x < CHUNK_WIDTH; ++x) {
+  //   //   for (GLuint y = 0; y < CHUNK_HEIGHT; ++y) {
+  //   //     for (GLuint z = 0; z < CHUNK_LENGTH; ++z) {
+  //   //       if (y <= 27) {
+  //   //         chunk.SetBlockAt(x, y, z, Block(BlockType::STONE));
+  //   //       }
+  //   //       if (y > 27 && y <= 31) {
+  //   //         chunk.SetBlockAt(x, y, z, Block(BlockType::DIRT));
+  //   //       }
+  //   //       if (y == 32) {
+  //   //         chunk.SetBlockAt(x, y, z, Block(BlockType::GRASS));
+  //   //       }
+  //   //     }
+  //   //   }
+  //   // }
+
+  //   // chunks.emplace(offset, chunk);
+  // }
+}
+
+Chunk &World::GenerateChunk(glm::ivec2 &offset) {
+  Chunk chunk {*this, offset};
+
+  chunk.Init();
+
+  for (GLuint x = 0; x < CHUNK_WIDTH; ++x) {
+    for (GLuint y = 0; y < CHUNK_HEIGHT; ++y) {
+      for (GLuint z = 0; z < CHUNK_LENGTH; ++z) {
+        if (y <= 27) {
+          chunk.SetBlockAt(x, y, z, Block(BlockType::STONE));
+        }
+        if (y > 27 && y <= 31) {
+          chunk.SetBlockAt(x, y, z, Block(BlockType::DIRT));
+        }
+        if (y == 32) {
+          chunk.SetBlockAt(x, y, z, Block(BlockType::GRASS));
         }
       }
     }
-
-    chunks.emplace(offset, chunk);
   }
+
+  chunks.emplace(offset, chunk);
+
+  return chunks.at(offset);
 }
 
-void World::Update() {
-  for (auto &[offset, chunk] : chunks) {
-    if (chunk.IsDirty()) {
-      chunk.UpdateMesh();
-      chunk.SetDirty(false);
+std::vector<glm::ivec2> World::GetNearbyChunks(glm::vec3 &pos, int radius) {
+  glm::ivec2 chunkPos = GetChunkPosFromCoords(pos);
+
+  std::vector<glm::ivec2> chunks;
+
+  for (int dx = -radius; dx <= radius; ++dx) {
+    for (int dz = -radius; dz <= radius; ++dz) {
+      if (dx*dx + dz*dz <= radius * radius) {
+        chunks.push_back({ chunkPos.x + dx, chunkPos.y + dz });
+      }
     }
   }
+
+  return chunks;
 }
+
+void World::Update(glm::vec3 &playerPos) {
+  for (glm::ivec2 &chunkPos : GetNearbyChunks(playerPos, generateRadius)) {
+    if (!chunks.contains(chunkPos)) {
+      GenerateChunk(chunkPos);
+    }
+  }
+
+  // Make all currently visible chunks go hidden
+  for (const glm::ivec2 &chunkPos : visibleChunks) {
+    Chunk &chunk = chunks.at(chunkPos);
+    chunk.SetHidden(true);
+  }
+  visibleChunks.clear();
+
+  // Make visible all nearby chunks--and also load chunks that have not been loaded before
+  for (glm::ivec2 &chunkPos : GetNearbyChunks(playerPos, renderRadius)) {
+    Chunk &chunk = chunks.at(chunkPos);
+
+    // std::cout << "CHUNK UPDATE BUFFER: " << chunkUpdateBuffer.size() << std::endl;
+    if (chunk.GetState() == ChunkState::Unloaded) {
+      chunkUpdateBuffer.push_back(chunkPos);
+      chunk.SetState(ChunkState::Loading);
+    } else {
+      chunk.SetHidden(false);
+      visibleChunks.insert(chunkPos);
+    }
+  }
+
+  if (!chunkUpdateBuffer.empty()) {
+    Chunk &chunk = chunks.at(chunkUpdateBuffer.front());
+    chunkUpdateBuffer.pop_front();
+
+    chunk.UpdateMesh();
+
+    chunk.SetState(ChunkState::Loaded);
+  }
+}
+
+// void World::UpdateChunk(Chunk &chunk) {
+//   if (chunk.IsLoaded()) {
+//     chunkUpdateBuffer.push_back(chunk.GetChunkPos());
+//   }
+// }
 
 std::unordered_map<glm::ivec2, Chunk, Utils::IVec2Hash> &World::GetChunks() {
   return chunks;
 }
 
-// Chunk &World::GetChunkAt(int x, int z) {
-//   return chunks.at({ x, z });
-// }
-// Chunk &World::GetChunkAt(const glm::ivec2 &pos) {
-//   return chunks.at({ pos.x, pos.y });
-// }
-
-// Block &World::GetBlockAt(int x, int y, int z) {
-//   Chunk &chunk = GetChunkAt(GetChunkPosFromCoords({ x,y,z }));
-
-//   int offsetX;
-//   if (x % CHUNK_WIDTH == 0) {
-//     offsetX = 0;
-//   } else {
-//     offsetX = x % CHUNK_WIDTH + (x > 0 ? 0 : CHUNK_WIDTH);
-//   }
-
-//   int offsetZ;
-//   if (x % CHUNK_WIDTH == 0) {
-//     offsetZ = 0;
-//   } else {
-//     offsetZ = z % CHUNK_LENGTH + (z > 0 ? 0 : CHUNK_LENGTH);
-//   }
-
-//   return chunk.GetBlockAt(offsetX, y, offsetZ);
-// }
-
-// Block &World::GetBlockAt(const glm::vec3 &pos) {
-//   return GetBlockAt(pos.x, pos.y, pos.z);
-// }
 
 glm::vec3 World::GetLocalBlockCoords(const glm::vec3 &pos) {
   int localX = static_cast<int>(pos.x) % CHUNK_WIDTH;
@@ -100,9 +150,9 @@ bool World::IsFaceVisible(BlockFace face, const glm::vec3 &pos) {
 
   glm::ivec2 neighborChunkPos = GetChunkPosFromCoords(neighborPos);
 
-  // if not in a loaded chunk
+  // if not in a chunk
   if (neighborPos.y >= CHUNK_HEIGHT || neighborPos.y < 0 ||
-  !chunks.contains(neighborChunkPos) || !chunks.at(neighborChunkPos).IsLoaded()) {
+  !chunks.contains(neighborChunkPos)) {
     return true;
   }
 
@@ -114,5 +164,14 @@ bool World::IsFaceVisible(BlockFace face, const glm::vec3 &pos) {
 
   return true;
 }
+
+// bool World::IsChunkNearby(glm::vec3 &playerPos, glm::ivec2 chunkPos) {
+//   glm::ivec2 playerChunkPos = GetChunkPosFromCoords(playerPos);
+  
+//   int dx = glm::abs(playerChunkPos.x - chunkPos.x);
+//   int dz = glm::abs(playerChunkPos.y - chunkPos.y);
+
+//   return dx * dx + dz * dz <= radius * radius;
+// }
 
 }

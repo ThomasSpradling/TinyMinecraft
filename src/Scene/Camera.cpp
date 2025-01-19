@@ -62,4 +62,8 @@ void Camera::UpdateViewDirection(float newYaw, float newPitch) {
   front = glm::normalize(direction);
 }
 
+glm::vec3 &Camera::GetPosition() {
+  return position;
+}
+
 }

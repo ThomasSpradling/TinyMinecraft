@@ -3,6 +3,8 @@
 
 #include "Utils/mathgl.h"
 #include "World/Chunk.h"
+#include <queue>
+#include <unordered_set>
 #include <vector>
 
 namespace World {
@@ -13,25 +15,29 @@ public:
   ~World() = default;
 
   void Generate();
-  void Update();
+  Chunk &GenerateChunk(glm::ivec2 &offset);
 
-  // // In chunk coordinates
-  // Chunk &GetChunkAt(int x, int z);
-  // Chunk &GetChunkAt(const glm::ivec2 &pos);
+  std::vector<glm::ivec2> GetNearbyChunks(glm::vec3 &pos, int radius);
 
-  // // In world coordinates
-  // Block &GetBlockAt(int x, int y, int z);
-  // Block &GetBlockAt(const glm::vec3 &pos);
-
-  glm::vec3 GetLocalBlockCoords(const glm::vec3 &pos);
-  glm::ivec2 GetChunkPosFromCoords(const glm::vec3 &pos);
+  void Update(glm::vec3 &playerPos);
+  void UpdateChunk(Chunk &chunk);
 
   std::unordered_map<glm::ivec2, Chunk, Utils::IVec2Hash> &GetChunks();
 
   bool IsFaceVisible(BlockFace face, const glm::vec3 &pos);
 private:
+  std::deque<glm::ivec2> chunkUpdateBuffer;
+  std::unordered_set<glm::ivec2, Utils::IVec2Hash> loadedChunks;
+  std::unordered_set<glm::ivec2, Utils::IVec2Hash> visibleChunks;
   std::unordered_map<glm::ivec2, Chunk, Utils::IVec2Hash> chunks;
 
+  glm::vec3 GetLocalBlockCoords(const glm::vec3 &pos);
+  glm::ivec2 GetChunkPosFromCoords(const glm::vec3 &pos);
+
+  // bool IsChunkNearby(glm::vec3 &pos, glm::ivec2 chunkPos);
+
+  int renderRadius = 5;
+  int generateRadius = 10;
 };
 
 }

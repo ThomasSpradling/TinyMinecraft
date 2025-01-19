@@ -3,7 +3,6 @@
 #include "World/BlockAtlas.h"
 #include "World/BlockFace.h"
 #include "World/World.h"
-#include "glm/fwd.hpp"
 #include <iostream>
 
 namespace World {
@@ -128,20 +127,20 @@ GLsizei Chunk::GetVertexCount() {
   return vertexCount;
 }
 
-void Chunk::SetDirty(bool value) {
-  dirty = value;
+void Chunk::SetHidden(bool value) {
+  hidden = value;
 }
 
-bool Chunk::IsDirty() {
-  return dirty;
+bool Chunk::IsHidden() {
+  return hidden;
 }
 
-void Chunk::SetLoaded(bool value) {
-  loaded = value;
+void Chunk::SetState(ChunkState value) {
+  state = value;
 }
 
-bool Chunk::IsLoaded() {
-  return loaded;
+ChunkState Chunk::GetState() {
+  return state;
 }
 
 glm::ivec2 &Chunk::GetChunkPos() {

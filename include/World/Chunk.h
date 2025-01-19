@@ -12,6 +12,12 @@ namespace World {
 
 class World;
 
+enum ChunkState {
+  Unloaded = 0,
+  Loaded,
+  Loading
+};
+
 class Chunk {
 public:
   Chunk(World &world, glm::ivec2 &chunkPos) : world(world), chunkPos(chunkPos) {}
@@ -30,11 +36,11 @@ public:
   GLuint GetMeshVAO() const;
   GLsizei GetVertexCount();
 
-  void SetDirty(bool value);
-  bool IsDirty();
+  void SetHidden(bool value);
+  bool IsHidden();
 
-  void SetLoaded(bool value);
-  bool IsLoaded();
+  void SetState(ChunkState value);
+  ChunkState GetState();
 
   glm::ivec2 &GetChunkPos();
 
@@ -46,8 +52,8 @@ private:
 
   glm::ivec2 chunkPos;
 
-  bool dirty = true;
-  bool loaded = true;
+  bool hidden = true;
+  ChunkState state = ChunkState::Unloaded;
 
   int vertexCount = 0;
 };

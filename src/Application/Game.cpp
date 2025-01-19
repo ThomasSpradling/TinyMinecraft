@@ -21,9 +21,7 @@ void Game::Initialize() {
   camera = std::make_shared<Scene::Camera>();
 
   camera->SetPosition(glm::vec3(50.f, 50.f, 50.f));
-  // camera->SetTarget(glm::vec3(0.f, 32.f, 0.f));
-  // camera->SetUpVector(glm::vec3(0.f, 1.f, 0.f));
-  
+
   camera->SetFOV(45.f);
   camera->SetAspectRatio(static_cast<float>(window.GetWidth()) / static_cast<float>(window.GetHeight()));
 }
@@ -124,14 +122,11 @@ void Game::ProcessInput() {
 }
 
 void Game::Update() {
-  // float t = glfwGetTime() / 5.f;
-  // float x = 50.f * glm::cos(2 * glm::pi<float>() * t);
-  // float z = 50.f * glm::sin(2 * glm::pi<float>() * t);
-  // camera->SetPosition(glm::vec3(x, 60.f, z));
+
 }
 
 void Game::Render(double) {
-  world.Update();
+  world.Update(camera->GetPosition());
   ui.Arrange();
 
   renderer.ClearBackground(glm::vec3(0.1f));
