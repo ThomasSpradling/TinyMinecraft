@@ -1,6 +1,9 @@
 #include "World/Chunk.h"
 #include "World/Block.h"
 #include "World/BlockFace.h"
+#include "World/World.h"
+#include "glm/fwd.hpp"
+#include <iostream>
 
 namespace World {
 
@@ -48,13 +51,13 @@ void Chunk::UpdateMesh() {
   std::vector<GLuint> indices;
   GLuint indexOffset = 0;
 
-  for (GLuint x = 0; x < CHUNK_WIDTH; ++x) {
-    for (GLuint y = 0; y < CHUNK_HEIGHT; ++y) {
-      for (GLuint z = 0; z < CHUNK_LENGTH; ++z) {
+  for (int x = 0; x < CHUNK_WIDTH; ++x) {
+    for (int y = 0; y < CHUNK_HEIGHT; ++y) {
+      for (int z = 0; z < CHUNK_LENGTH; ++z) {
         Block block = GetBlockAt(x, y, z);
         if (block.IsSolid()) {
           for (const BlockFace face : BlockFace::allFaces) {
-            if (FaceIsVisible(face, glm::vec3(x, y, z))) {
+            if (world.IsFaceVisible(face, glm::vec3(chunkPos.x * CHUNK_WIDTH + x, y, chunkPos.y * CHUNK_LENGTH + z))) {
               std::array<glm::vec3, 4> faceVertices = face.GetUnitVertices();
               glm::vec3 normal = face.GetNormal();
 
@@ -89,11 +92,12 @@ void Chunk::UpdateMesh() {
   vertexCount = indices.size();
 }
 
-Block Chunk::GetBlockAt(GLuint x, GLuint y, GLuint z) {
+
+Block &Chunk::GetBlockAt(GLuint x, GLuint y, GLuint z) {
   return blocks[x][y][z];
 }
 
-Block Chunk::GetBlockAt(const glm::vec3 &pos) {
+Block &Chunk::GetBlockAt(const glm::vec3 &pos) {
   return GetBlockAt(pos.x, pos.y, pos.z);
 }
 
@@ -121,29 +125,37 @@ bool Chunk::IsDirty() {
   return dirty;
 }
 
-glm::vec2 Chunk::GetOffset() {
-  return offset;
+void Chunk::SetLoaded(bool value) {
+  loaded = value;
+}
+
+bool Chunk::IsLoaded() {
+  return loaded;
+}
+
+glm::ivec2 &Chunk::GetChunkPos() {
+  return chunkPos;
 }
 
 /// Private methods
 
-bool Chunk::FaceIsVisible(BlockFace face, const glm::vec3 &pos) {
-  glm::vec3 neighbor = glm::vec3(pos) + face.GetNormal();
+// bool Chunk::FaceIsVisible(BlockFace face, const glm::vec3 &pos) {
+//   glm::vec3 neighbor = glm::vec3(pos) + face.GetNormal();
 
-  // If outside chunk, always render
-  if (neighbor.x >= CHUNK_WIDTH || neighbor.x < 0 ||
-    neighbor.y >= CHUNK_HEIGHT || neighbor.y < 0 ||
-    neighbor.z >= CHUNK_LENGTH || neighbor.z < 0
-  ) {
-    return true;
-  }
+//   // If outside chunk, always render
+//   if (neighbor.x >= CHUNK_WIDTH || neighbor.x < 0 ||
+//     neighbor.y >= CHUNK_HEIGHT || neighbor.y < 0 ||
+//     neighbor.z >= CHUNK_LENGTH || neighbor.z < 0
+//   ) {
+//     return true;
+//   }
 
-  // If a solid block is in front of this face, do not render
-  if (!GetBlockAt(neighbor).IsSolid()) {
-    return true;
-  }
+//   // If a solid block is in front of this face, do not render
+//   if (!GetBlockAt(neighbor).IsSolid()) {
+//     return true;
+//   }
 
-  return false;
-}
+//   return false;
+// }
 
 }

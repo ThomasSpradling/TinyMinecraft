@@ -13,15 +13,13 @@ void Renderer::Init(float width, float height) {
 }
 
 void Renderer::RenderWorld(World::World &world) {
-  for (World::Chunk &chunk : world.GetChunks()) {
-    RenderChunk(chunk);
+  for (auto &[offset, chunk] : world.GetChunks()) {
+    RenderChunk(chunk, offset);
   }
 }
 
-void Renderer::RenderChunk(World::Chunk &chunk) {
+void Renderer::RenderChunk(World::Chunk &chunk, const glm::vec2 &offset) {
   blockShader.Use();
-
-  glm::vec2 offset = chunk.GetOffset();
 
   glm::mat4 model = glm::mat4(1.0f);
   model = glm::translate(model, glm::vec3(offset.x * CHUNK_WIDTH, 0.0f, offset.y * CHUNK_LENGTH));

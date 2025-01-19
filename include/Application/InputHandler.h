@@ -3,7 +3,6 @@
 
 #include "Graphics/gfx.h"
 #include "Utils/mathgl.h"
-#include <iostream>
 
 namespace Application {
 

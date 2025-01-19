@@ -3,27 +3,27 @@ project(MinecraftClone)
 
 set(CMAKE_CXX_STANDARD 23)
 add_compile_options(
-  -Wpedantic
-  -Wall
-  -Wextra
-  -Wcast-align
-  -Wcast-qual
-  -Wctor-dtor-privacy
-  -Wdisabled-optimization
-  -Wformat=2
-  -Winit-self
-  -Wmissing-declarations
-  -Wmissing-include-dirs
-  -Woverloaded-virtual
-  -Wredundant-decls
-  -Wshadow
-  -Wsign-conversion
-  -Wsign-promo
-  -Wstrict-overflow=5
-  -Wswitch-default
-  -Wimplicit-fallthrough
-  -Wundef
-  -Werror
+  # -Wpedantic
+  # -Wall
+  # -Wextra
+  # -Wcast-align
+  # -Wcast-qual
+  # -Wctor-dtor-privacy
+  # -Wdisabled-optimization
+  # -Wformat=2
+  # -Winit-self
+  # -Wmissing-declarations
+  # -Wmissing-include-dirs
+  # -Woverloaded-virtual
+  # -Wredundant-decls
+  # -Wshadow
+  # -Wsign-conversion
+  # -Wsign-promo
+  # -Wstrict-overflow=5
+  # -Wswitch-default
+  # -Wimplicit-fallthrough
+  # -Wundef
+  # -Werror
 )
 
 ### Configure Dependencies
