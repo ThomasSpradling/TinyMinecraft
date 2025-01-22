@@ -9,12 +9,17 @@ namespace World {
 
 class BlockAtlas {
 public:
+
+  static constexpr glm::vec2 tileSize = glm::vec2(
+    static_cast<float>(BLOCK_TEXTURE_WIDTH) / BLOCK_TEXTURE_ATLAS_WIDTH,
+    static_cast<float>(BLOCK_TEXTURE_WIDTH) / BLOCK_TEXTURE_ATLAS_HEIGHT
+  );
+
   BlockAtlas() = delete;
   ~BlockAtlas() = delete;
 
   static glm::vec2 GetNormalizedTextureCoords(BlockType type, BlockFace face);
 
-  static glm::vec2 GetTextureSize();
 
 private:
   static glm::ivec2 GetTextureCoords(BlockType type, BlockFace face);

@@ -16,7 +16,7 @@ public:
   ~Window() = default;
 
   // Sets up GLFW and attaches the inputHandler to it
-  void Init(int width, int height, const std::string &name, InputHandler &inputHandler);
+  void Initialize(int width, int height, const std::string &name, InputHandler &inputHandler);
 
   bool ShouldClose();
 

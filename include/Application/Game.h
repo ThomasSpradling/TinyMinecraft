@@ -11,7 +11,6 @@ namespace Application {
 class Game {
 public:
   Game() = default;
-  ~Game() = default;
 
   /* Initializes all main game logic. */
   void Initialize();
@@ -21,14 +20,7 @@ public:
 
   void Shutdown();
 
-  /* Sets the maximum frames per second (FPS) we hope to achieve. */
-  void SetTargetFPS(int fps);
-
 private:
-  int targetFPS = 60;
-
-  double updateInterval;
-
   Window window;
   InputHandler inputHandler;
   Graphics::Renderer renderer;

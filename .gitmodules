@@ -11,3 +11,6 @@
 [submodule "third_party/stb"]
 	path = third_party/stb
 	url = https://github.com/nothings/stb
+[submodule "third_party/noise/PerlinNoise"]
+	path = third_party/noise/PerlinNoise
+	url = https://github.com/sol-prog/Perlin_Noise.git

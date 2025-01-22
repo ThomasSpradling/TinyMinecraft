@@ -19,8 +19,8 @@ public:
 
   bool IsSolid() const;
   BlockType GetType() const;
+  void SetType(BlockType value);
 
-  // glm::vec2 GetTextureCoords(Face face) const;
 private:
   BlockType type = BlockType::AIR;
 };

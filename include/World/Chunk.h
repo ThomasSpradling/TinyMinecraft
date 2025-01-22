@@ -23,7 +23,7 @@ public:
   Chunk(World &world, glm::ivec2 &chunkPos) : world(world), chunkPos(chunkPos) {}
   ~Chunk() = default;
 
-  void Init();
+  void Initialize();
 
   void UpdateMesh();
 
@@ -39,13 +39,16 @@ public:
   void SetHidden(bool value);
   bool IsHidden();
 
+  bool IsDirty() { return dirty; }
+  void SetDirty(bool value) { dirty = value; }
+
   void SetState(ChunkState value);
   ChunkState GetState();
 
   glm::ivec2 &GetChunkPos();
 
 private:
-  World &world;
+  [[maybe_unused]] World &world;
 
   Block blocks[CHUNK_WIDTH][CHUNK_HEIGHT][CHUNK_LENGTH];
   GLuint VAO, VBO, EBO;
@@ -54,6 +57,8 @@ private:
 
   bool hidden = true;
   ChunkState state = ChunkState::Unloaded;
+
+  bool dirty = true;
 
   int vertexCount = 0;
 };

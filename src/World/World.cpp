@@ -1,83 +1,76 @@
+#include <PerlinNoise/PerlinNoise.h>
+#include <algorithm>
+#include <cmath>
 #include "World/World.h"
+#include "Utils/Profiler.h"
+#include "Utils/defs.h"
 #include "World/Block.h"
 #include "World/Chunk.h"
-#include "glm/fwd.hpp"
-#include <algorithm>
-#include <iostream>
+#include "glm/ext/vector_int2.hpp"
 
 namespace World {
 
-void World::Generate() {
+void World::Initialize() {}
 
-  // for (glm::ivec2 offset : { glm::ivec2(0, 0), glm::ivec2(-1, 0), glm::ivec2(0, -1), glm::ivec2(-1, -1) }) {
+Chunk &World::GenerateChunk(glm::ivec2 &chunkPos) {
+  PROFILE_FUNCTION(Chunk)
 
-  //   GenerateChunk(offset);
+  Chunk chunk { *this, chunkPos };
+  chunk.Initialize();
 
-  //   // Chunk chunk { *this, offset };
-  //   // chunk.Init();
-  //   // for (GLuint x = 0; x < CHUNK_WIDTH; ++x) {
-  //   //   for (GLuint y = 0; y < CHUNK_HEIGHT; ++y) {
-  //   //     for (GLuint z = 0; z < CHUNK_LENGTH; ++z) {
-  //   //       if (y <= 27) {
-  //   //         chunk.SetBlockAt(x, y, z, Block(BlockType::STONE));
-  //   //       }
-  //   //       if (y > 27 && y <= 31) {
-  //   //         chunk.SetBlockAt(x, y, z, Block(BlockType::DIRT));
-  //   //       }
-  //   //       if (y == 32) {
-  //   //         chunk.SetBlockAt(x, y, z, Block(BlockType::GRASS));
-  //   //       }
-  //   //     }
-  //   //   }
-  //   // }
+  const double scale = 0.01;
+  const double slice = 42.0;
 
-  //   // chunks.emplace(offset, chunk);
-  // }
-}
+  PerlinNoise pn { seed };
 
-Chunk &World::GenerateChunk(glm::ivec2 &offset) {
-  Chunk chunk {*this, offset};
+  const int averageHeight = 80;
+  const int dirtLayerDepth = 5;
 
-  chunk.Init();
+  for (int x = 0; x < CHUNK_WIDTH; ++x) {
+    for (int z = 0; z < CHUNK_LENGTH; ++z) {
+      int globalX = chunkPos.x * static_cast<int>(CHUNK_WIDTH) + x;
+      int globalZ = chunkPos.y * static_cast<int>(CHUNK_LENGTH) + z;
 
-  for (GLuint x = 0; x < CHUNK_WIDTH; ++x) {
-    for (GLuint y = 0; y < CHUNK_HEIGHT; ++y) {
-      for (GLuint z = 0; z < CHUNK_LENGTH; ++z) {
-        if (y <= 27) {
-          chunk.SetBlockAt(x, y, z, Block(BlockType::STONE));
-        }
-        if (y > 27 && y <= 31) {
-          chunk.SetBlockAt(x, y, z, Block(BlockType::DIRT));
-        }
-        if (y == 32) {
-          chunk.SetBlockAt(x, y, z, Block(BlockType::GRASS));
+      double noiseValue = pn.noise(globalX * scale, slice, globalZ * scale);
+      noiseValue = (noiseValue + 1.0) / 2.0;
+      int height = static_cast<int>(std::floor(noiseValue * averageHeight));
+      height = std::clamp(height, 0, CHUNK_HEIGHT - 1);
+
+      for (int y = 0; y <= height; ++y) {
+        if (y == height) {
+          chunk.SetBlockAt(glm::vec3(x, y, z), BlockType::GRASS);
+        } else if (y >= height - dirtLayerDepth) {
+          chunk.SetBlockAt(glm::vec3(x, y, z), BlockType::DIRT);
+        } else {
+          chunk.SetBlockAt(glm::vec3(x, y, z), BlockType::STONE);
         }
       }
     }
   }
 
-  chunks.emplace(offset, chunk);
-
-  return chunks.at(offset);
+  chunks.emplace(chunkPos, chunk);
+  return chunks.at(chunkPos);
 }
 
 std::vector<glm::ivec2> World::GetNearbyChunks(glm::vec3 &pos, int radius) {
   glm::ivec2 chunkPos = GetChunkPosFromCoords(pos);
 
-  std::vector<glm::ivec2> chunks;
+  std::vector<glm::ivec2> res;
 
   for (int dx = -radius; dx <= radius; ++dx) {
     for (int dz = -radius; dz <= radius; ++dz) {
       if (dx*dx + dz*dz <= radius * radius) {
-        chunks.push_back({ chunkPos.x + dx, chunkPos.y + dz });
+        res.push_back({ chunkPos.x + dx, chunkPos.y + dz });
       }
     }
   }
 
-  return chunks;
+  return res;
 }
 
 void World::Update(glm::vec3 &playerPos) {
+  PROFILE_FUNCTION(Chunk)
+
   for (glm::ivec2 &chunkPos : GetNearbyChunks(playerPos, generateRadius)) {
     if (!chunks.contains(chunkPos)) {
       GenerateChunk(chunkPos);
@@ -95,7 +88,6 @@ void World::Update(glm::vec3 &playerPos) {
   for (glm::ivec2 &chunkPos : GetNearbyChunks(playerPos, renderRadius)) {
     Chunk &chunk = chunks.at(chunkPos);
 
-    // std::cout << "CHUNK UPDATE BUFFER: " << chunkUpdateBuffer.size() << std::endl;
     if (chunk.GetState() == ChunkState::Unloaded) {
       chunkUpdateBuffer.push_back(chunkPos);
       chunk.SetState(ChunkState::Loading);
@@ -105,26 +97,54 @@ void World::Update(glm::vec3 &playerPos) {
     }
   }
 
-  if (!chunkUpdateBuffer.empty()) {
-    Chunk &chunk = chunks.at(chunkUpdateBuffer.front());
-    chunkUpdateBuffer.pop_front();
+  if (chunkUpdateBuffer.empty()) {
+    return;
+  }
 
+  float minDistance = std::numeric_limits<double>::infinity();
+  glm::ivec2 nearestChunkPos;
+  for (const auto &chunkPos : chunkUpdateBuffer) {
+    float distance = glm::distance(glm::vec2(GetChunkPosFromCoords(playerPos)), glm::vec2(chunkPos));
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearestChunkPos = chunkPos;
+    }
+  }
+
+  if (minDistance != std::numeric_limits<float>::infinity()) {
+    Chunk &chunk = chunks.at(nearestChunkPos);
     chunk.UpdateMesh();
-
     chunk.SetState(ChunkState::Loaded);
+
+    chunkUpdateBuffer.erase(std::remove(chunkUpdateBuffer.begin(), chunkUpdateBuffer.end(), nearestChunkPos), chunkUpdateBuffer.end());
   }
 }
-
-// void World::UpdateChunk(Chunk &chunk) {
-//   if (chunk.IsLoaded()) {
-//     chunkUpdateBuffer.push_back(chunk.GetChunkPos());
-//   }
-// }
 
 std::unordered_map<glm::ivec2, Chunk, Utils::IVec2Hash> &World::GetChunks() {
   return chunks;
 }
 
+void World::BreakBlock(const glm::vec3 &pos) {
+  SetBlockAt(pos, BlockType::AIR);
+
+  chunks.at(GetChunkPosFromCoords(pos)).UpdateMesh();
+}
+
+void World::SetBlockAt(const glm::vec3 &pos, BlockType type) {
+  Block &block = GetBlockAt(pos);
+  block.SetType(type);
+}
+
+Block &World::GetBlockAt(const glm::vec3 &pos) {
+  glm::ivec2 chunkPos = GetChunkPosFromCoords(pos);
+  glm::vec3 offsetPos = GetLocalBlockCoords(pos);
+
+  return chunks.at(chunkPos).GetBlockAt(offsetPos);
+}
+
+bool World::HasBlock(const glm::vec3 &pos) {
+  return GetBlockAt(pos).IsSolid();
+}
 
 glm::vec3 World::GetLocalBlockCoords(const glm::vec3 &pos) {
   int localX = static_cast<int>(pos.x) % CHUNK_WIDTH;
@@ -165,13 +185,6 @@ bool World::IsFaceVisible(BlockFace face, const glm::vec3 &pos) {
   return true;
 }
 
-// bool World::IsChunkNearby(glm::vec3 &playerPos, glm::ivec2 chunkPos) {
-//   glm::ivec2 playerChunkPos = GetChunkPosFromCoords(playerPos);
-  
-//   int dx = glm::abs(playerChunkPos.x - chunkPos.x);
-//   int dz = glm::abs(playerChunkPos.y - chunkPos.y);
 
-//   return dx * dx + dz * dz <= radius * radius;
-// }
 
 }

@@ -5,6 +5,4 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#define _DEBUG_ 1
-
 #endif // GFX_H_

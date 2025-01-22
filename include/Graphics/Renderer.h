@@ -14,9 +14,8 @@ namespace Graphics {
 class Renderer {
 public:
   Renderer() = default;
-  ~Renderer() = default;
 
-  void Init(float viewportWidth, float viewportHeight);
+  void Initialize(float viewportWidth, float viewportHeight);
   
   void RenderWorld(World::World &world);
   void RenderChunk(World::Chunk &chunk, const glm::vec2 &offset);

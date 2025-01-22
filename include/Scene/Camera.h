@@ -12,7 +12,6 @@ public:
   ~Camera() = default;
 
   void SetPosition(glm::vec3 pos);
-  // void SetTarget(glm::vec3 pos);
   void SetUpVector(glm::vec3 vec);
 
   void SetFOV(float angle);
@@ -29,7 +28,8 @@ public:
   float GetYaw() const;
   float GetPitch() const;
 
-  void Move(const glm::vec3 &direction, float dt);
+  void Move();
+  void SetMoveDirection(const glm::vec3 &direction);
   void UpdateViewDirection(float newYaw, float newPitch);
 
   glm::vec3 &GetPosition();
@@ -40,13 +40,15 @@ private:
   glm::vec3 up { 0.0f, 1.0f, 0.0f };
   glm::vec3 front { 0.0f, 0.0f, -1.0f };
 
+  glm::vec3 moveDirection { 0.0f, 0.0f, 0.0f };
+
   float pitch = 0.0f, yaw = -90.0f;
 
-  const float speed = 20.0f;
+  const float speed = 0.02f;
 
   float fov { 45.0f };
   float aspect { 1.6f };
-  float near = 0.1f;
+  float near = 0.1;
   float far = 256.0f;
 };
 

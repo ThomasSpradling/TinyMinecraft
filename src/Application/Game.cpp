@@ -1,85 +1,81 @@
 #include "Application/Game.h"
 #include "Application/InputHandler.h"
-#include "GLFW/glfw3.h"
-#include "Graphics/gfx.h"
+#include "Utils/defs.h"
+#include "Utils/Profiler.h"
+#include <chrono>
 #include <algorithm>
+#include <ratio>
 #include <unistd.h>
 
 namespace Application {
 
 void Game::Initialize() {
-  SetTargetFPS(60);
+  PROFILE_FUNCTION(Game)
 
-  const int viewportWidth = 800;
-  const int viewportHeight = 450;
+  constexpr int viewportWidth = 600;
+  constexpr int viewportHeight = 400;
 
-  window.Init(viewportWidth, viewportHeight, "Look mum! I made a chunk!", inputHandler);
-  renderer.Init(viewportWidth, viewportHeight);
-  world.Generate();
+  window.Initialize(viewportWidth, viewportHeight, "Look mum! I made some chunks!", inputHandler);
+  renderer.Initialize(viewportWidth, viewportHeight);
+  world.Initialize();
   ui.Initialize();
   
+  // TODO: Replace with player orientations
   camera = std::make_shared<Scene::Camera>();
-
-  camera->SetPosition(glm::vec3(50.f, 50.f, 50.f));
-
+  camera->SetPosition(glm::vec3(0.f, 100.f, 0.f));
   camera->SetFOV(45.f);
   camera->SetAspectRatio(static_cast<float>(window.GetWidth()) / static_cast<float>(window.GetHeight()));
 }
 
 void Game::Run() {
-  const int maxCatchUpIterations = 10;
+  using clock = std::chrono::high_resolution_clock;
 
-  double previousTime = glfwGetTime();
-  double lastRenderTime = glfwGetTime();
-  double lag = 0.0; // How far behind we are on updates
+  auto previousTime = clock::now();
+  double lag = 0.0;
 
-  double frameInterval = 1.f / static_cast<float>(targetFPS); // Seconds per frame
-
-  while (!window.ShouldClose()) {
-    double currentTime = glfwGetTime();
-    double elapsedTime = currentTime - previousTime;
-    previousTime = currentTime;
-    lag += elapsedTime;
-
-    ProcessInput();
-
-#if _DEBUG_
-    double currentFPS = 1.f / elapsedTime;
-    std::cout << "Current FPS: " << currentFPS << std::endl;
+#ifdef UTILS_ShowFPS
+  int frameCount = 0;
+  double fpsTimer = 0.0;
+  int fps = 0;
 #endif
 
-    int iters = 0;
+  while (!window.ShouldClose()) {
+    ProcessInput();
 
-    // If still behind, try to catch up. We use maxCatchUpIterations not to stall.
-    while (lag >= updateInterval || iters < maxCatchUpIterations) {
+    auto currentTime = clock::now();
+
+    std::chrono::duration<double, std::milli> elapsed = currentTime - previousTime;
+    previousTime = currentTime;
+
+    double frameTime = std::clamp(elapsed.count(), 0.0, 250.0);
+    lag += frameTime;
+
+    // try to catch back up
+    while (lag >= FIXED_UPDATE_INTERVAL) {
       Update();
-
-      lag -= updateInterval;
-      iters++;
+      lag -= FIXED_UPDATE_INTERVAL;
     }
+    
+    Render(lag / FIXED_UPDATE_INTERVAL);
 
-    Render(lag / updateInterval);
+#ifdef UTILS_ShowFPS
+    frameCount++;
+    fpsTimer += frameTime;
+    if (fpsTimer >= 1000.0f) {
+      fps = frameCount;
+      frameCount = 0;
+      fpsTimer -= 1000.0f;
 
-    // Ensure we've waited enough time to adhere to our maximal FPS
-    lastRenderTime = glfwGetTime();
-    while (currentTime - lastRenderTime < frameInterval && currentTime - lastRenderTime < updateInterval) {
-      usleep(1000); // sleep for 1 ms
-      currentTime = glfwGetTime();
+      std::cout << "Current FPS: " << fps << "\n";
     }
+#endif
+
   }
-
-  glfwTerminate();
 }
 
 void Game::Shutdown() {
-
+  glfwTerminate();
 }
-
-void Game::SetTargetFPS(int fps) {
-  targetFPS = fps;
-  updateInterval = 1.f / static_cast<float>(targetFPS);
-}
-
 
 // Private Methods
 
@@ -107,7 +103,7 @@ void Game::ProcessInput() {
   if (inputHandler.IsKeyDown(GLFW_KEY_SPACE))
     cameraDirection += glm::vec3(0.0f, 1.0f, 0.0f);
 
-  camera->Move(cameraDirection, updateInterval);
+  camera->SetMoveDirection(cameraDirection);
 
   // Camera mouse
 
@@ -122,15 +118,18 @@ void Game::ProcessInput() {
 }
 
 void Game::Update() {
+  PROFILE_FUNCTION(Game)
 
+  camera->Move();
 }
 
 void Game::Render(double) {
+  PROFILE_FUNCTION(Game)
+
   world.Update(camera->GetPosition());
   ui.Arrange();
 
   renderer.ClearBackground(glm::vec3(0.1f));
-
 
   renderer.Begin3D(camera);
 

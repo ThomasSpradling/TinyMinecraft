@@ -1,9 +1,12 @@
 #include "Application/Window.h"
 #include "Graphics/gfx.h"
+#include "Utils/Profiler.h"
 
 namespace Application {
 
-void Window::Init(int initWidth, int initHeight, const std::string &name, InputHandler &inputHandler) {
+void Window::Initialize(int initWidth, int initHeight, const std::string &name, InputHandler &inputHandler) {
+  PROFILE_FUNCTION(Window)
+  
   width = initWidth;
   height = initHeight;
 
@@ -45,6 +48,8 @@ void Window::Init(int initWidth, int initHeight, const std::string &name, InputH
     glfwTerminate();
     exit(1);
   }
+
+  glfwWindowHint(GLFW_DEPTH_BITS, 32);
 
   glfwSwapInterval(1);
 

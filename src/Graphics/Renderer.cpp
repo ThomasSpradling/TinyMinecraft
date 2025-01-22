@@ -1,20 +1,34 @@
 #include "Graphics/Renderer.h"
+#include "Utils/Profiler.h"
 #include "World/Chunk.h"
 #include "Graphics/gfx.h"
 
 namespace Graphics {
 
-void Renderer::Init(float width, float height) {
+void Renderer::Initialize(float width, float height) {
+  PROFILE_SCOPE(Graphics, "Renderer::Initialize")
+
   viewportWidth = width;
   viewportHeight = height;
 
   blockAtlasTexture.Load("../resources/textures/block_atlas.png");
 
   uiShader.Load("../resources/shaders/ui.vs", "../resources/shaders/ui.fs");
+
+#if defined(MESH_METHOD_Naive) or defined(MESH_METHOD_VertexHiding)
+
+  blockShader.Load("../resources/shaders/unserialized_block.vs", "../resources/shaders/unserialized_block.fs");
+
+#else
+
   blockShader.Load("../resources/shaders/block.vs", "../resources/shaders/block.fs");
+
+#endif
 }
 
 void Renderer::RenderWorld(World::World &world) {
+  PROFILE_FUNCTION(World)
+
   for (auto &[offset, chunk] : world.GetChunks()) {
     if (!chunk.IsHidden() && chunk.GetState() == World::ChunkState::Loaded) {
       RenderChunk(chunk, offset);
@@ -23,6 +37,8 @@ void Renderer::RenderWorld(World::World &world) {
 }
 
 void Renderer::RenderChunk(World::Chunk &chunk, const glm::vec2 &offset) {
+  PROFILE_FUNCTION(Chunk)
+
   blockAtlasTexture.Bind();
 
   blockShader.Use();
@@ -39,6 +55,8 @@ void Renderer::RenderChunk(World::Chunk &chunk, const glm::vec2 &offset) {
 }
 
 void Renderer::RenderUI(UI::UserInterface &ui) {
+  PROFILE_FUNCTION(UserInterface)
+
   const glm::mat4 projection = glm::ortho(0.0f, viewportWidth, viewportHeight, 0.0f);
 
   uiShader.Use();
@@ -55,6 +73,7 @@ void Renderer::Begin3D(const std::shared_ptr<Scene::Camera> &camera3D) {
   glFrontFace(GL_CCW);
 
   glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LESS);
 
   if (isWireframeMode) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

@@ -1,8 +1,10 @@
 #include "World/BlockAtlas.h"
+#include "Utils/Profiler.h"
 #include "Utils/defs.h"
-#include <iostream>
 
 namespace World {
+
+constexpr glm::vec2 BlockAtlas::tileSize;
 
 glm::vec2 BlockAtlas::GetNormalizedTextureCoords(BlockType type, BlockFace face) {
   glm::ivec2 pixelCoords = GetTextureCoords(type, face);
@@ -11,13 +13,6 @@ glm::vec2 BlockAtlas::GetNormalizedTextureCoords(BlockType type, BlockFace face)
   float normalizedY = static_cast<float>(pixelCoords.y) / BLOCK_TEXTURE_ATLAS_HEIGHT;
 
   return { normalizedX, normalizedY };
-}
-
-glm::vec2 BlockAtlas::GetTextureSize() {
-  return {
-    static_cast<float>(BLOCK_TEXTURE_WIDTH) / BLOCK_TEXTURE_ATLAS_WIDTH,
-    static_cast<float>(BLOCK_TEXTURE_WIDTH) / BLOCK_TEXTURE_ATLAS_HEIGHT
-  };
 }
 
 glm::ivec2 BlockAtlas::GetTextureCoords(BlockType type, BlockFace face) {

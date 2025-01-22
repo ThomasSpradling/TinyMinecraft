@@ -1,10 +1,10 @@
 #include "Scene/Camera.h"
+#include "Utils/defs.h"
 #include "glm/geometric.hpp"
 
 namespace Scene {
 
 void Camera::SetPosition(glm::vec3 pos) { position = pos; }
-// void Camera::SetTarget(glm::vec3 pos) { target = pos; }
 void Camera::SetUpVector(glm::vec3 vec) { up = vec; }
 
 void Camera::SetFOV(float angle) { fov = angle; }
@@ -45,9 +45,12 @@ float Camera::GetPitch() const {
   return pitch;
 }
 
-void Camera::Move(const glm::vec3 &direction, float dt) {
-  float displacement = speed * dt;
-  position += direction != glm::vec3(0.0f) ? displacement * glm::normalize(direction) : direction;
+void Camera::Move() {
+  position += moveDirection != glm::vec3(0.0f) ? (speed * FIXED_UPDATE_INTERVAL * glm::normalize(moveDirection)) : moveDirection;
+}
+
+void Camera::SetMoveDirection(const glm::vec3 &direction) {
+  moveDirection = direction;
 }
 
 void Camera::UpdateViewDirection(float newYaw, float newPitch) {
