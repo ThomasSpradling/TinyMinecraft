@@ -19,9 +19,9 @@
 #define GAMEPLAY_MaxBlockInteractDistance (5.0f)
 
 //// Mesh method
-  #define MESH_METHOD_Naive
+  // #define MESH_METHOD_Naive
   // #define MESH_METHOD_VertexHiding
-  // #define MESH_METHOD_Serialize
+  #define MESH_METHOD_Serialize
   // #define MESH_METHOD_Greedy2D
 
 #endif // DEF_H_

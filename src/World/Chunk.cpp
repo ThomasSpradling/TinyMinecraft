@@ -4,6 +4,7 @@
 #include "World/Block.h"
 #include "World/BlockAtlas.h"
 #include "World/BlockFace.h"
+#include "World/World.h"
 
 namespace World {
 
@@ -70,9 +71,9 @@ PROFILE_FUNCTION(Chunk)
   std::vector<GLuint> indices;
   GLuint indexOffset = 0;
 
-  for (int x = 0; x < CHUNK_WIDTH; ++x) {
+  for (int z = 0; z < CHUNK_LENGTH; ++z) {
     for (int y = 0; y < CHUNK_HEIGHT; ++y) {
-      for (int z = 0; z < CHUNK_LENGTH; ++z) {
+      for (int x = 0; x < CHUNK_WIDTH; ++x) {
 
         Block block = GetBlockAt(glm::vec3(x, y, z));
 
@@ -96,7 +97,6 @@ PROFILE_FUNCTION(Chunk)
           };
 
           for (int i = 0; i < 4; ++i) {
-
             vertices.insert(vertices.end(),{
               faceVertices[i].x + x, faceVertices[i].y + y, faceVertices[i].z + z,  // positions
               faceTexCoords[i].x, faceTexCoords[i].y,  // tex coords
@@ -116,7 +116,7 @@ PROFILE_FUNCTION(Chunk)
           std::array<glm::vec3, 4> faceVertices = face.GetVertices();
           glm::vec2 topLeftTexCoord = BlockAtlas::GetNormalizedTextureCoords(block.GetType(), face);
 
-          glm::vec2 texSize = BlockAtlas::GetTextureSize();
+          glm::vec2 texSize = BlockAtlas::tileSize;
           glm::vec3 normal = face.GetNormal();
 
           std::array<glm::vec2, 4> faceTexCoords = {
@@ -148,7 +148,7 @@ PROFILE_FUNCTION(Chunk)
             std::array<glm::vec3, 4> faceVertices = face.GetVertices(1, 1);
             glm::vec2 topLeftTexCoord = BlockAtlas::GetNormalizedTextureCoords(block.GetType(), face);
 
-            glm::vec2 texSize = BlockAtlas::GetTextureSize();
+            glm::vec2 texSize = BlockAtlas::tileSize;
             glm::vec3 normal = face.GetNormal();
 
             int normalId = 0;

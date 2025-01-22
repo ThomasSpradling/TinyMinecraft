@@ -49,7 +49,7 @@ private:
   float fov { 45.0f };
   float aspect { 1.6f };
   float near = 0.1;
-  float far = 256.0f;
+  float far = 512.0f;
 };
 
 }
