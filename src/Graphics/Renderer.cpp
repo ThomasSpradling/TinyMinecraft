@@ -6,24 +6,23 @@
 namespace Graphics {
 
 void Renderer::Initialize(float width, float height) {
+  glEnable(GL_BLEND);
+glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
   PROFILE_SCOPE(Graphics, "Renderer::Initialize")
+
+  text.Initialize();
 
   viewportWidth = width;
   viewportHeight = height;
 
-  blockAtlasTexture.Load("../resources/textures/block_atlas.png");
+  blockAtlasTexture.Load("../resources/textures/block_atlas.png", 0);
+  fontMap.Load("../resources/font/pixel_2w.png", 1);
 
   uiShader.Load("../resources/shaders/ui.vs", "../resources/shaders/ui.fs");
-
-#if defined(MESH_METHOD_Naive) or defined(MESH_METHOD_VertexHiding)
-
-  blockShader.Load("../resources/shaders/unserialized_block.vs", "../resources/shaders/unserialized_block.fs");
-
-#else
-
+  textShader.Load("../resources/shaders/text.vs", "../resources/shaders/text.fs");
+  
   blockShader.Load("../resources/shaders/block.vs", "../resources/shaders/block.fs");
-
-#endif
 }
 
 void Renderer::RenderWorld(World::World &world) {
@@ -39,11 +38,12 @@ void Renderer::RenderWorld(World::World &world) {
 void Renderer::RenderChunk(World::Chunk &chunk, const glm::vec2 &offset) {
   PROFILE_FUNCTION(Chunk)
 
-  blockAtlasTexture.Bind();
+  blockAtlasTexture.Bind(0);
 
   blockShader.Use();
 
   blockShader.Uniform("uBlockAtlas", 0);
+  blockShader.Uniform("uCameraPos", currentCamera->GetPosition());
 
   glm::mat4 model = glm::mat4(1.0f);
   model = glm::translate(model, glm::vec3(offset.x * CHUNK_WIDTH, 0.0f, offset.y * CHUNK_LENGTH));
@@ -65,6 +65,17 @@ void Renderer::RenderUI(UI::UserInterface &ui) {
   glBindVertexArray(ui.GetVAO());
   glDrawElements(GL_TRIANGLES, ui.GetVertexCount(), GL_UNSIGNED_INT, 0);
   glBindVertexArray(0);
+
+  text.Draw("TEXT RENDERING WORKS!", 0, 0, glm::vec3(1, 0, 0));
+  text.Update();
+
+  fontMap.Bind(1);
+  textShader.Use();
+  textShader.Uniform("uProjection", projection);
+  textShader.Uniform("uFontMap", 1);
+  glBindVertexArray(text.GetVAO());
+  glDrawElements(GL_TRIANGLES, text.GetVertexCount(), GL_UNSIGNED_INT, 0);
+  glBindVertexArray(0);
 }
 
 void Renderer::Begin3D(const std::shared_ptr<Scene::Camera> &camera3D) {
@@ -81,6 +92,8 @@ void Renderer::Begin3D(const std::shared_ptr<Scene::Camera> &camera3D) {
 
   currentCamera = camera3D;
 
+  glEnable(GL_FRAMEBUFFER_SRGB); 
+
   blockShader.Use();
   blockShader.Uniform("uViewProjection", currentCamera->GetViewProjection());
 }
@@ -90,6 +103,9 @@ void Renderer::End3D() {
   glDisable(GL_DEPTH_TEST);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+  glDisable(GL_FRAMEBUFFER_SRGB); 
+
 
   currentCamera.reset();
 }

@@ -11,8 +11,8 @@ public:
   Texture() = default;
   ~Texture() = default;
 
-  void Load(const std::string &filePath);
-  void Bind();
+  void Load(const std::string &filePath, int id);
+  void Bind(int id);
 
 private:
   GLuint handle;

@@ -27,7 +27,7 @@ void UserInterface::Initialize() {
 }
 
 void UserInterface::Arrange() {
-  DrawRectangle(0, 0, 50, 50, glm::vec3(1.0f, 0.0f, 0.0f));
+  // DrawRectangle(0, 0, 50, 50, glm::vec3(1.0f, 0.0f, 0.0f));
   
   Update();
 }
@@ -69,5 +69,23 @@ void UserInterface::DrawRectangle(GLfloat x, GLfloat y, GLfloat width, GLfloat h
     n + 2, n + 3, n + 1       // bottom right triangle
   });
 }
+
+// void DrawText(const std::string &text, GLfloat x, GLfloat y, const glm::vec3 &color) {
+//   GLuint n = vertices.size() / 5;   // index start
+
+//   // Setup geometry:
+//   vertices.insert(vertices.end(), {
+//     // position              // color
+//     x, y,                    color.r, color.g, color.b,      // top left
+//     x + width, y,            color.r, color.g, color.b,      // top right
+//     x, y + height,           color.r, color.g, color.b,      // bottom left
+//     x + width, y + height,   color.r, color.g, color.b      // bottom right
+//   });
+
+//   indices.insert(indices.end(), {
+//     n + 0, n + 1, n + 2,      // top left triangle
+//     n + 2, n + 3, n + 1       // bottom right triangle
+//   });
+// }
 
 }

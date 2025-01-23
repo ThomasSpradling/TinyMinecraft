@@ -13,7 +13,7 @@
 
 namespace Graphics {
 
-void Texture::Load(const std::string &filePath) {
+void Texture::Load(const std::string &filePath, int id) {
   glGenTextures(1, &handle);
 
   unsigned char *data = stbi_load(filePath.c_str(), &width, &height, &channelCount, 0);
@@ -34,7 +34,7 @@ void Texture::Load(const std::string &filePath) {
     exit(1);
   }
 
-  Bind();
+  Bind(id);
 
   glTexImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(format), width, height, 0, format, GL_UNSIGNED_BYTE, data);
 
@@ -52,11 +52,17 @@ void Texture::Load(const std::string &filePath) {
   glTexParameterf(GL_TEXTURE_2D, GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
 
   glGenerateMipmap(GL_TEXTURE_2D);
-
-  glActiveTexture(GL_TEXTURE0);
 }
 
-void Texture::Bind() {
+void Texture::Bind(int id) {
+
+  if (id == 0) {
+    glActiveTexture(GL_TEXTURE0);
+  }
+
+  if (id == 1) {
+    glActiveTexture(GL_TEXTURE1);
+  }
   glBindTexture(GL_TEXTURE_2D, handle);
 }
 

@@ -6,6 +6,7 @@
 #include "Graphics/Shader.h"
 #include "UI/UserInterface.h"
 #include "World/World.h"
+#include "UI/Text.h"
 #include "Graphics/gfx.h"
 #include <memory>
 
@@ -29,15 +30,16 @@ public:
   void ToggleWireframeMode();
 
 private:
-  Shader uiShader, blockShader;
-  Texture blockAtlasTexture;
+  Shader uiShader, blockShader, textShader;
+  Texture blockAtlasTexture, fontMap;
+
+  UI::Text text;
 
   float viewportWidth, viewportHeight;
 
   std::shared_ptr<Scene::Camera> currentCamera = nullptr;
 
   bool isWireframeMode = false;
-
 };
 
 }
