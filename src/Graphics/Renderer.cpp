@@ -6,23 +6,32 @@
 namespace Graphics {
 
 void Renderer::Initialize(float width, float height) {
-  glEnable(GL_BLEND);
-glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
   PROFILE_SCOPE(Graphics, "Renderer::Initialize")
 
-  text.Initialize();
-
   viewportWidth = width;
-  viewportHeight = height;
+  viewportHeight = height;  
 
+  //// Block Setup
   blockAtlasTexture.Load("../resources/textures/block_atlas.png", 0);
+  
+  blockShader.Load("../resources/shaders/block.vs", "../resources/shaders/block.fs");
+
+  blockShader.Use();
+  blockShader.Uniform("uBlockAtlas", 0);
+
+  //// UI Setup
   fontMap.Load("../resources/font/pixel_2w.png", 1);
 
   uiShader.Load("../resources/shaders/ui.vs", "../resources/shaders/ui.fs");
   textShader.Load("../resources/shaders/text.vs", "../resources/shaders/text.fs");
-  
-  blockShader.Load("../resources/shaders/block.vs", "../resources/shaders/block.fs");
+
+  uiShader.Use();
+  const glm::mat4 projection = glm::ortho(0.0f, viewportWidth, viewportHeight, 0.0f);
+  uiShader.Uniform("uProjection", projection);
+
+  textShader.Use();
+  textShader.Uniform("uProjection", projection);
+  textShader.Uniform("uFontMap", 1);
 }
 
 void Renderer::RenderWorld(World::World &world) {
@@ -30,52 +39,17 @@ void Renderer::RenderWorld(World::World &world) {
 
   for (auto &[offset, chunk] : world.GetChunks()) {
     if (!chunk.IsHidden() && chunk.GetState() == World::ChunkState::Loaded) {
-      RenderChunk(chunk, offset);
+      chunk.Render(blockAtlasTexture, blockShader, currentCamera->GetPosition());
     }
   }
 }
 
-void Renderer::RenderChunk(World::Chunk &chunk, const glm::vec2 &offset) {
-  PROFILE_FUNCTION(Chunk)
-
-  blockAtlasTexture.Bind(0);
-
-  blockShader.Use();
-
-  blockShader.Uniform("uBlockAtlas", 0);
-  blockShader.Uniform("uCameraPos", currentCamera->GetPosition());
-
-  glm::mat4 model = glm::mat4(1.0f);
-  model = glm::translate(model, glm::vec3(offset.x * CHUNK_WIDTH, 0.0f, offset.y * CHUNK_LENGTH));
-  blockShader.Uniform("uModel", model);
-
-  glBindVertexArray(chunk.GetMeshVAO());
-  glDrawElements(GL_TRIANGLES, chunk.GetVertexCount(), GL_UNSIGNED_INT, 0);
-  glBindVertexArray(0);
-}
-
 void Renderer::RenderUI(UI::UserInterface &ui) {
   PROFILE_FUNCTION(UserInterface)
-
+  
   const glm::mat4 projection = glm::ortho(0.0f, viewportWidth, viewportHeight, 0.0f);
-
-  uiShader.Use();
-  uiShader.Uniform("uProjection", projection);
-
-  glBindVertexArray(ui.GetVAO());
-  glDrawElements(GL_TRIANGLES, ui.GetVertexCount(), GL_UNSIGNED_INT, 0);
-  glBindVertexArray(0);
-
-  text.Draw("TEXT RENDERING WORKS!", 0, 0, glm::vec3(1, 0, 0));
-  text.Update();
-
-  fontMap.Bind(1);
-  textShader.Use();
-  textShader.Uniform("uProjection", projection);
-  textShader.Uniform("uFontMap", 1);
-  glBindVertexArray(text.GetVAO());
-  glDrawElements(GL_TRIANGLES, text.GetVertexCount(), GL_UNSIGNED_INT, 0);
-  glBindVertexArray(0);
+  ui.SetProjection(projection);
+  ui.Render(uiShader, textShader, fontMap);
 }
 
 void Renderer::Begin3D(const std::shared_ptr<Scene::Camera> &camera3D) {

@@ -58,20 +58,35 @@ void Chunk::Initialize() {
   glBindVertexArray(0);
 }
 
+void Chunk::Render(Graphics::Texture &blockAtlasTexture, Graphics::Shader &blockShader, const glm::vec3 &playerPos) {
+  blockAtlasTexture.Bind(0);
+
+  blockShader.Use();
+
+  blockShader.Uniform("uBlockAtlas", 0);
+  blockShader.Uniform("uCameraPos", playerPos);
+
+  glm::mat4 model = glm::mat4(1.0f);
+  model = glm::translate(model, glm::vec3(chunkPos.x * CHUNK_WIDTH, 0.0f, chunkPos.y * CHUNK_LENGTH));
+  blockShader.Uniform("uModel", model);
+
+  glBindVertexArray(VAO);
+  glDrawElements(GL_TRIANGLES, vertexCount, GL_UNSIGNED_INT, 0);
+  glBindVertexArray(0);
+}
 
 void Chunk::UpdateMesh() {
-PROFILE_FUNCTION(Chunk)
+  PROFILE_FUNCTION(Chunk)
 
   std::vector<GLint> vertices;
-
   std::vector<GLuint> indices;
   GLuint indexOffset = 0;
 
-  for (int z = 0; z < CHUNK_WIDTH; ++z) {
+  for (int z = 0; z < CHUNK_LENGTH; ++z) {
     for (int y = 0; y < CHUNK_HEIGHT; ++y) {
-      for (int x = 0; x < CHUNK_LENGTH; ++x) {
+      for (int x = 0; x < CHUNK_WIDTH; ++x) {
 
-        Block block = GetBlockAt(glm::vec3(x, y, z));
+        const Block block = GetBlockAt(glm::vec3(x, y, z));
 
         if (!block.IsSolid()) continue;
 
@@ -90,20 +105,15 @@ PROFILE_FUNCTION(Chunk)
           int normalId = 0;
           if (normal.x > 0.0f) {
             normalId = 0;
-          }
-          if (normal.x < 0.0f) {
+          } else if (normal.x < 0.0f) {
             normalId = 1;
-          }
-          if (normal.y > 0.0f) {
+          } else if (normal.y > 0.0f) {
             normalId = 2;
-          }
-          if (normal.y < 0.0f) {
+          } else if (normal.y < 0.0f) {
             normalId = 3;
-          }
-          if (normal.z > 0.0f) {
+          } else if (normal.z > 0.0f) {
             normalId = 4;
-          }
-          if (normal.z < 0.0f) {
+          } else if (normal.z < 0.0f) {
             normalId = 5;
           }
 
@@ -142,12 +152,6 @@ PROFILE_FUNCTION(Chunk)
               (maskV << 26);
 
             vertices.push_back(mask);
-
-            // vertices.insert(vertices.end(),{
-            //   faceVertices[i].x + x, faceVertices[i].y + y, faceVertices[i].z + z,  // positions
-            //   faceTexCoords[i].x, faceTexCoords[i].y,  // tex coords
-            //   normal.x, normal.y, normal.z  // normal
-            // });
           }
 
           indices.insert(indices.end(), {

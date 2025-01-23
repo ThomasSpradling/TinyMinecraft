@@ -10,7 +10,14 @@ uniform sampler2D uFontMap;
 void main()
 {
   vec4 color = texture(uFontMap, texCoords);
-  // color.xyz += fragColor;
 
+  const vec3 magenta = vec3(1.0, 0.0, 1.0);
+  const float threshold = 0.01;
+
+  if (distance(color.rgb, magenta) < threshold) {
+    discard;
+  }
+
+  color.xyz += fragColor;
   FragColor = color;
 }

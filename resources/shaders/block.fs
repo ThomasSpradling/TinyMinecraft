@@ -38,6 +38,14 @@ const vec3 ambience = vec3(0.1);
 
 void main()
 {
+  vec4 texColor = texture(uBlockAtlas, texCoord);
+
+  const vec3 magenta = vec3(1.0, 0.0, 1.0);
+  const float threshold = 0.01;
+
+  if (distance(texColor.rgb, magenta) < threshold) {
+    discard;
+  }
 
   // Light sources
   dirLights[0].specular = vec3(1.0);
@@ -74,5 +82,5 @@ void main()
     vec3 specularTerm = material.specularReflection * dirLights[i].specular * pow(max(0, 1 - beta * lambda), gamma);
   }
 
-  FragColor = vec4(irradiance, 1.0f) * texture(uBlockAtlas, texCoord);
+  FragColor = vec4(irradiance, 1.0f) * texColor;
 }

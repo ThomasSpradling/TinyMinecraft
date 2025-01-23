@@ -6,7 +6,6 @@
 #include "Graphics/Shader.h"
 #include "UI/UserInterface.h"
 #include "World/World.h"
-#include "UI/Text.h"
 #include "Graphics/gfx.h"
 #include <memory>
 
@@ -19,7 +18,6 @@ public:
   void Initialize(float viewportWidth, float viewportHeight);
   
   void RenderWorld(World::World &world);
-  void RenderChunk(World::Chunk &chunk, const glm::vec2 &offset);
   void RenderUI(UI::UserInterface &ui);
 
   void Begin3D(const std::shared_ptr<Scene::Camera> &camera3D);
@@ -32,8 +30,6 @@ public:
 private:
   Shader uiShader, blockShader, textShader;
   Texture blockAtlasTexture, fontMap;
-
-  UI::Text text;
 
   float viewportWidth, viewportHeight;
 

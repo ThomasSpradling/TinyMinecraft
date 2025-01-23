@@ -3,6 +3,8 @@
 
 #include <memory>
 
+#include "Graphics/Shader.h"
+#include "Graphics/Texture.h"
 #include "Utils/defs.h"
 #include "World/Block.h"
 #include "World/BlockFace.h"
@@ -25,6 +27,7 @@ public:
 
   void Initialize();
 
+  void Render(Graphics::Texture &blockAtlasTexture, Graphics::Shader &blockShader, const glm::vec3 &playerPos);
   void UpdateMesh();
 
   Block &GetBlockAt(GLuint x, GLuint y, GLuint z);
@@ -48,7 +51,7 @@ public:
   glm::ivec2 &GetChunkPos();
 
 private:
-  [[maybe_unused]] World &world;
+  World &world;
 
   Block blocks[CHUNK_WIDTH][CHUNK_HEIGHT][CHUNK_LENGTH];
   GLuint VAO, VBO, EBO;

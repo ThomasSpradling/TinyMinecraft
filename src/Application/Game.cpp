@@ -119,8 +119,8 @@ void Game::ProcessInput() {
 
 void Game::Update() {
   PROFILE_FUNCTION(Game)
-
   camera->Move();
+
 }
 
 void Game::Render(double) {
