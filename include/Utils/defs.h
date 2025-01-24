@@ -1,6 +1,14 @@
 #ifndef DEF_H_
 #define DEF_H_
 
+// Graphics
+
+// Shadow mapping (BROKEN!)
+  // #define GFX_ShadowMapping
+
+// Values
+  #define i_GFX_RenderDistance 12
+
 // text
 #define TEXT_CHAR_WIDTH 12
 #define TEXT_CHAR_HEIGHT 16

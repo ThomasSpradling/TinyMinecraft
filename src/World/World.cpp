@@ -10,7 +10,8 @@
 
 namespace World {
 
-void World::Initialize() {}
+void World::Initialize() {
+}
 
 Chunk &World::GenerateChunk(glm::ivec2 &chunkPos) {
   PROFILE_FUNCTION(Chunk)

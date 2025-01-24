@@ -17,6 +17,7 @@ public:
 
   void Initialize(float viewportWidth, float viewportHeight);
   
+  void RenderShadows(World::World &world);
   void RenderWorld(World::World &world);
   void RenderUI(UI::UserInterface &ui);
 
@@ -28,14 +29,20 @@ public:
   void ToggleWireframeMode();
 
 private:
-  Shader uiShader, blockShader, textShader;
+  Shader uiShader, blockShader, textShader, depthShader, debugDepthQuad;
   Texture blockAtlasTexture, fontMap;
 
+  /// TODO: Remove
+  GLuint depthMapFBO, depthMap;
+
   float viewportWidth, viewportHeight;
+  float shadowMapWidth, shadowMapHeight;
 
   std::shared_ptr<Scene::Camera> currentCamera = nullptr;
 
   bool isWireframeMode = false;
+
+  void InitializeShadowMapping();
 };
 
 }

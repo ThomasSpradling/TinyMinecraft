@@ -38,8 +38,8 @@ private:
   glm::vec3 GetLocalBlockCoords(const glm::vec3 &pos);
   glm::ivec2 GetChunkPosFromCoords(const glm::vec3 &pos);
 
-  int renderRadius = 10;
-  int generateRadius = 12;
+  int renderRadius = i_GFX_RenderDistance;
+  int generateRadius = i_GFX_RenderDistance + 2;
 
   const unsigned int seed = 3782;
 };

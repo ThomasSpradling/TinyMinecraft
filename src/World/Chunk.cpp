@@ -28,8 +28,6 @@ void Chunk::Initialize() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint), nullptr, GL_DYNAMIC_DRAW);
 
-#if defined(MESH_METHOD_Naive) or defined(MESH_METHOD_VertexHiding)
-
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat), nullptr, GL_DYNAMIC_DRAW);
 
@@ -45,21 +43,13 @@ void Chunk::Initialize() {
   glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void *) (5 * sizeof(GLfloat)));
   glEnableVertexAttribArray(2);
 
-#else
-
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLint), nullptr, GL_DYNAMIC_DRAW);
-
-  glVertexAttribPointer(0, 1, GL_INT, GL_FALSE, sizeof(GLint), (void *) 0);
-  glEnableVertexAttribArray(0);
-
-#endif
-
   glBindVertexArray(0);
 }
 
-void Chunk::Render(Graphics::Texture &blockAtlasTexture, Graphics::Shader &blockShader, const glm::vec3 &playerPos) {
+void Chunk::Render(Graphics::Texture &blockAtlasTexture, GLuint depthMap, Graphics::Shader &blockShader, const glm::vec3 &playerPos) {
   blockAtlasTexture.Bind(0);
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D, depthMap);
 
   blockShader.Use();
 
@@ -78,7 +68,7 @@ void Chunk::Render(Graphics::Texture &blockAtlasTexture, Graphics::Shader &block
 void Chunk::UpdateMesh() {
   PROFILE_FUNCTION(Chunk)
 
-  std::vector<GLint> vertices;
+  std::vector<GLfloat> vertices;
   std::vector<GLuint> indices;
   GLuint indexOffset = 0;
 
@@ -96,28 +86,13 @@ void Chunk::UpdateMesh() {
             continue;
           }
 
-          const std::array<glm::vec3, 4> faceVertices = face.GetVertices(1, 1);
+          const std::array<glm::vec3, 4> faceVertices = face.GetVertices();
           const glm::vec2 topLeftTexCoord = BlockAtlas::GetNormalizedTextureCoords(block.GetType(), face);
 
           const glm::vec2 texSize = BlockAtlas::tileSize;
           const glm::vec3 normal = face.GetNormal();
 
-          int normalId = 0;
-          if (normal.x > 0.0f) {
-            normalId = 0;
-          } else if (normal.x < 0.0f) {
-            normalId = 1;
-          } else if (normal.y > 0.0f) {
-            normalId = 2;
-          } else if (normal.y < 0.0f) {
-            normalId = 3;
-          } else if (normal.z > 0.0f) {
-            normalId = 4;
-          } else if (normal.z < 0.0f) {
-            normalId = 5;
-          }
-
-          std::array<glm::vec2, 4> faceTexCoords = {
+          const std::array<glm::vec2, 4> faceTexCoords = {
             topLeftTexCoord,                                                  // Top-left
             { topLeftTexCoord.x, topLeftTexCoord.y + texSize.y },             // Bottom-left
             { topLeftTexCoord.x + texSize.x, topLeftTexCoord.y + texSize.y }, // Bottom-right
@@ -125,40 +100,18 @@ void Chunk::UpdateMesh() {
           };
 
           for (int i = 0; i < 4; ++i) {
-            int maskX = static_cast<int>(std::floor(faceVertices[i].x + x));
-            maskX &= ((1 << 5) - 1);
-
-            int maskY = static_cast<int>(std::floor(faceVertices[i].y + y));
-            maskY &= ((1 << 9) - 1);
-
-            int maskZ = static_cast<int>(std::floor(faceVertices[i].z + z));
-            maskZ &= ((1 << 5) - 1);
-
-            int maskNormal = static_cast<int>(normalId);
-            maskNormal &= ((1 << 3) - 1);
-
-            int maskU = static_cast<int>(faceTexCoords[i].x / texSize.x);
-            maskU &= ((1 << 3) - 1);
-
-            int maskV = static_cast<int>(faceTexCoords[i].y / texSize.y);
-            maskV &= ((1 << 3) - 1);
-
-            GLint mask =
-              (maskX << 0) |
-              (maskY << 5) |
-              (maskZ << 14) |
-              (maskNormal << 19) |
-              (maskU << 23) |
-              (maskV << 26);
-
-            vertices.push_back(mask);
+            vertices.insert(vertices.end(),{
+              faceVertices[i].x + x, faceVertices[i].y + y, faceVertices[i].z + z,  // positions
+              faceTexCoords[i].x, faceTexCoords[i].y,  // tex coords
+              normal.x, normal.y, normal.z  // normal
+            });
           }
 
           indices.insert(indices.end(), {
             indexOffset + 0, indexOffset + 1, indexOffset + 2,
             indexOffset + 2, indexOffset + 3, indexOffset + 0,
           });
-          indexOffset += 4; 
+          indexOffset += 4;
         }
       }
     }

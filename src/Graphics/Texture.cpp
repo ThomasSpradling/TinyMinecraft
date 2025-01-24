@@ -46,7 +46,6 @@ void Texture::Load(const std::string &filePath, int id) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 5);
   glGenerateMipmap(GL_TEXTURE_2D);
   
-
   float maxAnisotropy;
   glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy);
   glTexParameterf(GL_TEXTURE_2D, GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);

@@ -51,7 +51,7 @@ void Window::Initialize(int initWidth, int initHeight, const std::string &name, 
 
   glfwWindowHint(GLFW_DEPTH_BITS, 32);
 
-  glfwSwapInterval(1);
+  glfwSwapInterval(0);
 
   std::cout << "Initialized window." << std::endl;
 }

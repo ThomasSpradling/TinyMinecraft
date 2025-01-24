@@ -17,7 +17,6 @@ public:
   void Initialize();
   void Arrange();
 
-  void SetProjection(const glm::mat4 &ortho);
   void Render(Graphics::Shader &uiShader, Graphics::Shader &textShader, Graphics::Texture &fontMap);
   void Update();
   GLuint GetVAO();

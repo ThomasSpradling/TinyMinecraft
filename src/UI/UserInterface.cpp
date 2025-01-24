@@ -14,10 +14,6 @@ void UserInterface::Arrange() {
   Update();
 }
 
-void UserInterface::SetProjection(const glm::mat4 &ortho) {
-  projection = ortho;
-}
-
 void UserInterface::Render(Graphics::Shader &uiShader, Graphics::Shader &textShader, Graphics::Texture &fontMap) {
   //// General
   uiShader.Use();

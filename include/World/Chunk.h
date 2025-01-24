@@ -27,7 +27,7 @@ public:
 
   void Initialize();
 
-  void Render(Graphics::Texture &blockAtlasTexture, Graphics::Shader &blockShader, const glm::vec3 &playerPos);
+  void Render(Graphics::Texture &blockAtlasTexture, GLuint depthMap, Graphics::Shader &blockShader, const glm::vec3 &playerPos);
   void UpdateMesh();
 
   Block &GetBlockAt(GLuint x, GLuint y, GLuint z);

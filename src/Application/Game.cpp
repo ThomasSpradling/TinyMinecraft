@@ -129,13 +129,18 @@ void Game::Render(double) {
   world.Update(camera->GetPosition());
   ui.Arrange();
 
-  renderer.ClearBackground(glm::vec3(0.1f));
+  renderer.ClearBackground(glm::vec3(0.0f));
+
 
   renderer.Begin3D(camera);
 
     if (inputHandler.IsKeyPressed(GLFW_KEY_TAB)) {
       renderer.ToggleWireframeMode();
     }
+
+#ifdef GFX_ShadowMapping
+    renderer.RenderShadows(world);
+#endif
 
     renderer.RenderWorld(world);
 
