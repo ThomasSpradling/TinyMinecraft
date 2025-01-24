@@ -1,5 +1,7 @@
 #include "UI/UserInterface.h"
 #include "Utils/defs.h"
+#include <iomanip>
+#include <sstream>
 
 namespace UI {
 
@@ -9,7 +11,24 @@ void UserInterface::Initialize() {
 }
 
 void UserInterface::Arrange() {
-  DrawText("TEXT RENDERING WORKS!", 0, 0, glm::vec3(1, 0, 0));
+  std::ostringstream debug;
+
+#ifdef UTILS_ShowFPS  // FPS
+  debug << "CURRENT FPS: " << currentFPS << "\n";
+#endif
+
+  debug << std::fixed << std::setprecision(3);
+  debug << "XYZ: " 
+        << playerPosition.x << ", " 
+        << playerPosition.y << ", "
+        << playerPosition.z << "\n";
+  debug << std::defaultfloat;
+
+  debug << "CHUNK: "
+        << chunkPosition.x << ", "
+        << chunkPosition.y;
+
+  DrawText(debug.str(), 10, 10, glm::vec3(1, 1, 1), 1);
   
   Update();
 }
@@ -95,6 +114,18 @@ void UserInterface::InitializeText() {
   glBindVertexArray(0);
 }
 
+void UserInterface::SetCurrentFPS(int fps) {
+  currentFPS = fps;
+}
+
+void UserInterface::SetPlayerPosition(const glm::vec3 &pos) {
+  playerPosition = pos;
+}
+
+void UserInterface::SetChunkPosition(const glm::ivec2 &pos) {
+  chunkPosition = pos;
+}
+
 void UserInterface::DrawRectangle(GLfloat x, GLfloat y, GLfloat width, GLfloat height, const glm::vec3 &color) {
   GLuint n = basicVertices.size() / 5;   // index start
 
@@ -126,14 +157,14 @@ void UserInterface::UpdateHelper(GLuint VAO, GLuint VBO, GLuint EBO, std::vector
   glBindVertexArray(0);
 }
 
-void UserInterface::DrawText(const std::string &text, GLfloat x, GLfloat y, const glm::vec3 &color) {
+void UserInterface::DrawText(const std::string &text, GLfloat x, GLfloat y, const glm::vec3 &color, float scale = 1) {
   GLuint n = textVertices.size() / 7;
 
   float offsetX = x;
   float offsetY = y;
   for (const char ch : text) { 
     if (ch == '\n') {
-      offsetY += TEXT_CHAR_HEIGHT + 5;
+      offsetY += TEXT_CHAR_HEIGHT * scale + 5 * scale;
       offsetX = x;
       continue;
     }
@@ -160,17 +191,23 @@ void UserInterface::DrawText(const std::string &text, GLfloat x, GLfloat y, cons
         { topLeftTexCoord.x + tileSize.x, topLeftTexCoord.y + tileSize.y }
     };
 
-    // std::cout << "XX: " << topLeftTexCoord.x << std::endl;
-
-    // std::cout << "OFFSET: " << offsetX << "; " << offsetY << std::endl;
-
     // render it
     textVertices.insert(textVertices.end(), {
-      // position                                    // color                       // texture coords
-      offsetX, offsetY,                                          color.r, color.g, color.b,     texCoords[0].x, texCoords[0].y,
-      offsetX + TEXT_CHAR_WIDTH, offsetY,                        color.r, color.g, color.b,    texCoords[1].x, texCoords[1].y,
-      offsetX, offsetY + TEXT_CHAR_HEIGHT,                       color.r, color.g, color.b,     texCoords[2].x, texCoords[2].y,
-      offsetX + TEXT_CHAR_WIDTH, offsetY + TEXT_CHAR_HEIGHT,     color.r, color.g, color.b,     texCoords[3].x, texCoords[3].y,
+      offsetX, offsetY,
+      color.r, color.g, color.b,
+      texCoords[0].x, texCoords[0].y,
+
+      offsetX + TEXT_CHAR_WIDTH * scale, offsetY,
+      color.r, color.g, color.b,
+      texCoords[1].x, texCoords[1].y,
+
+      offsetX, offsetY + TEXT_CHAR_HEIGHT * scale,
+      color.r, color.g, color.b,
+      texCoords[2].x, texCoords[2].y,
+
+      offsetX + TEXT_CHAR_WIDTH * scale,
+      offsetY + TEXT_CHAR_HEIGHT * scale,
+      color.r, color.g, color.b,texCoords[3].x, texCoords[3].y,
     });
 
     textIndices.insert(textIndices.end(), {
@@ -180,7 +217,7 @@ void UserInterface::DrawText(const std::string &text, GLfloat x, GLfloat y, cons
 
     n += 4;
     
-    offsetX += TEXT_CHAR_WIDTH;
+    offsetX += TEXT_CHAR_WIDTH * scale;
   }
 }
 

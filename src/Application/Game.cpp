@@ -12,8 +12,8 @@ namespace Application {
 void Game::Initialize() {
   PROFILE_FUNCTION(Game)
 
-  constexpr int viewportWidth = 600;
-  constexpr int viewportHeight = 400;
+  constexpr int viewportWidth = 1920;
+  constexpr int viewportHeight = 1080;
 
   window.Initialize(viewportWidth, viewportHeight, "Look mum! I made some chunks!", inputHandler);
   renderer.Initialize(viewportWidth, viewportHeight);
@@ -66,7 +66,7 @@ void Game::Run() {
       frameCount = 0;
       fpsTimer -= 1000.0f;
 
-      std::cout << "Current FPS: " << fps << "\n";
+      ui.SetCurrentFPS(fps);
     }
 #endif
 
@@ -120,7 +120,8 @@ void Game::ProcessInput() {
 void Game::Update() {
   PROFILE_FUNCTION(Game)
   camera->Move();
-
+  ui.SetPlayerPosition(camera->GetPosition());
+  ui.SetChunkPosition(world.GetChunkPosFromCoords(camera->GetPosition()));
 }
 
 void Game::Render(double) {

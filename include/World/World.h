@@ -30,13 +30,14 @@ public:
   Block &GetBlockAt(const glm::vec3 &pos);
   
   bool HasBlock(const glm::vec3 &pos);
+  
+  glm::ivec2 GetChunkPosFromCoords(const glm::vec3 &pos);
 private:
   std::vector<glm::ivec2> chunkUpdateBuffer;
   std::unordered_set<glm::ivec2, Utils::IVec2Hash> visibleChunks;
   std::unordered_map<glm::ivec2, Chunk, Utils::IVec2Hash> chunks;
 
   glm::vec3 GetLocalBlockCoords(const glm::vec3 &pos);
-  glm::ivec2 GetChunkPosFromCoords(const glm::vec3 &pos);
 
   int renderRadius = i_GFX_RenderDistance;
   int generateRadius = i_GFX_RenderDistance + 2;

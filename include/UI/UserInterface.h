@@ -21,6 +21,10 @@ public:
   void Update();
   GLuint GetVAO();
   GLsizei GetVertexCount();
+
+  void SetCurrentFPS(int fps);
+  void SetPlayerPosition(const glm::vec3 &pos);
+  void SetChunkPosition(const glm::ivec2 &pos);
 private:
   std::vector<GLfloat> basicVertices, textVertices;
   std::vector<GLuint> basicIndices, textIndices;
@@ -30,6 +34,11 @@ private:
 
   int basicVertexCount, textVertexCount;
 
+  // debug
+  int currentFPS = 0;
+  glm::vec3 playerPosition;
+  glm::ivec2 chunkPosition;
+
   glm::mat4 projection;
 
   void InitializeGeneral();
@@ -37,7 +46,7 @@ private:
   void UpdateHelper(GLuint VAO, GLuint VBO, GLuint EBO, std::vector<GLfloat> &verts, std::vector<GLuint> &indices);
 
   void DrawRectangle(GLfloat x, GLfloat y, GLfloat width, GLfloat height, const glm::vec3 &color);
-  void DrawText(const std::string &text, GLfloat x, GLfloat y, const glm::vec3 &color);
+  void DrawText(const std::string &text, GLfloat x, GLfloat y, const glm::vec3 &color, float scale);
 
 };
 
