@@ -44,7 +44,7 @@ private:
 
   float pitch = 0.0f, yaw = -90.0f;
 
-  const float speed = 0.02f;
+  const float speed = 0.1f;
 
   float fov { 45.0f };
   float aspect { 1.6f };

@@ -7,7 +7,12 @@ typedef enum BlockType {
   AIR = 0,
   GRASS,
   DIRT,
-  STONE
+  STONE,
+  SAND,
+  LOG,
+  SNOW,
+  WATER,
+  SANDSTONE,
 } BlockType;
 
 class Block {

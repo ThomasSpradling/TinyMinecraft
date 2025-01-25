@@ -46,7 +46,7 @@ void Renderer::Initialize(float width, float height) {
 
 void Renderer::RenderWorld(World::World &world) {
   PROFILE_FUNCTION(World)
-
+  
   for (auto &[offset, chunk] : world.GetChunks()) {
     if (!chunk.IsHidden() && chunk.GetState() == World::ChunkState::Loaded) {
       chunk.Render(blockAtlasTexture, depthMap, blockShader, currentCamera->GetPosition());

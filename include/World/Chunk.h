@@ -51,7 +51,7 @@ public:
   glm::ivec2 &GetChunkPos();
 
 private:
-  World &world;
+  [[maybe_unused]]World &world;
 
   Block blocks[CHUNK_WIDTH][CHUNK_HEIGHT][CHUNK_LENGTH];
   GLuint VAO, VBO, EBO;

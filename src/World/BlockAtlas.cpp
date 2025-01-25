@@ -1,6 +1,7 @@
 #include "World/BlockAtlas.h"
 #include "Utils/Profiler.h"
 #include "Utils/defs.h"
+#include "World/BlockFace.h"
 
 namespace World {
 
@@ -31,6 +32,23 @@ glm::ivec2 BlockAtlas::GetTextureCoords(BlockType type, BlockFace face) {
       break;
     case BlockType::STONE:
       coords = { 3, 0 };
+      break;
+    case BlockType::SAND:
+      coords = { 4, 0 };
+      break;
+    case BlockType::LOG:
+      if (face == BlockFace::Top || face == BlockFace::Bottom)
+        coords = { 0, 1 };
+      else coords = { 1, 1 };
+      break;
+    case BlockType::SNOW:
+      coords = { 2, 1 };
+      break;
+    case BlockType::WATER:
+      coords = { 2, 1 };
+      break;
+    case BlockType::SANDSTONE:
+      coords = { 4, 1 };
       break;
     case BlockType::AIR:
     default:

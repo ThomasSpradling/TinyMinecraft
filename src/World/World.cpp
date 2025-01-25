@@ -1,53 +1,31 @@
-#include <PerlinNoise/PerlinNoise.h>
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include "World/World.h"
 #include "Utils/Profiler.h"
 #include "Utils/defs.h"
+#include "Utils/noise.h"
+#include "Utils/utils.h"
+#include "World/Biome.h"
 #include "World/Block.h"
 #include "World/Chunk.h"
 #include "glm/ext/vector_int2.hpp"
 
 namespace World {
 
-void World::Initialize() {
-}
+World::World() : temperatureMap(seed + 1), humidityMap(seed + 2), blendMap(seed + 3), heightMap(seed + 4), stoneMap(seed + 5), worldGen(*this) {}
 
-Chunk &World::GenerateChunk(glm::ivec2 &chunkPos) {
+void World::Initialize() {}
+
+void World::GenerateChunk(glm::ivec2 &chunkPos) {
   PROFILE_FUNCTION(Chunk)
 
+  worldGen.GenerateTerrainChunk(chunkPos, blendMap, heightMap, stoneMap);
+}
+
+Chunk &World::CreateEmptyChunk(glm::ivec2 &chunkPos) {
   Chunk chunk { *this, chunkPos };
   chunk.Initialize();
-
-  const double scale = 0.01;
-  const double slice = 42.0;
-
-  PerlinNoise pn { seed };
-
-  const int averageHeight = 80;
-  const int dirtLayerDepth = 5;
-
-  for (int x = 0; x < CHUNK_WIDTH; ++x) {
-    for (int z = 0; z < CHUNK_LENGTH; ++z) {
-      int globalX = chunkPos.x * static_cast<int>(CHUNK_WIDTH) + x;
-      int globalZ = chunkPos.y * static_cast<int>(CHUNK_LENGTH) + z;
-
-      double noiseValue = pn.noise(globalX * scale, slice, globalZ * scale);
-      noiseValue = (noiseValue + 1.0) / 2.0;
-      int height = static_cast<int>(std::floor(noiseValue * averageHeight));
-      height = std::clamp(height, 0, CHUNK_HEIGHT - 1);
-
-      for (int y = 0; y <= height; ++y) {
-        if (y == height) {
-          chunk.SetBlockAt(glm::vec3(x, y, z), BlockType::GRASS);
-        } else if (y >= height - dirtLayerDepth) {
-          chunk.SetBlockAt(glm::vec3(x, y, z), BlockType::DIRT);
-        } else {
-          chunk.SetBlockAt(glm::vec3(x, y, z), BlockType::STONE);
-        }
-      }
-    }
-  }
 
   chunks.emplace(chunkPos, chunk);
   return chunks.at(chunkPos);
@@ -67,6 +45,30 @@ std::vector<glm::ivec2> World::GetNearbyChunks(glm::vec3 &pos, int radius) {
   }
 
   return res;
+}
+
+float World::GetTemperature(int x, int z) {
+  const float temperatureScale = 0.001;
+
+  float temperature = Utils::OctaveNoise(x * temperatureScale, z * temperatureScale, temperatureMap);
+  temperature = Utils::ScaleValue(0.3, 0.7, 0.1, 0.9, temperature);
+  temperature = std::clamp(temperature, 0.f, 1.f);
+
+  return temperature;
+}
+
+float World::GetHumidity(int x, int z) {
+  const float humidityScale = 0.003;
+
+  float humidity = Utils::OctaveNoise(x * humidityScale, z * humidityScale, humidityMap);
+  humidity = Utils::ScaleValue(0.3, 0.7, 0.1, 0.9, humidity);
+  humidity = std::clamp(humidity, 0.f, 1.f);
+
+  return  humidity;
+}
+
+BiomeType World::GetBiome(int x, int z) {
+  return worldGen.SelectBiomes(GetTemperature(x, z), GetHumidity(x, z)).first->GetType();
 }
 
 void World::Update(glm::vec3 &playerPos) {

@@ -14,6 +14,8 @@ void Game::Initialize() {
 
   constexpr int viewportWidth = 1920;
   constexpr int viewportHeight = 1080;
+  // constexpr int viewportWidth = 600;
+  // constexpr int viewportHeight = 400;
 
   window.Initialize(viewportWidth, viewportHeight, "Look mum! I made some chunks!", inputHandler);
   renderer.Initialize(viewportWidth, viewportHeight);
@@ -120,8 +122,12 @@ void Game::ProcessInput() {
 void Game::Update() {
   PROFILE_FUNCTION(Game)
   camera->Move();
-  ui.SetPlayerPosition(camera->GetPosition());
-  ui.SetChunkPosition(world.GetChunkPosFromCoords(camera->GetPosition()));
+
+  glm::vec3 pos = camera->GetPosition();
+
+  ui.SetPlayerPosition(pos);
+  ui.SetChunkPosition(world.GetChunkPosFromCoords(pos));
+  ui.SetClimateValues(world.GetTemperature(pos.x, pos.z), world.GetHumidity(pos.x, pos.z), world.GetBiome(pos.x, pos.z));
 }
 
 void Game::Render(double) {

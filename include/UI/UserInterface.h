@@ -5,6 +5,7 @@
 #include "Graphics/Texture.h"
 #include "Graphics/gfx.h"
 #include "Utils/mathgl.h"
+#include "World/Biome.h"
 #include <vector>
 
 namespace UI {
@@ -25,6 +26,7 @@ public:
   void SetCurrentFPS(int fps);
   void SetPlayerPosition(const glm::vec3 &pos);
   void SetChunkPosition(const glm::ivec2 &pos);
+  void SetClimateValues(float temp, float humid, World::BiomeType biom);
 private:
   std::vector<GLfloat> basicVertices, textVertices;
   std::vector<GLuint> basicIndices, textIndices;
@@ -39,6 +41,9 @@ private:
   glm::vec3 playerPosition;
   glm::ivec2 chunkPosition;
 
+  float temperature = 0, humidity = 0;
+  World::BiomeType biome;
+
   glm::mat4 projection;
 
   void InitializeGeneral();
@@ -47,7 +52,6 @@ private:
 
   void DrawRectangle(GLfloat x, GLfloat y, GLfloat width, GLfloat height, const glm::vec3 &color);
   void DrawText(const std::string &text, GLfloat x, GLfloat y, const glm::vec3 &color, float scale);
-
 };
 
 }

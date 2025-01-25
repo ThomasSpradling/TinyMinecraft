@@ -1,5 +1,6 @@
 #include "UI/UserInterface.h"
 #include "Utils/defs.h"
+#include "World/Biome.h"
 #include <iomanip>
 #include <sstream>
 
@@ -24,9 +25,16 @@ void UserInterface::Arrange() {
         << playerPosition.z << "\n";
   debug << std::defaultfloat;
 
-  debug << "CHUNK: "
+  debug << "Chunk: "
         << chunkPosition.x << ", "
-        << chunkPosition.y;
+        << chunkPosition.y << "\n\n";
+
+  debug << std::fixed << std::setprecision(5);
+  debug << "Climate: "
+        << "T " << temperature << ", H " << humidity << "\n";
+
+  debug << "Biome: "
+        << World::Biome::GetBiomeName(biome) << "\n";
 
   DrawText(debug.str(), 10, 10, glm::vec3(1, 1, 1), 1);
   
@@ -46,6 +54,12 @@ void UserInterface::Render(Graphics::Shader &uiShader, Graphics::Shader &textSha
   glBindVertexArray(textVAO);
   glDrawElements(GL_TRIANGLES, textVertexCount, GL_UNSIGNED_INT, 0);
   glBindVertexArray(0);
+}
+
+void UserInterface::SetClimateValues(float temp, float humid, World::BiomeType biom) {
+  temperature = temp;
+  humidity = humid;
+  biome = biom;
 }
 
 void UserInterface::Update() {
@@ -158,11 +172,14 @@ void UserInterface::UpdateHelper(GLuint VAO, GLuint VBO, GLuint EBO, std::vector
 }
 
 void UserInterface::DrawText(const std::string &text, GLfloat x, GLfloat y, const glm::vec3 &color, float scale = 1) {
+  std::string upperText = text;
+  std::transform(upperText.begin(), upperText.end(), upperText.begin(), ::toupper);
+
   GLuint n = textVertices.size() / 7;
 
   float offsetX = x;
   float offsetY = y;
-  for (const char ch : text) { 
+  for (const char ch : upperText) { 
     if (ch == '\n') {
       offsetY += TEXT_CHAR_HEIGHT * scale + 5 * scale;
       offsetX = x;
