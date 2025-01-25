@@ -47,10 +47,10 @@ void Renderer::Initialize(float width, float height) {
 void Renderer::RenderWorld(World::World &world) {
   PROFILE_FUNCTION(World)
   
-  for (auto &[offset, chunk] : world.GetChunks()) {
-    if (!chunk.IsHidden() && chunk.GetState() == World::ChunkState::Loaded) {
-      chunk.Render(blockAtlasTexture, depthMap, blockShader, currentCamera->GetPosition());
-    }
+  for (auto &[offset, chunk] : world.GetLoadedChunks()) {
+    // if (!chunk.IsHidden()) {
+    chunk.Render(blockAtlasTexture, depthMap, blockShader, currentCamera->GetPosition());
+    // }
   }
 }
 
@@ -111,7 +111,7 @@ void Renderer::RenderShadows(World::World &world) {
   glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glClear(GL_DEPTH_BUFFER_BIT);
     blockAtlasTexture.Bind(0);
-    for (auto &[offset, chunk] : world.GetChunks()) {
+    for (auto &[offset, chunk] : world.GetLoadedChunks()) {
       if (!chunk.IsHidden() && chunk.GetState() == World::ChunkState::Loaded) {
         chunk.Render(blockAtlasTexture, depthMap, depthShader, currentCamera->GetPosition());
       }

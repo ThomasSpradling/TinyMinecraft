@@ -4,6 +4,7 @@
 #include "Utils/noise.h"
 #include "Utils/mathgl.h"
 #include "World/Biome.h"
+#include "World/Chunk.h"
 
 namespace World {
 
@@ -12,8 +13,8 @@ class World;
 class WorldGeneration {
 public:
   WorldGeneration(World &world);
-  void GenerateTerrainChunk(glm::ivec2 &chunkPos, PerlinNoise &blendMap, PerlinNoise &heightMap, PerlinNoise &stoneMap);
-  std::pair <const Biome*, const Biome*> SelectBiomes(float temperature, float humidity);
+  void GenerateTerrainChunk(Chunk &chunk, PerlinNoise &blendMap, PerlinNoise &heightMap, PerlinNoise &stoneMap);
+  std::pair <const Biome*, const Biome*> SelectBiomes(float temperature, float humidity) const;
 private:
   World &world;
   std::unordered_map<BiomeType, Biome> biomes;

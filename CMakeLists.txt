@@ -3,6 +3,8 @@ project(MinecraftClone)
 
 set(CMAKE_CXX_STANDARD 23)
 
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g")
+
 add_compile_options(
   # -Wpedantic
   # -Wall

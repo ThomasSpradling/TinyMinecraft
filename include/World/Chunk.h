@@ -22,7 +22,7 @@ enum ChunkState {
 
 class Chunk {
 public:
-  Chunk(World &world, glm::ivec2 &chunkPos) : world(world), chunkPos(chunkPos) {}
+  Chunk(World &world, const glm::ivec2 &chunkPos) : world(world), chunkPos(chunkPos) {}
   ~Chunk() = default;
 
   void Initialize();

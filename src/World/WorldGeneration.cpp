@@ -1,5 +1,6 @@
 #include "World/WorldGeneration.h"
 
+#include "Utils/Profiler.h"
 #include "Utils/defs.h"
 #include "Utils/noise.h"
 #include "Utils/utils.h"
@@ -40,8 +41,10 @@ WorldGeneration::WorldGeneration(World &world) : world(world) {
                                           60.0f, 200.0f, 0.6f, 1.0f, 0.0f, 0.40f));
 }
 
-void WorldGeneration::GenerateTerrainChunk(glm::ivec2 &chunkPos, PerlinNoise &blendMap, PerlinNoise &heightMap, PerlinNoise &stoneMap) {
-  Chunk &chunk = world.CreateEmptyChunk(chunkPos);
+void WorldGeneration::GenerateTerrainChunk(Chunk &chunk, PerlinNoise &blendMap, PerlinNoise &heightMap, PerlinNoise &stoneMap) {
+  PROFILE_FUNCTION(Chunk)
+  
+  const glm::ivec2 &chunkPos = chunk.GetChunkPos();
 
   for (int z = 0; z < CHUNK_LENGTH; ++z) {
     for (int x = 0; x < CHUNK_WIDTH; ++x) {
@@ -73,7 +76,7 @@ void WorldGeneration::GenerateTerrainChunk(glm::ivec2 &chunkPos, PerlinNoise &bl
   }
 }
 
-std::pair<const Biome*, const Biome*> WorldGeneration::SelectBiomes(float temperature, float humidity) {
+std::pair<const Biome*, const Biome*> WorldGeneration::SelectBiomes(float temperature, float humidity) const {
   const Biome *primaryBiome = nullptr;
   const Biome *secondaryBiome = nullptr;
   primaryBiome = &biomes.at(BiomeType::Grassland);

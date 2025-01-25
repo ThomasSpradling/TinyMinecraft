@@ -134,8 +134,8 @@ void Game::Render(double) {
   PROFILE_FUNCTION(Game)
 
   world.Update(camera->GetPosition());
-  ui.Arrange();
 
+  ui.Arrange();
   renderer.ClearBackground(glm::vec3(0.0f));
 
 
