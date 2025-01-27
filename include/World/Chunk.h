@@ -2,6 +2,7 @@
 #define CHUNK_H_
 
 #include <memory>
+#include <vector>
 
 #include "Graphics/Shader.h"
 #include "Graphics/Texture.h"
@@ -20,6 +21,13 @@ enum ChunkState {
   Loading
 };
 
+struct FaceGeometry {
+  glm::vec3 pos;
+  std::vector<GLfloat> vertices;
+  std::vector<GLuint> indices;
+  float distanceToPlayer;
+};
+
 class Chunk {
 public:
   Chunk(World &world, const glm::ivec2 &chunkPos) : world(world), chunkPos(chunkPos) {}
@@ -28,15 +36,20 @@ public:
   void Initialize();
 
   void Render(Graphics::Texture &blockAtlasTexture, GLuint depthMap, Graphics::Shader &blockShader, const glm::vec3 &playerPos);
+  void RenderTranslucent(Graphics::Texture &blockAtlasTexture, GLuint depthMap, Graphics::Shader &waterShader, const glm::vec3 &playerPos);
+
   void UpdateMesh();
+  void UpdateTranslucentMesh(const glm::vec3 &playerPos);
+  void SortTranslucentBlocks(const glm::vec3 &playerPos);
 
   Block &GetBlockAt(GLuint x, GLuint y, GLuint z);
   Block &GetBlockAt(const glm::vec3 &pos);
 
   void SetBlockAt(GLuint x, GLuint y, GLuint z, const Block &block);
   void SetBlockAt(const glm::vec3 &pos, const Block &block);
+
+  bool HasTranslucentBlocks();
   
-  GLuint GetMeshVAO() const;
   GLsizei GetVertexCount();
 
   void SetHidden(bool value);
@@ -50,11 +63,15 @@ public:
 
   glm::ivec2 &GetChunkPos();
 
+  int GetSurfaceHeight(int x, int z);
 private:
   [[maybe_unused]]World &world;
 
   Block blocks[CHUNK_WIDTH][CHUNK_HEIGHT][CHUNK_LENGTH];
-  GLuint VAO, VBO, EBO;
+  std::vector<FaceGeometry> translucentFaces;
+
+  GLuint opaqueVAO, opaqueVBO, opaqueEBO;
+  GLuint transVAO, transVBO, transEBO;
 
   glm::ivec2 chunkPos;
 
@@ -63,7 +80,13 @@ private:
 
   bool dirty = true;
 
-  int vertexCount = 0;
+  bool hasTranslucentBlocks = false;
+
+  int opaqueVertexCount = 0, transVertexCount = 0;
+
+  // void InitializeBuffers(GLuint &VAO, GLuint &VBO, GLuint &EBO);
+  void InitializeOpaque();
+  void InitializeTranslucent();
 };
 
 }

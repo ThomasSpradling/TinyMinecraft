@@ -19,7 +19,6 @@ void Game::Initialize() {
 
   window.Initialize(viewportWidth, viewportHeight, "Look mum! I made some chunks!", inputHandler);
   renderer.Initialize(viewportWidth, viewportHeight);
-  world.Initialize();
   ui.Initialize();
   
   // TODO: Replace with player orientations
@@ -121,7 +120,11 @@ void Game::ProcessInput() {
 
 void Game::Update() {
   PROFILE_FUNCTION(Game)
+
+  glm::vec3 before = camera->GetPosition();
   camera->Move();
+  glm::vec3 after = camera->GetPosition();
+  world.HandlePlayerMovement(before, after);
 
   glm::vec3 pos = camera->GetPosition();
 

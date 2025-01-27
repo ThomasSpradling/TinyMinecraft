@@ -29,7 +29,7 @@ public:
   void ToggleWireframeMode();
 
 private:
-  Shader uiShader, blockShader, textShader, depthShader, debugDepthQuad;
+  Shader uiShader, blockShader, waterShader, textShader, depthShader, debugDepthQuad;
   Texture blockAtlasTexture, fontMap;
 
   /// TODO: Remove

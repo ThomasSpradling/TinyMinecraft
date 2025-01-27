@@ -33,7 +33,7 @@ Block Biome::GenerateBlock(int x, int y, int z, int height, float stoneNoise) co
   const float stoneThreshold = 0.75;
   
   switch(type) {
-    case BiomeType::Desert:    
+    case BiomeType::Desert:
       if (y >= height - 2 && y <= height) return BlockType::SAND;
       if (y < height - 2) return BlockType::STONE;
     case BiomeType::Grassland:

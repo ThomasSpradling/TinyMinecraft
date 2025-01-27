@@ -118,6 +118,12 @@ private:
     oss << "vec3(" << vec.x << ", " << vec.y <<  ", " << vec.z << ")";
     return oss.str();
   }
+
+  std::string ToString(const glm::ivec2 &vec) {
+    std::ostringstream oss;
+    oss << "vec3(" << vec.x << ", " << vec.y << ")";
+    return oss.str();
+  }
 };
 
 extern Logger g_logger;

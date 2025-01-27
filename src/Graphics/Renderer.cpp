@@ -13,14 +13,22 @@ void Renderer::Initialize(float width, float height) {
   viewportWidth = width;
   viewportHeight = height;  
 
+  // Graphic settings
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable( GL_BLEND );
+
   //// Block Setup
   blockAtlasTexture.Load("../resources/textures/block_atlas.png", 0);
-  
-  blockShader.Load("../resources/shaders/block.vs", "../resources/shaders/block.fs");
+
+  blockShader.Load("../resources/shaders/block_solid.vs", "../resources/shaders/block_solid.fs");
+  waterShader.Load("../resources/shaders/block_translucent.vs", "../resources/shaders/block_translucent.fs");
   debugDepthQuad.Load("../resources/shaders/debug_quad.vs", "../resources/shaders/debug_quad.fs");
 
   blockShader.Use();
   blockShader.Uniform("uBlockAtlas", 0);
+
+  waterShader.Use();
+  waterShader.Uniform("uBlockAtlas", 0);
 
   //// UI Setup
   fontMap.Load("../resources/font/pixel_2w.png", 1);
@@ -45,13 +53,7 @@ void Renderer::Initialize(float width, float height) {
 }
 
 void Renderer::RenderWorld(World::World &world) {
-  PROFILE_FUNCTION(World)
-  
-  for (auto &[offset, chunk] : world.GetLoadedChunks()) {
-    // if (!chunk.IsHidden()) {
-    chunk.Render(blockAtlasTexture, depthMap, blockShader, currentCamera->GetPosition());
-    // }
-  }
+  world.Render(blockAtlasTexture, depthMap, blockShader, waterShader, currentCamera->GetPosition());
 }
 
 /// TODO: REMVOE
@@ -113,7 +115,7 @@ void Renderer::RenderShadows(World::World &world) {
     blockAtlasTexture.Bind(0);
     for (auto &[offset, chunk] : world.GetLoadedChunks()) {
       if (!chunk.IsHidden() && chunk.GetState() == World::ChunkState::Loaded) {
-        chunk.Render(blockAtlasTexture, depthMap, depthShader, currentCamera->GetPosition());
+        // chunk.Render(blockAtlasTexture, depthMap, depthShader, currentCamera->GetPosition());
       }
     }
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -157,6 +159,9 @@ void Renderer::Begin3D(const std::shared_ptr<Scene::Camera> &camera3D) {
 
   blockShader.Use();
   blockShader.Uniform("uViewProjection", currentCamera->GetViewProjection());
+
+  waterShader.Use();
+  waterShader.Uniform("uViewProjection", currentCamera->GetViewProjection());
 }
 
 void Renderer::End3D() {

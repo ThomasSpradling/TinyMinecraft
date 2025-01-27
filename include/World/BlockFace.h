@@ -8,12 +8,13 @@ namespace World {
 class BlockFace {
 public:
   enum Direction {
-    Front,  // +Z
-    Back,   // -Z
-    Left,   // -X
-    Right,  // +X
-    Top,    // +Y
-    Bottom  // -Y
+    North,  // +Z
+    South,  // -Z
+    West,   // -X
+    East,   // +X
+    Up,     // +Y
+    Down,    // -Y
+    None
   };
   static std::array<BlockFace, 6> allFaces;
 
@@ -31,7 +32,8 @@ public:
     - `height` will be the length along the x-axis for the top and bottom faces and the y-axis for the others.
     This provides a useful and consistent orientation for greedy meshing.
   */
-  std::array<glm::vec3, 4> GetVertices(int width = 1, int height = 1) const;
+  std::array<glm::vec3, 4> GetVertices(float width = 1.f, float height = 1.f) const;
+  std::array<glm::vec3, 4> GetFluidVertices(int depth = 0, int maxDepth = 7, Direction dir = None, bool floating = false) const;
 
 private:
   Direction direction;

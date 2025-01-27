@@ -150,5 +150,8 @@ void main()
     irradiance += specularTerm;
   }
 
+  if (texColor.a == 0)
+    discard;
+
   FragColor = vec4(irradiance, 1.0f) * texColor;
 }

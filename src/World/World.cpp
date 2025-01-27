@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <iostream>
@@ -12,43 +13,10 @@
 #include "World/Biome.h"
 #include "World/Block.h"
 #include "World/Chunk.h"
-#include "glm/ext/vector_int2.hpp"
 
 namespace World {
 
-World::World() : temperatureMap(seed + 1), humidityMap(seed + 2), blendMap(seed + 3), heightMap(seed + 4), stoneMap(seed + 5), worldGen(*this) {}
-
-void World::Initialize() {}
-
-void World::GenerateChunk(const glm::ivec2 &chunkPos) {
-  PROFILE_FUNCTION(Chunk)
-
-  // worldGen.GenerateTerrainChunk(chunkPos, blendMap, heightMap, stoneMap);
-}
-
-// Chunk &World::CreateEmptyChunk(const glm::ivec2 &chunkPos) {
-//   Chunk chunk { *this, chunkPos };
-//   chunk.Initialize();
-
-//   chunks.emplace(chunkPos, chunk);
-//   return chunks.at(chunkPos);
-// }
-
-std::vector<glm::ivec2> World::GetNearbyChunks(const glm::vec3 &pos, int radius) {
-  glm::ivec2 chunkPos = GetChunkPosFromCoords(pos);
-
-  std::vector<glm::ivec2> res;
-
-  for (int dx = -radius; dx <= radius; ++dx) {
-    for (int dz = -radius; dz <= radius; ++dz) {
-      if (dx*dx + dz*dz <= radius * radius) {
-        res.push_back({ chunkPos.x + dx, chunkPos.y + dz });
-      }
-    }
-  }
-
-  return res;
-}
+World::World() : temperatureMap(seed + 1), humidityMap(seed + 2), blendMap(seed + 3), heightMap(seed + 4), stoneMap(seed + 5), treeMap(seed + 6), grassMap(seed + 7), worldGen(*this) {}
 
 float World::GetTemperature(int x, int z) {
   const float temperatureScale = 0.001;
@@ -72,6 +40,33 @@ float World::GetHumidity(int x, int z) {
 
 BiomeType World::GetBiome(int x, int z) {
   return worldGen.SelectBiomes(GetTemperature(x, z), GetHumidity(x, z)).first->GetType();
+}
+
+void World::Render(Graphics::Texture &blockAtlasTexture, GLuint depthMap, Graphics::Shader &blockShader, Graphics::Shader &waterShader, const glm::vec3 &playerPos) {
+  PROFILE_FUNCTION(World)
+  
+  std::vector<Chunk *> translucentChunks;
+  
+  for (auto &[offset, chunk] : GetLoadedChunks()) {
+    if (chunk.HasTranslucentBlocks()) {
+      translucentChunks.push_back(&chunk);
+    }
+
+    chunk.Render(blockAtlasTexture, depthMap, blockShader, playerPos);
+  }
+
+  glm::vec2 playerChunkPos = GetChunkPosFromCoords(playerPos);
+
+  std::sort(translucentChunks.begin(), translucentChunks.end(), [playerChunkPos](Chunk *a, Chunk *b) {
+    float distanceA = glm::distance(playerChunkPos, static_cast<glm::vec2>(a->GetChunkPos()));
+    float distanceB = glm::distance(playerChunkPos, static_cast<glm::vec2>(b->GetChunkPos()));
+
+    return distanceA > distanceB;
+  });
+
+  for (auto chunk : translucentChunks) {
+    chunk->RenderTranslucent(blockAtlasTexture, depthMap, blockShader, playerPos);
+  }
 }
 
 void World::Update(const glm::vec3 &playerPos) {
@@ -101,8 +96,6 @@ void World::Update(const glm::vec3 &playerPos) {
     UnloadChunk(loadedChunks.at(chunkPos));
   }
 
-  std::cout << "SIZE 2: " << loadedChunks.size() << std::endl;
-
   for (int dz = -loadRadius; dz <= loadRadius; ++dz) {
     for (int dx = -loadRadius; dx <= loadRadius; ++dx) {
       float distanceSquared = dx * dx + dz * dz;
@@ -117,9 +110,17 @@ void World::Update(const glm::vec3 &playerPos) {
     }
   }
 
-  // }
+  for (int dz = -loadRadius; dz <= loadRadius; ++dz) {
+    for (int dx = -loadRadius; dx <= loadRadius; ++dx) {
+      float distanceSquared = dx * dx + dz * dz;
 
-  std::cout << "SIZE 3: " << loadedChunks.size() << std::endl;
+      if (distanceSquared <= loadRadius * loadRadius) {
+        glm::ivec2 chunkPos { playerChunkPos.x + dx, playerChunkPos.y + dz };
+
+        worldGen.LoadUnloadedBlocks(GetChunkAt(chunkPos));
+      }
+    }
+  }
 
   // Figure out closet dirty chunk in range
 
@@ -140,78 +141,13 @@ void World::Update(const glm::vec3 &playerPos) {
     }
   }
 
-
   // if there is a closet dirty chunk in range, update its mesh
 
   if (closestDirtyChunk) {
     closestDirtyChunk->UpdateMesh();
+    closestDirtyChunk->UpdateTranslucentMesh(playerPos);
     closestDirtyChunk->SetDirty(false);
   }
-
-  // Loading chunk refers to "generating it" or "loading from disk / db"
-  // Updating chunk refers to "remeshing it" and "assigning blocks"
-
-  // for each currentChunks:
-  //    unloadChunk()
-  // 
-  //  currentChunks.clear() 
-  //
-  // for each GetNearbyChunks(radius)
-  //    loadChunk()
-  //    currentChunk.push()
-  //
-  // find nearest chunk and update that
-
-  // const auto nearbyChunks = GetNearbyChunks(playerPos, renderRadius);
-  // const auto nearbyRenderChunks = GetNearbyChunks(playerPos, renderRadius);
-
-  // for (const glm::ivec2 &chunkPos : nearbyChunks) {
-  //   if (!chunks.contains(chunkPos)) {
-  //     GenerateChunk(chunkPos);
-  //   }
-  // }
-
-  // // Make all currently visible chunks go hidden
-  // for (const glm::ivec2 &chunkPos : visibleChunks) {
-  //   Chunk &chunk = chunks.at(chunkPos);
-  //   chunk.SetHidden(true);
-  // }
-  // visibleChunks.clear();
-
-  // // Make visible all nearby chunks--and also load chunks that have not been loaded before
-  // for (const glm::ivec2 &chunkPos : nearbyRenderChunks) {
-  //   Chunk &chunk = chunks.at(chunkPos);
-
-  //   if (chunk.GetState() == ChunkState::Unloaded) {
-  //     chunkUpdateBuffer.push_back(chunkPos);
-  //     chunk.SetState(ChunkState::Loading);
-  //   } else {
-  //     chunk.SetHidden(false);
-  //     visibleChunks.insert(chunkPos);
-  //   }
-  // }
-
-  // if (chunkUpdateBuffer.empty()) {
-  //   return;
-  // }
-
-  // float minDistance = std::numeric_limits<double>::infinity();
-  // glm::ivec2 nearestChunkPos;
-  // for (const auto &chunkPos : chunkUpdateBuffer) {
-  //   float distance = glm::distance(glm::vec2(GetChunkPosFromCoords(playerPos)), glm::vec2(chunkPos));
-  //   if (distance < minDistance) {
-  //     minDistance = distance;
-  //     nearestChunkPos = chunkPos;
-  //   }
-  // }
-
-  // if (minDistance != std::numeric_limits<float>::infinity()) {
-  //   Chunk &chunk = chunks.at(nearestChunkPos);
-  //   chunk.UpdateMesh();
-  //   chunk.SetState(ChunkState::Loaded);
-
-  //   chunkUpdateBuffer.erase(std::remove(chunkUpdateBuffer.begin(), chunkUpdateBuffer.end(), nearestChunkPos), chunkUpdateBuffer.end());
-  // }
 }
 
 void World::UnloadChunk(int x, int z) {
@@ -241,6 +177,8 @@ void World::LoadChunk(int x, int z) {
   chunk.SetState(ChunkState::Loaded);
 
   worldGen.GenerateTerrainChunk(chunk, blendMap, heightMap, stoneMap);
+  worldGen.GenerateFeatures(chunk, treeMap, grassMap);
+
   loadedChunks.emplace(chunkPos, chunk);
 }
 
@@ -254,6 +192,8 @@ void World::LoadChunk(Chunk &chunk) {
   const glm::ivec2 &chunkPos = chunk.GetChunkPos();
   if (!loadedChunks.contains(chunkPos)) {
     worldGen.GenerateTerrainChunk(chunk, blendMap, heightMap, stoneMap);
+    worldGen.GenerateFeatures(chunk, treeMap, grassMap);
+
     loadedChunks.emplace(chunkPos, chunk);
   }
   chunk.SetState(ChunkState::Loaded);
@@ -267,18 +207,12 @@ Chunk &World::GetChunkAt(const glm::ivec2 &chunkPos) {
   if (loadedChunks.contains(chunkPos)) {
     return loadedChunks.at(chunkPos);
   }
-  // More advanced logic here involving loading it first
+  // TODO: More advanced logic here involving loading it first
 }
 
 std::unordered_map<glm::ivec2, Chunk, Utils::IVec2Hash> &World::GetLoadedChunks() {
   return loadedChunks;
 }
-
-// void World::BreakBlock(const glm::vec3 &pos) {
-//   SetBlockAt(pos, BlockType::AIR);
-
-//   chunks.at(GetChunkPosFromCoords(pos)).UpdateMesh();
-// }
 
 void World::SetBlockAt(const glm::vec3 &pos, BlockType type) {
   Block &block = GetBlockAt(pos);
@@ -293,7 +227,7 @@ Block &World::GetBlockAt(const glm::vec3 &pos) {
 }
 
 bool World::HasBlock(const glm::vec3 &pos) {
-  return GetBlockAt(pos).IsSolid();
+  return GetBlockAt(pos).GetType() != BlockType::AIR;
 }
 
 glm::vec3 World::GetLocalBlockCoords(const glm::vec3 &pos) {
@@ -315,9 +249,43 @@ glm::ivec2 World::GetChunkPosFromCoords(const glm::vec3 &pos) {
   return { offsetX, offsetZ };
 }
 
-bool World::IsFaceVisible(BlockFace face, const glm::vec3 &pos) {
-  glm::vec3 neighborPos = pos + face.GetNormal();
+void World::HandlePlayerMovement(const glm::vec3 &before, const glm::vec3 &after) {
+  if (before == after) {
+    return;
+  }
 
+  glm::ivec2 playerChunkPosBefore = GetChunkPosFromCoords(before);
+  glm::ivec2 playerChunkPosAfter = GetChunkPosFromCoords(after);
+
+  std::array<glm::ivec2, 9> directions = {
+    glm::ivec2(1, 0), glm::ivec2(-1, 0), glm::ivec2(0, 1),
+    glm::ivec2(0, -1), glm::ivec2(1, -1), glm::ivec2(1, 1),
+    glm::ivec2(-1, 1), glm::ivec2(-1, -1), glm::ivec2(0, 0)
+  };
+
+  // if moving within same chunk, always re-sort that chunk
+  if (playerChunkPosBefore == playerChunkPosAfter) {
+    if (IsChunkLoaded(playerChunkPosBefore)) {
+      GetChunkAt(playerChunkPosBefore).SortTranslucentBlocks(after);
+    }
+  } else {
+    // GetChunkAt(playerChunkPosBefore).SortTranslucentBlocks(after);
+    for (const auto &offset : directions) {
+      if (IsChunkLoaded(playerChunkPosBefore + offset)) {
+        GetChunkAt(playerChunkPosBefore + offset).SortTranslucentBlocks(after);
+      }
+    }
+  }
+
+
+}
+
+bool World::IsChunkLoaded(const glm::ivec2 &pos) {
+  return loadedChunks.contains(pos);
+}
+
+bool World::IsFaceVisible(const Block &block, BlockFace face, const glm::vec3 &pos) {
+  glm::vec3 neighborPos = pos + face.GetNormal();
   glm::ivec2 neighborChunkPos = GetChunkPosFromCoords(neighborPos);
 
   // if not in a chunk
@@ -328,13 +296,24 @@ bool World::IsFaceVisible(BlockFace face, const glm::vec3 &pos) {
 
   glm::vec3 neightborLocalPos = GetLocalBlockCoords(neighborPos);
 
-  if (loadedChunks.at(neighborChunkPos).GetBlockAt(neightborLocalPos).IsSolid()) {
-    return false;
+  Block neightboringBlock = loadedChunks.at(neighborChunkPos).GetBlockAt(neightborLocalPos);
+
+  if (neightboringBlock.GetType() == BlockType::AIR) {
+    return true;
   }
 
-  return true;
-}
+  if (!block.IsTransparent()) {
+    return neightboringBlock.IsTransparent();
+  }
 
+  if (block.IsTransparent()) {
+    if (neightboringBlock.IsTransparent()) {
+      return neightboringBlock.GetType() != block.GetType();
+    }
+  }
+
+  return false;
+}
 
 
 }
