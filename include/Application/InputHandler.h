@@ -3,32 +3,32 @@
 
 #include "Graphics/gfx.h"
 #include "Utils/mathgl.h"
+#include <array>
 
 namespace Application {
 
-typedef struct Button {
+using ButtonState = struct Button {
   bool pressed = false;
   bool down = false;
-} ButtonState;
+};
 
-typedef struct Keyboard {
-  Button keys[GLFW_KEY_LAST];
-} Keyboard;
+using Keyboard = struct Keyboard {
+  std::array<Button, GLFW_KEY_LAST> keys;
+};
 
-typedef struct Mouse {
-  Button buttons[GLFW_MOUSE_BUTTON_LAST];
+using Mouse = struct Mouse {
+  std::array<Button, GLFW_MOUSE_BUTTON_LAST> buttons;
   glm::vec2 delta, position;
   bool grabbed = false;
   float offsetY = 0.0f;
-} Mouse;
+};
 
 class InputHandler {
 public:
-  Keyboard keyboard;
-  Mouse mouse;
+  Keyboard m_keyboard;
+  Mouse m_mouse;
 
   InputHandler() = default;
-  ~InputHandler() = default;
 
   void static KeyCallback(GLFWwindow *handle, int key, int, int action, int);
   void static CursorCallback(GLFWwindow *handle, double x, double y);
@@ -38,30 +38,30 @@ public:
   //// Keyboard input
 
   // Checks if key was presssed one time.
-  bool IsKeyPressed(int key);
+  auto IsKeyPressed(int key) -> bool;
 
   // Checks if key is currently held down.
-  bool IsKeyUp(int key);
+  [[nodiscard]] auto IsKeyUp(int key) const -> bool;
 
   // Checks if key is currently up.
-  bool IsKeyDown(int key);
+  [[nodiscard]] auto IsKeyDown(int key) const -> bool;
 
   //// Mouse input
 
-  bool IsMouseButtonPressed(int button);
+  auto IsMouseButtonPressed(int button) -> bool;
 
-  bool IsMouseButtonUp(int button);
+  [[nodiscard]] auto IsMouseButtonUp(int button) const -> bool;
 
-  bool IsMouseButtonDown(int button);
+  [[nodiscard]] auto IsMouseButtonDown(int button) const -> bool;
 
-  glm::vec2 GetMousePosition();
-  int GetMousePositionX();
-  int GetMousePositionY();
+  [[nodiscard]] auto GetMousePosition() const -> glm::vec2;
+  [[nodiscard]] auto GetMousePositionX() const -> float;
+  [[nodiscard]] auto GetMousePositionY() const -> float;
 
-  float GetMouseDeltaX();
-  float GetMouseDeltaY();
+  auto GetMouseDeltaX() -> float;
+  auto GetMouseDeltaY() -> float;
 
-  float GetMouseWheelMove();
+  [[nodiscard]] auto GetMouseWheelMove() const -> float;
 
 private:
   // const float mouseSensitivity = 0.3f;

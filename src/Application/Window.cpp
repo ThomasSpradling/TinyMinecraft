@@ -1,17 +1,20 @@
 #include "Application/Window.h"
 #include "Graphics/gfx.h"
+#include "Utils/Logger.h"
 #include "Utils/Profiler.h"
 
 namespace Application {
 
-void Window::Initialize(int initWidth, int initHeight, const std::string &name, InputHandler &inputHandler) {
+Window::Window(int width, int height, const std::string &name, InputHandler &inputHandler)
+  : m_width(width)
+  , m_height(height)
+{
   PROFILE_FUNCTION(Window)
-  
-  width = initWidth;
-  height = initHeight;
+
+  const int DEPTH_BUFFER_SIZE = 32;
 
   if (!glfwInit()) {
-    std::cerr << "Error initializing GLFW." << std::endl;
+    Utils::g_logger.Error("GLFW: Error initializing.");
     exit(1);
   }
 
@@ -25,61 +28,76 @@ void Window::Initialize(int initWidth, int initHeight, const std::string &name, 
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
   
-  handle = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
-  if (handle == nullptr) {
-    std::cerr << "Error creating GLFW window." << std::endl;
-    glfwTerminate();
+  m_handle = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
+  if (m_handle == nullptr) {
+    Utils::g_logger.Error("GLFW: Error creating window.");
     exit(1);
   }
 
-  glfwSetInputMode(handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  glfwSetInputMode(m_handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-  glfwSetWindowUserPointer(handle, &inputHandler);
+  glfwSetWindowUserPointer(m_handle, &inputHandler);
 
-  glfwSetKeyCallback(handle, InputHandler::KeyCallback);
-  glfwSetCursorPosCallback(handle, InputHandler::CursorCallback);
-  glfwSetMouseButtonCallback(handle, InputHandler::MouseCallback);
-  glfwSetScrollCallback(handle, InputHandler::ScrollCallback);
+  glfwSetKeyCallback(m_handle, InputHandler::KeyCallback);
+  glfwSetCursorPosCallback(m_handle, InputHandler::CursorCallback);
+  glfwSetMouseButtonCallback(m_handle, InputHandler::MouseCallback);
+  glfwSetScrollCallback(m_handle, InputHandler::ScrollCallback);
 
-  glfwMakeContextCurrent(handle);
+  glfwMakeContextCurrent(m_handle);
 
-  if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
-    std::cerr << "Error initializing GLAD." << std::endl;
-    glfwTerminate();
+// NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+
+  if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
+    Utils::g_logger.Error("GLAD: Error initializing.");
     exit(1);
   }
 
-  glfwWindowHint(GLFW_DEPTH_BITS, 32);
+// NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+
+  glfwWindowHint(GLFW_DEPTH_BITS, DEPTH_BUFFER_SIZE);
 
   glfwSwapInterval(0);
 
-  std::cout << "Initialized window." << std::endl;
+  Utils::g_logger.Message("Window created and initialized successfully.");
 }
 
-void Window::PollEvents() {
+
+Window::~Window() {
+  Utils::g_logger.Message("Destroying window.");
+
+  glfwTerminate();
+}
+
+void Window::PollEvents() const {
   glfwPollEvents();
 }
 
-bool Window::ShouldClose() {
-  return glfwWindowShouldClose(handle);
+auto Window::ShouldClose() -> bool {
+  return glfwWindowShouldClose(m_handle);
 }
 
 void Window::Close() {
-  std::cout << "Destroying window." << std::endl;
-
-  glfwSetWindowShouldClose(handle, GLFW_TRUE);
+  glfwSetWindowShouldClose(m_handle, GLFW_TRUE);
 }
 
-int Window::GetWidth() {
-  return width;
+auto Window::GetWidth() const -> int {
+  return m_width;
 }
 
-int Window::GetHeight() {
-  return height;
+auto Window::GetHeight() const -> int {
+  return m_height;
+}
+
+auto Window::GetHandle() const -> GLFWwindow * {
+  return m_handle;
 }
 
 void Window::SwapBuffers() {
-  glfwSwapBuffers(handle);
+  glfwSwapBuffers(m_handle);
+}
+
+void Window::ErrorCallback(int code, const char *description) {
+  Utils::g_logger.Error("GLFW error {}: {}", code, description);
 }
 
 }

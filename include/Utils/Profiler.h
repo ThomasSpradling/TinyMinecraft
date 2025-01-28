@@ -9,7 +9,7 @@
 
 namespace Utils {
 
-enum class ProfileCategory {
+enum class ProfileCategory : uint8_t {
   Miscellaneous = 0,
   Window,
   UserInterface,
@@ -21,8 +21,13 @@ enum class ProfileCategory {
 
 class Profiler {
 public:
-  Profiler(const std::string &section, ProfileCategory category = ProfileCategory::Miscellaneous) : category(category), name(section), start(std::chrono::high_resolution_clock::now()) {};
+  Profiler(std::string_view section, ProfileCategory category = ProfileCategory::Miscellaneous);
+  
   ~Profiler();
+  Profiler(const Profiler &) = delete;
+  auto operator=(const Profiler &) -> Profiler & = delete;
+  Profiler(Profiler &&) = delete;
+  auto operator=(Profiler &&) -> Profiler & = delete;
 
   static void Start(const std::string &section, ProfileCategory cat = ProfileCategory::Miscellaneous);
   static void End();
@@ -30,15 +35,15 @@ public:
   static void LogSummary();
 
 private:
-  ProfileCategory category;
-  std::string name;
-  std::chrono::time_point<std::chrono::high_resolution_clock> start;
+  ProfileCategory m_category;
+  std::string m_name;
+  std::chrono::time_point<std::chrono::high_resolution_clock> m_start;
 
   static std::unordered_map<ProfileCategory, std::unordered_map<std::string, std::vector<long long>>> timings;
 
-  static std::string CategoryToString(ProfileCategory category);
+  static auto CategoryToString(ProfileCategory category) -> std::string;
 
-  static std::string FormatDuration(long long nanoseconds);
+  static auto FormatDuration(long long nanoseconds) -> std::string;
 
   void LogDuration(ProfileCategory cat, const std::string &section, long long duration);
 
@@ -46,6 +51,7 @@ private:
 };
 
 }
+
 
 // TODO: fix link
 // hack: https://stackoverflow.com/questions/35922268/create-an-identifier-at-compile-time-that-has-the-line-number-as-part-of-it

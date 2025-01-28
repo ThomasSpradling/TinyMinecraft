@@ -3,10 +3,10 @@
 
 namespace World {
 
-Block::Block(BlockType type) : type(type) {}
+Block::Block(BlockType type) : m_type(type) {}
 
 bool Block::IsTransparent() const {
-  switch (type) {
+  switch (m_type) {
     case World::BlockType::AIR:
     case World::BlockType::WATER:
     case World::BlockType::GLASS:
@@ -19,7 +19,7 @@ bool Block::IsTransparent() const {
 }
 
 bool Block::IsBillboard() const {
-  switch (type) {
+  switch (m_type) {
     case World::BlockType::TALL_GRASS:
       return true;
     default:
@@ -28,11 +28,11 @@ bool Block::IsBillboard() const {
 }
 
 BlockType Block::GetType() const {
-  return type;
+  return m_type;
 }
 
 void Block::SetType(BlockType value) {
-  type = value;
+  m_type = value;
 }
 
 }

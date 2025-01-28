@@ -1,5 +1,6 @@
 #include "World/Chunk.h"
 #include "Graphics/gfx.h"
+#include "Utils/Logger.h"
 #include "Utils/Profiler.h"
 #include "Utils/defs.h"
 #include "Utils/utils.h"
@@ -9,13 +10,17 @@
 #include "World/BlockFace.h"
 #include "glm/geometric.hpp"
 #include <algorithm>
-#include <iostream>
-#include <limits>
 
 namespace World {
 
-void Chunk::Initialize() {
-  // Set all blocks to be empty
+Chunk::Chunk(World &world, const glm::ivec2 &m_chunkPos)
+  :m_world(world)
+  , m_opaqueVBO(GL_ARRAY_BUFFER)
+  , m_transVBO(GL_ARRAY_BUFFER)
+  , m_opaqueEBO(GL_ELEMENT_ARRAY_BUFFER)
+  , m_transEBO(GL_ELEMENT_ARRAY_BUFFER)
+  , m_chunkPos(m_chunkPos)
+{
   for (int x = 0; x < CHUNK_WIDTH; ++x) {
     for (int y = 0; y < CHUNK_HEIGHT; ++y) {
       for (int z = 0; z < CHUNK_LENGTH; ++z) {
@@ -28,100 +33,82 @@ void Chunk::Initialize() {
   InitializeTranslucent();
 }
 
+Chunk::Chunk(Chunk &&other) noexcept
+  : m_world(other.m_world)
+  , m_translucentFaces(std::move(other.m_translucentFaces))
+  , m_opaqueVAO(std::move(other.m_opaqueVAO))
+  , m_transVAO(std::move(other.m_transVAO))
+  , m_opaqueVBO(std::move(other.m_opaqueVBO))
+  , m_transVBO(std::move(other.m_transVBO))
+  , m_opaqueEBO(std::move(other.m_opaqueEBO))
+  , m_transEBO(std::move(other.m_transEBO))
+  , m_chunkPos(other.m_chunkPos)
+{
+}
+
+// Move assignment operator
+auto Chunk::operator=(Chunk &&other) noexcept -> Chunk & {
+  Chunk temp(std::move(other));
+  std::swap(*this, temp);
+  return *this;
+}
+
 void Chunk::InitializeOpaque() {
-  glGenVertexArrays(1, &opaqueVAO);
-  glGenBuffers(1, &opaqueVBO);
-  glGenBuffers(1, &opaqueEBO);
+  m_opaqueVAO.Bind();
+  m_opaqueVBO.Bind();
+  m_opaqueEBO.Bind();
 
-  glBindVertexArray(opaqueVAO);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, opaqueEBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint), nullptr, GL_DYNAMIC_DRAW);
-
-  glBindBuffer(GL_ARRAY_BUFFER, opaqueVBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat), nullptr, GL_DYNAMIC_DRAW);
-
-  // positions
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(GLfloat), (void *) 0);
-  glEnableVertexAttribArray(0);
-
-  // colors
-  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 12 * sizeof(GLfloat), (void *) (3 * sizeof(GLfloat)));
-  glEnableVertexAttribArray(1);
-
-  // texture coords
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 12 * sizeof(GLfloat), (void *) (7 * sizeof(GLfloat)));
-  glEnableVertexAttribArray(2);
-
-  // normals
-  glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(GLfloat), (void *) (9 * sizeof(GLfloat)));
-  glEnableVertexAttribArray(3);
-
-  glBindVertexArray(0);
+  m_opaqueVAO.AddAttribute(0, 3, GL_FLOAT, 12 * sizeof(GLfloat), 0);
+  m_opaqueVAO.AddAttribute(1, 4, GL_FLOAT, 12 * sizeof(GLfloat), 3 * sizeof(GLfloat));
+  m_opaqueVAO.AddAttribute(2, 2, GL_FLOAT, 12 * sizeof(GLfloat), 7 * sizeof(GLfloat));
+  m_opaqueVAO.AddAttribute(3, 3, GL_FLOAT, 12 * sizeof(GLfloat), 9 * sizeof(GLfloat));
 }
 
 void Chunk::InitializeTranslucent() {
-  glGenVertexArrays(1, &transVAO);
-  glGenBuffers(1, &transVBO);
-  glGenBuffers(1, &transEBO);
+  m_transVAO.Bind();
+  m_transVBO.Bind();
+  m_transEBO.Bind();
 
-  glBindVertexArray(transVAO);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, transEBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint), nullptr, GL_DYNAMIC_DRAW);
-
-  glBindBuffer(GL_ARRAY_BUFFER, transVBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat), nullptr, GL_DYNAMIC_DRAW);
-
-  // positions
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (void *) 0);
-  glEnableVertexAttribArray(0);
-
-  // colors
-  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (void *) (3 * sizeof(GLfloat)));
-  glEnableVertexAttribArray(1);
-
-  // texture coords
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (void *) (7 * sizeof(GLfloat)));
-  glEnableVertexAttribArray(2);
-
-  glBindVertexArray(0);
+  m_transVAO.AddAttribute(0, 3, GL_FLOAT, 9 * sizeof(GLfloat), 0);
+  m_transVAO.AddAttribute(1, 4, GL_FLOAT, 9 * sizeof(GLfloat), 3 * sizeof(GLfloat));
+  m_transVAO.AddAttribute(2, 2, GL_FLOAT, 9 * sizeof(GLfloat), 7 * sizeof(GLfloat));
 }
 
-void Chunk::Render(Graphics::Texture &blockAtlasTexture, GLuint depthMap, Graphics::Shader &blockShader, const glm::vec3 &playerPos) {
-  blockAtlasTexture.Bind(0);
+void Chunk::Render(Graphics::Texture &blockAtlasTexture, Graphics::Shader &blockShader, const glm::vec3 &playerPos) {
+  blockAtlasTexture.Bind();
   glActiveTexture(GL_TEXTURE2);
-  glBindTexture(GL_TEXTURE_2D, depthMap);
+  // glBindTexture(GL_TEXTURE_2D, depthMap);
 
   blockShader.Use();
 
   blockShader.Uniform("uBlockAtlas", 0);
   blockShader.Uniform("uCameraPos", playerPos);
 
-  glm::mat4 model = glm::mat4(1.0f);
-  model = glm::translate(model, glm::vec3(chunkPos.x * CHUNK_WIDTH, 0.0f, chunkPos.y * CHUNK_LENGTH));
+  glm::mat4 model { 1.0f };
+  model = glm::translate(model, glm::vec3(m_chunkPos.x * CHUNK_WIDTH, 0.0f, m_chunkPos.y * CHUNK_LENGTH));
   blockShader.Uniform("uModel", model);
 
-  glBindVertexArray(opaqueVAO);
-  glDrawElements(GL_TRIANGLES, opaqueVertexCount, GL_UNSIGNED_INT, 0);
+  m_opaqueVAO.Bind();
+  glDrawElements(GL_TRIANGLES, static_cast<int>(m_opaqueVertexCount), GL_UNSIGNED_INT, nullptr);
 }
 
-void Chunk::RenderTranslucent(Graphics::Texture &blockAtlasTexture, GLuint depthMap, Graphics::Shader &shader, const glm::vec3 &playerPos) {
+void Chunk::RenderTranslucent(Graphics::Texture &blockAtlasTexture, Graphics::Shader &shader, const glm::vec3 &playerPos) {
   glDisable(GL_CULL_FACE);
   
   shader.Use();
-  shader.Uniform("uBlockAtlas", 0);
+  shader.Uniform("uBlockAtlas", static_cast<int>(blockAtlasTexture.GetId()));
 
-  glm::mat4 model = glm::mat4(1.0f);
-  model = glm::translate(model, glm::vec3(chunkPos.x * CHUNK_WIDTH, 0.0f, chunkPos.y * CHUNK_LENGTH));
+  auto model = glm::mat4(1.0f);
+  model = glm::translate(model, glm::vec3(m_chunkPos.x * CHUNK_WIDTH, 0.0f, m_chunkPos.y * CHUNK_LENGTH));
   shader.Uniform("uModel", model);
-  glBindVertexArray(transVAO);
+
+  m_transVAO.Bind();
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glDepthMask(GL_FALSE);
 
-  glDrawElements(GL_TRIANGLES, transVertexCount, GL_UNSIGNED_INT, 0);
+  glDrawElements(GL_TRIANGLES, static_cast<int>(m_transVertexCount), GL_UNSIGNED_INT, nullptr);
 
   glDepthMask(GL_TRUE);
   glDisable(GL_BLEND);
@@ -138,7 +125,7 @@ void Chunk::UpdateMesh() {
   std::vector<GLuint> indices;
   GLuint indexOffset = 0;
 
-  hasTranslucentBlocks = false;
+  m_hasTranslucentBlocks = false;
 
   for (int z = 0; z < CHUNK_LENGTH; ++z) {
     for (int y = 0; y < CHUNK_HEIGHT; ++y) {
@@ -150,13 +137,13 @@ void Chunk::UpdateMesh() {
         }
 
         if (block.IsTransparent()) {
-          hasTranslucentBlocks = true;
+          m_hasTranslucentBlocks = true;
           continue;
         }
 
         for (const BlockFace &face : BlockFace::allFaces) {
 
-          if (!world.IsFaceVisible(block, face, glm::vec3(chunkPos.x * CHUNK_WIDTH + x, y, chunkPos.y * CHUNK_LENGTH + z))) {
+          if (!m_world.IsFaceVisible(block, face, glm::vec3(m_chunkPos.x * CHUNK_WIDTH + x, y, m_chunkPos.y * CHUNK_LENGTH + z))) {
             continue;
           }
 
@@ -177,9 +164,9 @@ void Chunk::UpdateMesh() {
 
           for (int i = 0; i < 4; ++i) {
             vertices.insert(vertices.end(),{
-              faceVertices[i].x + x, faceVertices[i].y + y, faceVertices[i].z + z,  // positions
+              faceVertices.at(i).x + static_cast<float>(x), faceVertices.at(i).y + static_cast<float>(y), faceVertices.at(i).z + static_cast<float>(z),  // positions
               blockColor.r, blockColor.g, blockColor.b, blockColor.a,  // colors
-              faceTexCoords[i].x, faceTexCoords[i].y,  // tex coords
+              faceTexCoords.at(i).x, faceTexCoords.at(i).y,  // tex coords
               normal.x, normal.y, normal.z  // normal
             });
           }
@@ -194,15 +181,12 @@ void Chunk::UpdateMesh() {
     }
   }
 
-  glBindVertexArray(opaqueVAO);
+  m_opaqueVAO.Bind();
   
-  glBindBuffer(GL_ARRAY_BUFFER, opaqueVBO);
-  glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertices.size() * sizeof(GLfloat)), vertices.data(), GL_DYNAMIC_DRAW);
+  m_opaqueVBO.BufferData(vertices, GL_DYNAMIC_DRAW);
+  m_opaqueEBO.BufferData(indices, GL_DYNAMIC_DRAW);
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, opaqueEBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(indices.size() * sizeof(GLuint)), indices.data(), GL_DYNAMIC_DRAW);
-
-  opaqueVertexCount = indices.size();
+  m_opaqueVertexCount = indices.size();
   
   vertices.clear();
   indices.clear();
@@ -211,7 +195,7 @@ void Chunk::UpdateMesh() {
 void Chunk::UpdateTranslucentMesh(const glm::vec3 &playerPos) {
   PROFILE_FUNCTION(Chunk)
 
-  translucentFaces.clear();
+  m_translucentFaces.clear();
 
   for (int z = 0; z < CHUNK_LENGTH; ++z) {
     for (int y = 0; y < CHUNK_HEIGHT; ++y) {
@@ -227,7 +211,7 @@ void Chunk::UpdateTranslucentMesh(const glm::vec3 &playerPos) {
           continue;
         }
 
-        glm::vec3 blockPos = glm::vec3(CHUNK_WIDTH * chunkPos.x, 0, CHUNK_LENGTH * chunkPos.y) + glm::vec3(pos);
+        glm::vec3 blockPos = glm::vec3(CHUNK_WIDTH * m_chunkPos.x, 0, CHUNK_LENGTH * m_chunkPos.y) + glm::vec3(pos);
 
         if (block.IsBillboard()) {
           FaceGeometry faceGeom1;
@@ -263,14 +247,14 @@ void Chunk::UpdateTranslucentMesh(const glm::vec3 &playerPos) {
 
           for (int i = 0; i < 4; ++i) {
             faceGeom1.vertices.insert(faceGeom1.vertices.end(), {
-              faceVertices1[i].x + x, faceVertices1[i].y + y, faceVertices1[i].z + z,  // positions
+              faceVertices1.at(i).x + static_cast<float>(x), faceVertices1.at(i).y + static_cast<float>(y), faceVertices1.at(i).z + static_cast<float>(z),  // positions
               blockColor.r, blockColor.g, blockColor.b, blockColor.a,  // colors
-              faceTexCoords[i].x, faceTexCoords[i].y,  // tex coords
+              faceTexCoords.at(i).x, faceTexCoords.at(i).y,  // tex coords
             });
             faceGeom2.vertices.insert(faceGeom2.vertices.end(), {
-              faceVertices2[i].x + x, faceVertices2[i].y + y, faceVertices2[i].z + z,  // positions
+              faceVertices2.at(i).x + static_cast<float>(x), faceVertices2.at(i).y + static_cast<float>(y), faceVertices2.at(i).z + static_cast<float>(z),  // positions
               blockColor.r, blockColor.g, blockColor.b, blockColor.a,  // colors
-              faceTexCoords[i].x, faceTexCoords[i].y,  // tex coords
+              faceTexCoords.at(i).x, faceTexCoords.at(i).y,  // tex coords
             });
           }
 
@@ -285,17 +269,17 @@ void Chunk::UpdateTranslucentMesh(const glm::vec3 &playerPos) {
           });
 
           faceGeom1.distanceToPlayer = glm::distance(playerPos, faceGeom1.pos);
-          translucentFaces.push_back(faceGeom1);
+          m_translucentFaces.push_back(faceGeom1);
 
           faceGeom2.distanceToPlayer = glm::distance(playerPos, faceGeom2.pos);
-          translucentFaces.push_back(faceGeom2);
+          m_translucentFaces.push_back(faceGeom2);
 
           continue;
         }
 
         for (const BlockFace &face : BlockFace::allFaces) {
 
-          if (!world.IsFaceVisible(block, face, glm::vec3(chunkPos.x * CHUNK_WIDTH + x, y, chunkPos.y * CHUNK_LENGTH + z))) {
+          if (!m_world.IsFaceVisible(block, face, glm::vec3(m_chunkPos.x * CHUNK_WIDTH + x, y, m_chunkPos.y * CHUNK_LENGTH + z))) {
             continue;
           }
 
@@ -322,9 +306,9 @@ void Chunk::UpdateTranslucentMesh(const glm::vec3 &playerPos) {
 
           for (int i = 0; i < 4; ++i) {
             faceGeom.vertices.insert(faceGeom.vertices.end(), {
-              faceVertices[i].x + x, faceVertices[i].y + y, faceVertices[i].z + z,  // positions
+              faceVertices.at(i).x + static_cast<float>(x), faceVertices.at(i).y + static_cast<float>(y), faceVertices.at(i).z + static_cast<float>(z),  // positions
               blockColor.r, blockColor.g, blockColor.b, blockColor.a,  // colors
-              faceTexCoords[i].x, faceTexCoords[i].y,  // tex coords
+              faceTexCoords.at(i).x, faceTexCoords.at(i).y,  // tex coords
             });
           }
 
@@ -335,7 +319,7 @@ void Chunk::UpdateTranslucentMesh(const glm::vec3 &playerPos) {
 
           faceGeom.distanceToPlayer = glm::distance(playerPos, faceGeom.pos);
 
-          translucentFaces.push_back(faceGeom);
+          m_translucentFaces.push_back(faceGeom);
         }
 
       }
@@ -350,7 +334,7 @@ void Chunk::SortTranslucentBlocks(const glm::vec3 &playerPos) {
     return;
   }
 
-  std::sort(translucentFaces.begin(), translucentFaces.end(), [playerPos](const FaceGeometry &a, const FaceGeometry &b) {
+  std::ranges::sort(m_translucentFaces, [playerPos](const FaceGeometry &a, const FaceGeometry &b) {
     float distanceA = glm::distance(playerPos, a.pos);
     float distanceB = glm::distance(playerPos, b.pos);
 
@@ -362,7 +346,7 @@ void Chunk::SortTranslucentBlocks(const glm::vec3 &playerPos) {
 
   GLuint indexOffset = 0;
 
-  for (const auto &faceGeom : translucentFaces) {
+  for (const auto &faceGeom : m_translucentFaces) {
     vertices.insert(vertices.end(), faceGeom.vertices.begin(), faceGeom.vertices.end());
 
     for (GLuint index : faceGeom.indices) {
@@ -372,61 +356,66 @@ void Chunk::SortTranslucentBlocks(const glm::vec3 &playerPos) {
     indexOffset += static_cast<GLuint>(faceGeom.vertices.size() / 8);
   }
 
-  glBindVertexArray(transVAO);
+  m_transVAO.Bind();
 
-  glBindBuffer(GL_ARRAY_BUFFER, transVBO);
-  glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertices.size() * sizeof(GLfloat)), vertices.data(), GL_DYNAMIC_DRAW);
+  m_transVBO.BufferData(vertices, GL_DYNAMIC_DRAW);
+  m_transEBO.BufferData(indices, GL_DYNAMIC_DRAW);
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, transEBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(indices.size() * sizeof(GLuint)), indices.data(), GL_DYNAMIC_DRAW);
-
-  transVertexCount = indices.size();
+  m_transVertexCount = indices.size();
   
   vertices.clear();
   indices.clear();
 }
 
-Block &Chunk::GetBlockAt(GLuint x, GLuint y, GLuint z) {
-  return blocks[x][y][z];
+auto Chunk::GetBlockAt(int x, int y, int z) -> Block & {
+  return m_blocks.at(CHUNK_LENGTH * CHUNK_HEIGHT * x + CHUNK_LENGTH * y + z);
 }
 
-Block &Chunk::GetBlockAt(const glm::vec3 &pos) {
+auto Chunk::GetBlockAt(const glm::ivec3 &pos) -> Block & {
   return GetBlockAt(pos.x, pos.y, pos.z);
 }
 
-void Chunk::SetBlockAt(GLuint x, GLuint y, GLuint z, const Block &block) {
-  blocks[x][y][z] = block;
+void Chunk::SetBlockAt(int x, int y, int z, const Block &block) {
+  m_blocks.at(CHUNK_LENGTH * CHUNK_HEIGHT * x + CHUNK_LENGTH * y + z) = block;
 }
 
-void Chunk::SetBlockAt(const glm::vec3 &pos, const Block &block) {
+void Chunk::SetBlockAt(const glm::ivec3 &pos, const Block &block) {
   return SetBlockAt(pos.x, pos.y, pos.z, block);
 }
 
-bool Chunk::HasTranslucentBlocks() {
-  return hasTranslucentBlocks;
+auto Chunk::HasTranslucentBlocks() const -> bool {
+  return m_hasTranslucentBlocks;
 }
 
 void Chunk::SetHidden(bool value) {
-  hidden = value;
+  m_hidden = value;
 }
 
-bool Chunk::IsHidden() {
-  return hidden;
+auto Chunk::IsHidden() const -> bool {
+  return m_hidden;
+}
+
+auto Chunk::IsDirty() const -> bool {
+  return m_dirty;
+}
+
+void Chunk::SetDirty(bool value) {
+  m_dirty = value;
 }
 
 void Chunk::SetState(ChunkState value) {
-  state = value;
+  m_state = value;
 }
 
-ChunkState Chunk::GetState() {
-  return state;
+auto Chunk::GetState() const -> ChunkState {
+  return m_state;
 }
 
-glm::ivec2 &Chunk::GetChunkPos() {
-  return chunkPos;
+auto Chunk::GetChunkPos() const -> glm::ivec2 {
+  return m_chunkPos;
 }
 
-int Chunk::GetSurfaceHeight(int x, int z) {
+auto Chunk::GetSurfaceHeight(int x, int z) -> int {
   for (int y = CHUNK_HEIGHT - 1; y >= 0; --y) {
     if (GetBlockAt(x, y, z).GetType() != BlockType::AIR) {
       return y;

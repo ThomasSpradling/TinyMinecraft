@@ -15,29 +15,56 @@ struct VertexAttr {
 
 class Shader {
 public:
-    GLuint handle;
+  Shader(const std::string &vertexPath, const std::string &fragmentPath);
 
-    Shader() = default;
-    ~Shader();
+  ~Shader();
+  Shader(const Shader &) = delete;
+  auto operator=(const Shader &) -> Shader & = delete;
+  Shader(Shader &&) = delete;
+  auto operator=(Shader &&) -> Shader & = delete;
 
-    void Load(const std::string_view vs_path, const std::string_view fs_path);
+  auto Use() -> void;
 
-    auto Use() -> void;
-    template<typename T> auto Uniform(std::string name, T value) -> void;
-    template<> auto Uniform<bool>(std::string name, bool value) -> void;
-    template<> auto Uniform<int>(std::string name, int value) -> void;
-    template<> auto Uniform<float>(std::string name, float value) -> void;
-    template<> auto Uniform<glm::mat4>(std::string name, glm::mat4 value) -> void;
-    template<> auto Uniform<glm::mat3>(std::string name, glm::mat3 value) -> void;
-    template<> auto Uniform<glm::vec2>(std::string name, glm::vec2 value) -> void;
-    template<> auto Uniform<glm::vec3>(std::string name, glm::vec3 value) -> void;
-    template<> auto Uniform<glm::vec4>(std::string name, glm::vec4 value) -> void;
+  template<typename T> void Uniform(const std::string &name, T value);
+  
+  void Uniform(const std::string &name, bool value) {
+    glUniform1i(glGetUniformLocation(m_programHandle, name.c_str()), (int) value);
+  }
+
+  auto Uniform(const std::string &name, int value) -> void {
+    glUniform1i(glGetUniformLocation(m_programHandle, name.c_str()), value);
+  }
+
+  auto Uniform(const std::string &name, float value) -> void {
+    glUniform1f(glGetUniformLocation(m_programHandle, name.c_str()), value);
+  }
+
+  auto Uniform(const std::string &name, glm::mat4 value) -> void {
+    glUniformMatrix4fv(glGetUniformLocation(m_programHandle, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+  }
+
+  auto Uniform(const std::string &name, glm::mat3 value) -> void {
+    glUniformMatrix3fv(glGetUniformLocation(m_programHandle, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+  }
+
+  auto Uniform(const std::string &name, glm::vec2 value) -> void {
+    glUniform2fv(glGetUniformLocation(m_programHandle, name.c_str()), 1, glm::value_ptr(value));
+  }
+
+  auto Uniform(const std::string &name, glm::vec3 value) -> void {
+    glUniform3fv(glGetUniformLocation(m_programHandle, name.c_str()), 1, glm::value_ptr(value));
+  }
+
+  auto Uniform(const std::string &name, glm::vec4 value) -> void {
+    glUniform4fv(glGetUniformLocation(m_programHandle, name.c_str()), 1, glm::value_ptr(value));
+  }
 private:
-    GLuint vs_handle, fs_handle;
+  GLuint m_programHandle;
+  GLuint m_vertexHandle, m_fragmentHandle;
 
-    auto ReadFile(const std::string_view path) const -> std::string;
-    auto Compile(const char *source, GLenum type, const std::string_view filename) const -> GLuint;
-    auto Link() const -> GLuint;
+  [[nodiscard]] auto ReadFile(const std::string &path) const -> std::string;
+  auto Compile(const char *source, GLenum type, const std::string_view filename) const -> GLuint;
+  [[nodiscard]] auto Link() const -> GLuint;
 };
 
 }

@@ -1,41 +1,37 @@
 #include "World/BlockFace.h"
-#include "Utils/Profiler.h"
-#include "glm/fwd.hpp"
-#include <iostream>
 
 namespace World {
 
 std::array<BlockFace, 6> BlockFace::allFaces {
-  BlockFace::North,
-  BlockFace::South,
-  BlockFace::West,
-  BlockFace::East,
-  BlockFace::Up,
-  BlockFace::Down
+  BlockFace::Direction::North,
+  BlockFace::Direction::South,
+  BlockFace::Direction::West,
+  BlockFace::Direction::East,
+  BlockFace::Direction::Up,
+  BlockFace::Direction::Down
 };
 
-BlockFace::BlockFace(Direction face) : direction(face) {}
+BlockFace::BlockFace(Direction face) : m_direction(face) {}
 
-bool BlockFace::operator==(const BlockFace &other) const {
-  return direction == other.direction;
+auto BlockFace::operator==(const BlockFace &other) const -> bool {
+  return m_direction == other.m_direction;
 }
 
-glm::vec3 BlockFace::GetNormal() const {
-
-  static const glm::vec3 normals[] = {
+auto BlockFace::GetNormal() const -> glm::vec3 {
+  static const std::array<glm::ivec3, 6> normals = {{
     {  0,  0,  1 },
     {  0,  0, -1 },
     { -1,  0,  0 },
     {  1,  0,  0 },
     {  0,  1,  0 },
     {  0, -1,  0 } 
-  };
+  }};
 
-  return normals[static_cast<int>(direction)];
+  return normals.at(static_cast<int>(m_direction));
 }
 
-std::array<glm::vec3, 4> BlockFace::GetVertices(float width, float height) const {
-  switch (direction) {
+auto BlockFace::GetVertices(float width, float height) const -> std::array<glm::vec3, 4> {
+  switch (m_direction) {
     case Direction::Up:
       return { glm::vec3(0, 1, 0), glm::vec3(0, 1, width), glm::vec3(height, 1, width), glm::vec3(height, 1, 0) };
     case Direction::Down:
@@ -53,12 +49,12 @@ std::array<glm::vec3, 4> BlockFace::GetVertices(float width, float height) const
   }
 }
 
-std::array<glm::vec3, 4> BlockFace::GetFluidVertices(int depth, int maxDepth, Direction dir, bool floating) const {
+auto BlockFace::GetFluidVertices(int depth, int maxDepth, Direction dir, bool floating) const -> std::array<glm::vec3, 4> {
   const float maxHeight = 0.8f;
   const float minHeight = 0.2f;
 
 
-  float frontHeight, backHeight;
+  float frontHeight = 0.0, backHeight = 0.0;
   
   float slope = (minHeight - maxHeight) / static_cast<float>(maxDepth - 1);
   if (depth == 0) {
@@ -68,8 +64,8 @@ std::array<glm::vec3, 4> BlockFace::GetFluidVertices(int depth, int maxDepth, Di
     frontHeight = 0.2;
     backHeight = 0.8;
   } else {
-    frontHeight = slope * depth + maxHeight - slope;
-    backHeight = slope * (depth + 1) + maxHeight - slope;
+    frontHeight = slope * static_cast<float>(depth) + maxHeight - slope;
+    backHeight = slope * (static_cast<float>(depth) + 1.f) + maxHeight - slope;
   }
   
   float southwestHeight = maxHeight;
@@ -111,7 +107,7 @@ std::array<glm::vec3, 4> BlockFace::GetFluidVertices(int depth, int maxDepth, Di
   glm::vec3 southeastVert = glm::vec3(1.0f, southeastHeight, 0.0f);
 
 
-  switch (direction) {
+  switch (m_direction) {
     case Direction::Up:
       return { southwestVert, northwestVert, northeastVert, southeastVert };
     case Direction::Down:

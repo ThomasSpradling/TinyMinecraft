@@ -9,30 +9,37 @@ namespace World {
 
 Biome::Biome(BiomeType type, float minHeight, float maxHeight, 
     float minTemp, float maxTemp, 
-    float minHumidity, float maxHumidity) : type(type),
-  minHeight(minHeight), maxHeight(maxHeight),
-  minTemp(minTemp), maxTemp(maxTemp),
-  minHumidity(minHumidity), maxHumidity(maxHumidity) {}
+    float minHumidity, float maxHumidity)
+  : m_type(type)
+  , m_minHeight(minHeight)
+  , m_maxHeight(maxHeight)
+  , m_minTemp(minTemp)
+  , m_maxTemp(maxTemp)
+  , m_minHumidity(minHumidity)
+  , m_maxHumidity(maxHumidity)
+{}
 
-bool Biome::IsValid(float temperature, float humidity) const {
-  return temperature >= minTemp && temperature <= maxTemp &&
-         humidity >= minHumidity && humidity <= maxHumidity;
+auto Biome::IsValid(double temperature, double humidity) const -> bool {
+  return temperature >= m_minTemp && temperature <= m_maxTemp &&
+         humidity >= m_minHumidity && humidity <= m_maxHumidity;
 }
 
-float Biome::GenerateHeight(int x, int z, PerlinNoise &heightMap) const {
-  float height = Utils::OctaveNoise(x * 0.005, z * 0.005, heightMap, 4);
+auto Biome::GenerateHeight(int x, int z, PerlinNoise &heightMap) const -> double {
+  double height = Utils::OctaveNoise(x * 0.005, z * 0.005, heightMap, 4);
   // height = glm::pow(height * 1.2, 4.9);
-  height = Utils::ScaleValue(0, 1, minHeight, maxHeight, height);
-  height = std::clamp(height, 0.f, static_cast<float>(CHUNK_HEIGHT));
+  height = Utils::ScaleValue(0.0, 1.0, m_minHeight, m_maxHeight, height);
+  height = std::clamp(height, 0.0, static_cast<double>(CHUNK_HEIGHT));
   
   return height;
 }
 
-Block Biome::GenerateBlock(int x, int y, int z, int height, float stoneNoise) const {
+auto Biome::GenerateBlock(int x, int y, int z, int height, double stoneNoise) const -> Block {
   const int seaLevel = 62;
   const float stoneThreshold = 0.75;
-  
-  switch(type) {
+
+// NOLINTBEGIN(bugprone-branch-clone)  
+
+  switch(m_type) {
     case BiomeType::Desert:
       if (y >= height - 2 && y <= height) return BlockType::SAND;
       if (y < height - 2) return BlockType::STONE;
@@ -90,38 +97,40 @@ Block Biome::GenerateBlock(int x, int y, int z, int height, float stoneNoise) co
       break;
     default:
   }
+// NOLINTEND(bugprone-branch-clone)  
+
   return BlockType::AIR;
 }
 
-BiomeType Biome::GetType() const {
-  return type;
+auto Biome::GetType() const -> BiomeType {
+  return m_type;
 }
 
-float Biome::GetMinHeight() const {
-  return minHeight;
+auto Biome::GetMinHeight() const -> double {
+  return m_minHeight;
 }
 
-float Biome::GetMaxHeight() const {
-  return maxHeight;
+auto Biome::GetMaxHeight() const -> double {
+  return m_maxHeight;
 }
 
-float Biome::GetMinTemperature() const {
-  return minTemp;
+auto Biome::GetMinTemperature() const -> double {
+  return m_minTemp;
 }
 
-float Biome::GetMaxTemperature() const {
-  return maxTemp;
+auto Biome::GetMaxTemperature() const -> double {
+  return m_maxTemp;
 }
 
-float Biome::GetMinHumidity() const {
-  return minHumidity;
+auto Biome::GetMinHumidity() const -> double {
+  return m_minHumidity;
 }
 
-float Biome::GetMaxHumidty() const {
-  return maxHumidity;
+auto Biome::GetMaxHumidty() const -> double {
+  return m_maxHumidity;
 }
 
-std::string Biome::GetBiomeName(BiomeType type) {
+auto Biome::GetBiomeName(BiomeType type) -> std::string {
   switch (type) {
     case BiomeType::Desert:
       return "Desert";

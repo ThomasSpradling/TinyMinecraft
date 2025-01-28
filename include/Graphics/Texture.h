@@ -8,17 +8,25 @@ namespace Graphics {
 
 class Texture {
 public:
-  Texture() = default;
-  ~Texture() = default;
+  Texture(const std::string &filePath);
 
-  void Load(const std::string &filePath, int id);
-  void Bind(int id);
+  ~Texture();
+  Texture(const Texture &) = delete;
+  auto operator=(const Texture &) -> Texture & = delete;
+  Texture(const Texture &&) = delete;
+  auto operator=(const Texture &&) -> Texture & = delete;
+
+  void Bind() const;
+  [[nodiscard]] auto GetId() const -> GLuint;
 
 private:
-  GLuint handle;
-  int width;
-  int height;
-  int channelCount;
+  static int currentTextureId;
+
+  GLuint m_handle;
+  GLuint m_id;
+  int m_width = 0;
+  int m_height = 0;
+  int m_channelCount = 0;
 };
 
 }

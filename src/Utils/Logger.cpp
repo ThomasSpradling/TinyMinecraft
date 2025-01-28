@@ -2,13 +2,13 @@
 
 namespace Utils {
 
-Logger g_logger;
+Logger const g_logger;
 
 void Logger::SetOutputCallback(std::function<void(const std::string &)> func) {
   outputCallback = std::move(func);
 }
 
-std::string Logger::GetColor(Level level) const {
+auto Logger::GetColor(Level level) const -> std::string {
   switch (level) {
     case Level::Debug: return BLUE;
     case Level::Warning: return YELLOW;
@@ -19,7 +19,7 @@ std::string Logger::GetColor(Level level) const {
   }
 }
 
-std::string Logger::LevelToString(Level level) const {
+auto Logger::LevelToString(Level level) const -> std::string {
   switch (level) {
     case Level::Message: return "MESSAGE";
     case Level::Debug: return "DEBUG";

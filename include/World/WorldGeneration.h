@@ -19,11 +19,11 @@ public:
 
   void LoadUnloadedBlocks(Chunk &chunk);
 
-  std::pair <const Biome*, const Biome*> SelectBiomes(float temperature, float humidity) const;
+  std::pair <const Biome*, const Biome*> SelectBiomes(double temperature, double humidity) const;
 private:
-  World &world;
-  std::unordered_map<BiomeType, Biome> biomes;
-  std::unordered_map<glm::ivec2, std::vector<std::pair<glm::vec3, BlockType>>, Utils::IVec2Hash> unloadedBlocks;
+  World &m_world;
+  std::unordered_map<BiomeType, Biome> m_biomes;
+  std::unordered_map<glm::ivec2, std::vector<std::pair<glm::vec3, BlockType>>, Utils::IVec2Hash> m_unloadedBlocks;
 
   bool CanTreeSpawn(Chunk &chunk, int x, int surfaceY, int z, int radius);
   void SpawnTree(Chunk &chunk, int x, int surfaceY, int z);

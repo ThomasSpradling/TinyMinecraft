@@ -6,43 +6,39 @@
 #include "Graphics/Shader.h"
 #include "UI/UserInterface.h"
 #include "World/World.h"
-#include "Graphics/gfx.h"
 #include <memory>
 
 namespace Graphics {
 
 class Renderer {
 public:
-  Renderer() = default;
-
-  void Initialize(float viewportWidth, float viewportHeight);
+  Renderer(float viewportWidth, float viewportHeight);
   
-  void RenderShadows(World::World &world);
+  // void RenderShadows(World::World &world);
   void RenderWorld(World::World &world);
   void RenderUI(UI::UserInterface &ui);
 
   void Begin3D(const std::shared_ptr<Scene::Camera> &camera3D);
   void End3D();
-  auto HasCamera() const -> bool;
+  [[nodiscard]] auto HasCamera() const -> bool;
 
-  void ClearBackground(const glm::vec3 &color);
+  void ClearBackground(const glm::vec3 &color) const;
   void ToggleWireframeMode();
 
 private:
-  Shader uiShader, blockShader, waterShader, textShader, depthShader, debugDepthQuad;
-  Texture blockAtlasTexture, fontMap;
+  Shader m_uiShader, m_blockShader, m_waterShader, m_textShader, m_depthShader, m_debugDepthQuadShader;
+  Texture m_blockAtlasTexture, m_fontMap;
+  std::shared_ptr<Scene::Camera> m_currentCamera = nullptr;
 
   /// TODO: Remove
-  GLuint depthMapFBO, depthMap;
+  // GLuint m_depthMapFBO, m_depthMap;
+  // float m_shadowMapWidth, m_shadowMapHeight;
 
-  float viewportWidth, viewportHeight;
-  float shadowMapWidth, shadowMapHeight;
+  float m_viewportWidth, m_viewportHeight;
 
-  std::shared_ptr<Scene::Camera> currentCamera = nullptr;
+  bool m_isWireframeMode = false;
 
-  bool isWireframeMode = false;
-
-  void InitializeShadowMapping();
+  // void InitializeShadowMapping();
 };
 
 }

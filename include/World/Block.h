@@ -34,7 +34,7 @@ public:
   void SetType(BlockType value);
 
 private:
-  BlockType type = BlockType::AIR;
+  BlockType m_type = BlockType::AIR;
 };
 
 }

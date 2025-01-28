@@ -2,39 +2,40 @@
 #define WINDOW_H_
 
 #include "Application/InputHandler.h"
-#include "Graphics/gfx.h"
-#include <iostream>
-#include <unordered_map>
 
 namespace Application {
 
 class Window {
 public:
-  GLFWwindow *handle;
-
-  Window() = default;
-  ~Window() = default;
+  Window(int width, int height, const std::string &name, InputHandler &inputHandler);
+  
+  ~Window();
+  Window(const Window &) = delete;
+  auto operator=(const Window &) -> Window & = delete;
+  Window(Window &&) = delete;
+  auto operator=(Window &&) -> Window & = delete;
 
   // Sets up GLFW and attaches the inputHandler to it
-  void Initialize(int width, int height, const std::string &name, InputHandler &inputHandler);
+  // void Initialize(int width, int height, const std::string &name, InputHandler &inputHandler);
 
-  bool ShouldClose();
+  auto ShouldClose() -> bool;
 
-  void PollEvents();
+  void PollEvents() const;
 
   void Close();
 
-  int GetWidth();
-  int GetHeight();
+  [[nodiscard]] auto GetWidth() const -> int;
+  [[nodiscard]] auto GetHeight() const -> int;
+
+  [[nodiscard]] auto GetHandle() const -> GLFWwindow *;
 
   void SwapBuffers();
 
 private:
-  int width, height;
+  int m_width, m_height;
+  GLFWwindow *m_handle;
 
-  void static ErrorCallback(int code, const char *description) {
-    std::cerr << "GLFW error " << code << ": " << description << std::endl;
-  }
+  void static ErrorCallback(int code, const char *description);
 };
 
 }

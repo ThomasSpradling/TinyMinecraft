@@ -1,6 +1,7 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
+#include <cstdint>
 #include <functional>
 #include <iomanip>
 #include <iostream>
@@ -12,7 +13,7 @@ namespace Utils {
 
 class Logger {
 public:
-  enum class Level {
+  enum class Level : uint8_t {
     Message,
     Debug,
     Profile,
@@ -26,10 +27,10 @@ public:
   void SetOutputCallback(std::function<void(const std::string &)> func);
 
   template<typename... Args>
-  void Log(Level level, const std::string &format, Args... args) {
+  void Log(Level level, const std::string &format, Args... args) const {
     std::ostringstream oss;
 
-    if constexpr (sizeof...(args)  > 0) FormatString(oss, format, args...);
+    if constexpr (sizeof...(args) > 0) FormatString(oss, format, args...);
     else oss << format;
 
     std::string color = GetColor(level);
@@ -42,27 +43,27 @@ public:
   }
 
   template<typename... Args>
-  void Message(const std::string &format, Args... args) {
+  void Message(const std::string &format, Args... args) const {
     Log(Level::Message, format, args...);
   }
   
   template<typename... Args>
-  void Debug(const std::string &format, Args... args) {
+  void Debug(const std::string &format, Args... args) const {
     Log(Level::Debug, format, args...);
   }
   
   template<typename... Args>
-  void Warning(const std::string &format, Args... args) {
+  void Warning(const std::string &format, Args... args) const {
     Log(Level::Warning, format, args...);
   }
 
   template<typename... Args>
-  void Error(const std::string &format, Args... args) {
+  void Error(const std::string &format, Args... args) const {
     Log(Level::Error, format, args...);
   }
 
   template<typename... Args>
-  void Fatal(const std::string &format, Args... args) {
+  void Fatal(const std::string &format, Args... args) const {
     Log(Level::Fatal, format, args...);
   }
 
@@ -77,12 +78,12 @@ private:
     std::cout << msg;
   };
 
-  std::string GetColor(Level level) const;
+  [[nodiscard]] auto GetColor(Level level) const -> std::string;
 
-  std::string LevelToString(Level level) const;
+  [[nodiscard]] auto LevelToString(Level level) const -> std::string;
 
   template<typename T>
-  void FormatString(std::ostringstream &oss, const std::string &format, const T &value) {
+  void FormatString(std::ostringstream &oss, const std::string &format, const T &value) const {
     size_t placeholderPos = format.find("{}");
     if (placeholderPos != std::string::npos) {
       oss << format.substr(0, placeholderPos) << ToString(value) << format.substr(placeholderPos + 2);
@@ -92,7 +93,7 @@ private:
   }
 
   template<typename T, typename... Args>
-  void FormatString(std::ostringstream &oss, const std::string& format, const T& value, Args... args) {
+  void FormatString(std::ostringstream &oss, const std::string& format, const T& value, Args... args) const {
     size_t placeholderPos = format.find("{}");
     if (placeholderPos != std::string::npos) {
         oss << format.substr(0, placeholderPos) << ToString(value);
@@ -103,7 +104,7 @@ private:
   }
 
   template<typename T>
-  std::string ToString(const T &value) {
+  auto ToString(const T &value) const -> std::string {
     if constexpr (std::is_arithmetic_v<T>) {
       return std::to_string(value);
     } else {
@@ -113,20 +114,20 @@ private:
     }
   }
 
-  std::string ToString(const glm::vec3 &vec) {
+  [[nodiscard]] auto ToString(const glm::vec3 &vec) const -> std::string {
     std::ostringstream oss;
     oss << "vec3(" << vec.x << ", " << vec.y <<  ", " << vec.z << ")";
     return oss.str();
   }
 
-  std::string ToString(const glm::ivec2 &vec) {
+  [[nodiscard]] auto ToString(const glm::ivec2 &vec) const -> std::string {
     std::ostringstream oss;
     oss << "vec3(" << vec.x << ", " << vec.y << ")";
     return oss.str();
   }
 };
 
-extern Logger g_logger;
+extern const Logger g_logger;
 
 }
 

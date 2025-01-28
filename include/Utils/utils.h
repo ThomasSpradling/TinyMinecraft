@@ -7,11 +7,16 @@
 namespace Utils {
 
 // Linearly scales a value from starting range to end range
-float ScaleValue(float min1, float max1, float min2, float max2, float value);
+template <typename T>
+auto ScaleValue(T min1, T max1, T min2, T max2, T value) -> T {
+  T slope = (max2 - min2) / (max1 - min1);
+  T intercept = min2 - slope * min1;
+  return slope * value + intercept;
+}
 
 // Face
 template <int VertCount>
-glm::vec3 CalculateConvexCenter(const std::array<glm::vec3, VertCount> &vertices) {
+auto CalculateConvexCenter(const std::array<glm::vec3, VertCount> &vertices) -> glm::vec3 {
   glm::vec3 res { 0.0f };
   float weights = 0.0;
 

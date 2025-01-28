@@ -1,12 +1,19 @@
 #include "UI/UserInterface.h"
+#include "Graphics/gfx.h"
 #include "Utils/defs.h"
 #include "World/Biome.h"
+#include <algorithm>
 #include <iomanip>
 #include <sstream>
 
 namespace UI {
 
-void UserInterface::Initialize() {
+UserInterface::UserInterface()
+  : m_basicVBO(GL_ARRAY_BUFFER)
+  , m_textVBO(GL_ARRAY_BUFFER)
+  , m_basicEBO(GL_ELEMENT_ARRAY_BUFFER)
+  , m_textEBO(GL_ELEMENT_ARRAY_BUFFER)
+{
   InitializeGeneral();
   InitializeText();
 }
@@ -15,26 +22,26 @@ void UserInterface::Arrange() {
   std::ostringstream debug;
 
 #ifdef UTILS_ShowFPS  // FPS
-  debug << "CURRENT FPS: " << currentFPS << "\n";
+  debug << "CURRENT FPS: " << m_currentFPS << "\n";
 #endif
 
   debug << std::fixed << std::setprecision(3);
   debug << "XYZ: " 
-        << playerPosition.x << ", " 
-        << playerPosition.y << ", "
-        << playerPosition.z << "\n";
+        << m_playerPosition.x << ", " 
+        << m_playerPosition.y << ", "
+        << m_playerPosition.z << "\n";
   debug << std::defaultfloat;
 
   debug << "Chunk: "
-        << chunkPosition.x << ", "
-        << chunkPosition.y << "\n\n";
+        << m_chunkPosition.x << ", "
+        << m_chunkPosition.y << "\n\n";
 
   debug << std::fixed << std::setprecision(5);
   debug << "Climate: "
-        << "T " << temperature << ", H " << humidity << "\n";
+        << "T " << m_temperature << ", H " << m_humidity << "\n";
 
   debug << "Biome: "
-        << World::Biome::GetBiomeName(biome) << "\n";
+        << World::Biome::GetBiomeName(m_biome) << "\n";
 
   DrawText(debug.str(), 10, 10, glm::vec3(1, 1, 1), 1);
   
@@ -44,108 +51,78 @@ void UserInterface::Arrange() {
 void UserInterface::Render(Graphics::Shader &uiShader, Graphics::Shader &textShader, Graphics::Texture &fontMap) {
   //// General
   uiShader.Use();
-  glBindVertexArray(basicVAO);
-  glDrawElements(GL_TRIANGLES, basicVertexCount, GL_UNSIGNED_INT, 0);
+  m_basicVAO.Bind();
+
+  glDrawElements(GL_TRIANGLES, static_cast<int>(m_basicVertexCount), GL_UNSIGNED_INT, nullptr);
   glBindVertexArray(0);
 
   //// Text
   textShader.Use();
-  fontMap.Bind(1);
-  glBindVertexArray(textVAO);
-  glDrawElements(GL_TRIANGLES, textVertexCount, GL_UNSIGNED_INT, 0);
+  fontMap.Bind();
+
+  m_textVAO.Bind();
+
+  glDrawElements(GL_TRIANGLES, static_cast<int>(m_textVertexCount), GL_UNSIGNED_INT, nullptr);
   glBindVertexArray(0);
 }
 
-void UserInterface::SetClimateValues(float temp, float humid, World::BiomeType biom) {
-  temperature = temp;
-  humidity = humid;
-  biome = biom;
+void UserInterface::SetClimateValues(float temperature, float humidity, World::BiomeType biome) {
+  m_temperature = temperature;
+  m_humidity = humidity;
+  m_biome = biome;
 }
 
 void UserInterface::Update() {
-  UpdateHelper(basicVAO, basicVBO, basicEBO, basicVertices, basicIndices);
-  UpdateHelper(textVAO, textVBO, textEBO, textVertices, textIndices);
+  UpdateHelper(m_basicVAO, m_basicVBO, m_basicEBO, m_basicVertices, m_basicIndices);
+  UpdateHelper(m_textVAO, m_textVBO, m_textEBO, m_textVertices, m_textIndices);
 
-  basicVertexCount = basicIndices.size();
-  textVertexCount = textIndices.size();
+  m_basicVertexCount = m_basicIndices.size();
+  m_textVertexCount = m_textIndices.size();
 
-  basicVertices.clear();
-  basicIndices.clear();
+  m_basicVertices.clear();
+  m_basicIndices.clear();
 
-  textVertices.clear();
-  textIndices.clear();
+  m_textVertices.clear();
+  m_textIndices.clear();
 }
 
 void UserInterface::InitializeGeneral() {
-  glGenVertexArrays(1, &basicVAO);
-  glGenBuffers(1, &basicVBO);
-  glGenBuffers(1, &basicEBO);
+  m_basicVAO.Bind();
+  m_basicVBO.Bind();
+  m_basicEBO.Bind();
 
-  glBindVertexArray(basicVAO);
-
-  glBindBuffer(GL_ARRAY_BUFFER, basicVBO);
-  glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, basicEBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
-
-  // positions
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*) 0);
-  glEnableVertexAttribArray(0);
-
-  // colors
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*) (2 * sizeof(GLfloat)));
-  glEnableVertexAttribArray(1);
-
-  glBindVertexArray(0);
+  m_basicVAO.AddAttribute(0, 2, GL_FLOAT, 5 * sizeof(GLfloat), 0);
+  m_basicVAO.AddAttribute(1, 2, GL_FLOAT, 5 * sizeof(GLfloat), 2 * sizeof(GLfloat));
 }
 
 void UserInterface::InitializeText() {
-  glGenVertexArrays(1, &textVAO);
-  glGenBuffers(1, &textVBO);
-  glGenBuffers(1, &textEBO);
+  m_textVAO.Bind();
+  m_textVBO.Bind();
+  m_textEBO.Bind();
 
-  glBindVertexArray(textVAO);
-
-  glBindBuffer(GL_ARRAY_BUFFER, textVBO);
-  glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
-
-  // positions
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*) 0);
-  glEnableVertexAttribArray(0);
-
-  // colors
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*) (2 * sizeof(GLfloat)));
-  glEnableVertexAttribArray(1);
-
-  // texture coordinates
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*) (5 * sizeof(GLfloat)));
-  glEnableVertexAttribArray(2);
-
-  glBindVertexArray(0);
+  m_textVAO.AddAttribute(0, 2, GL_FLOAT, 7 * sizeof(GLfloat), 0);
+  m_textVAO.AddAttribute(1, 3, GL_FLOAT, 7 * sizeof(GLfloat), 2 * sizeof(GLfloat));
+  m_textVAO.AddAttribute(2, 2, GL_FLOAT, 7 * sizeof(GLfloat), 5 * sizeof(GLfloat));
 }
 
 void UserInterface::SetCurrentFPS(int fps) {
-  currentFPS = fps;
+  m_currentFPS = fps;
 }
 
 void UserInterface::SetPlayerPosition(const glm::vec3 &pos) {
-  playerPosition = pos;
+  m_playerPosition = pos;
 }
 
 void UserInterface::SetChunkPosition(const glm::ivec2 &pos) {
-  chunkPosition = pos;
+  m_chunkPosition = pos;
 }
 
 void UserInterface::DrawRectangle(GLfloat x, GLfloat y, GLfloat width, GLfloat height, const glm::vec3 &color) {
-  GLuint n = basicVertices.size() / 5;   // index start
+  GLuint n = m_basicVertices.size() / 5;   // index start
 
   // Setup geometry:
   
-  basicVertices.insert(basicVertices.end(), {
+  m_basicVertices.insert(m_basicVertices.end(), {
     // position              // color
     x, y,                    color.r, color.g, color.b,      // top left
     x + width, y,            color.r, color.g, color.b,      // top right
@@ -153,29 +130,24 @@ void UserInterface::DrawRectangle(GLfloat x, GLfloat y, GLfloat width, GLfloat h
     x + width, y + height,   color.r, color.g, color.b      // bottom right
   });
 
-  basicIndices.insert(basicIndices.end(), {
+  m_basicIndices.insert(m_basicIndices.end(), {
     n + 0, n + 1, n + 2,      // top left triangle
     n + 2, n + 3, n + 1       // bottom right triangle
   });
 }
 
-void UserInterface::UpdateHelper(GLuint VAO, GLuint VBO, GLuint EBO, std::vector<GLfloat> &verts, std::vector<GLuint> &indices) {
-  glBindVertexArray(VAO);
+void UserInterface::UpdateHelper(Graphics::VertexArray &vao, Graphics::BufferObject &vbo, Graphics::BufferObject &ebo, std::vector<GLfloat> &verts, std::vector<GLuint> &indices) {
+  vao.Bind();
 
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(sizeof(GLfloat) * verts.size()), verts.data(), GL_DYNAMIC_DRAW);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(sizeof(GLuint) * indices.size()), indices.data(), GL_DYNAMIC_DRAW);
-
-  glBindVertexArray(0);
+  vbo.BufferData(verts, GL_DYNAMIC_DRAW);
+  ebo.BufferData(indices, GL_DYNAMIC_DRAW);
 }
 
 void UserInterface::DrawText(const std::string &text, GLfloat x, GLfloat y, const glm::vec3 &color, float scale = 1) {
   std::string upperText = text;
-  std::transform(upperText.begin(), upperText.end(), upperText.begin(), ::toupper);
+  std::ranges::transform(upperText, upperText.begin(), ::toupper);
 
-  GLuint n = textVertices.size() / 7;
+  GLuint n = m_textVertices.size() / 7;
 
   float offsetX = x;
   float offsetY = y;
@@ -199,7 +171,7 @@ void UserInterface::DrawText(const std::string &text, GLfloat x, GLfloat y, cons
       static_cast<float>(TEXT_CHAR_HEIGHT) / static_cast<float>(FONT_MAP_HEIGHT)
     );
 
-    glm::vec2 topLeftTexCoord = glm::vec2(tileSize.x * indexX, tileSize.y * indexY);
+    glm::vec2 topLeftTexCoord = glm::vec2(tileSize.x * static_cast<float>(indexX), tileSize.y * static_cast<float>(indexY));
 
     std::array<glm::vec2, 4> texCoords = {
         topLeftTexCoord,
@@ -209,7 +181,7 @@ void UserInterface::DrawText(const std::string &text, GLfloat x, GLfloat y, cons
     };
 
     // render it
-    textVertices.insert(textVertices.end(), {
+    m_textVertices.insert(m_textVertices.end(), {
       offsetX, offsetY,
       color.r, color.g, color.b,
       texCoords[0].x, texCoords[0].y,
@@ -227,7 +199,7 @@ void UserInterface::DrawText(const std::string &text, GLfloat x, GLfloat y, cons
       color.r, color.g, color.b,texCoords[3].x, texCoords[3].y,
     });
 
-    textIndices.insert(textIndices.end(), {
+    m_textIndices.insert(m_textIndices.end(), {
       n + 0, n + 1, n + 2,      // top left triangle
       n + 2, n + 3, n + 1       // bottom right triangle
     });

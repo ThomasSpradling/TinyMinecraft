@@ -9,7 +9,6 @@ namespace Scene {
 class Camera {
 public:
   Camera() = default;
-  ~Camera() = default;
 
   void SetPosition(glm::vec3 pos);
   void SetUpVector(glm::vec3 vec);
@@ -19,37 +18,36 @@ public:
   void SetNearPlane(GLfloat nearPlane);
   void SetFarPlane(GLfloat farPlane);
 
-  glm::mat4 GetViewProjection();
+  auto GetViewProjection() -> glm::mat4;
 
-  glm::vec3 GetFront() const;
-  glm::vec3 GetRight() const;
-  glm::vec3 GetUp() const;
+  [[nodiscard]] auto GetFront() const -> glm::vec3;
+  [[nodiscard]] auto GetRight() const -> glm::vec3;
+  [[nodiscard]] auto GetUp() const -> glm::vec3;
 
-  float GetYaw() const;
-  float GetPitch() const;
+  [[nodiscard]] auto GetYaw() const -> float;
+  [[nodiscard]] auto GetPitch() const -> float;
 
   void Move();
   void SetMoveDirection(const glm::vec3 &direction);
   void UpdateViewDirection(float newYaw, float newPitch);
 
-  glm::vec3 &GetPosition();
+  [[nodiscard]] auto GetPosition() const -> glm::vec3;
 
 private:
-  glm::vec3 position { 0.0f };
+  glm::vec3 m_position { 0.0f };
 
-  glm::vec3 up { 0.0f, 1.0f, 0.0f };
-  glm::vec3 front { 0.0f, 0.0f, -1.0f };
+  glm::vec3 m_up { 0.0f, 1.0f, 0.0f };
+  glm::vec3 m_front { 0.0f, 0.0f, -1.0f };
 
-  glm::vec3 moveDirection { 0.0f, 0.0f, 0.0f };
+  glm::vec3 m_moveDirection { 0.0f, 0.0f, 0.0f };
 
-  float pitch = 0.0f, yaw = -90.0f;
+  float m_pitch = 0.0f, m_yaw = -90.0f;
+  float m_speed = 0.05f;
 
-  const float speed = 0.05f;
-
-  float fov { 45.0f };
-  float aspect { 1.6f };
-  float near = 0.1;
-  float far = 512.0f;
+  float m_fov { 45.0f };
+  float m_aspect { 1.6f };
+  float m_near = 0.1;
+  float m_far = 512.0f;
 };
 
 }

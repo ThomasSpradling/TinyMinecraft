@@ -8,11 +8,17 @@ namespace Utils {
   
 std::unordered_map<ProfileCategory, std::unordered_map<std::string, std::vector<long long>>> Profiler::timings;
 
+Profiler::Profiler(std::string_view section, ProfileCategory category)
+  : m_category(category)
+  , m_name(section)
+  , m_start(std::chrono::high_resolution_clock::now())
+{}
+
 Profiler::~Profiler() {
   auto end = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+  auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - m_start).count();
 
-  Profiler::LogDuration(category, name, duration);
+  Profiler::LogDuration(m_category, m_name, duration);
 }
 
 void Profiler::LogSummary() {
@@ -26,11 +32,11 @@ void Profiler::LogSummary() {
     oss << std::string(60, '-') << "\n";
 
     for (const auto& [section, durations] : sections) {
-      float total = 0;
+      long long total = 0;
       for (const auto& duration : durations) {
         total += duration;
       }
-      int average = total / durations.size();
+      long long average = total / static_cast<long long>(durations.size());
       oss << std::setw(40) << std::left << section
           << " | Runs: " << std::setw(9) << durations.size()
           << " | Avg: " << std::setw(9) << FormatDuration(average)
@@ -41,17 +47,19 @@ void Profiler::LogSummary() {
   g_logger.Log(Logger::Level::Profile, oss.str());
 }
 
-std::string Profiler::FormatDuration(long long nanoseconds) {
+auto Profiler::FormatDuration(long long nanoseconds) -> std::string {
   std::ostringstream oss;
+  
+  // auto nano = static_cast<double>(nanoseconds);
 
-  if (nanoseconds < 1e4) {
+  if (nanoseconds < 10000) {
     oss << nanoseconds << " ns";
-  } else if (long long microseconds = nanoseconds / 1e3; microseconds < 1e4) {
+  } else if (long long microseconds = nanoseconds / 1000; microseconds < 10000) {
     oss << microseconds << " µs";
-  } else if (long milliseconds = microseconds / 1e3; milliseconds < 1e4) {
+  } else if (long milliseconds = microseconds / 1000; milliseconds < 10000) {
     oss << milliseconds << " ms";
   } else {
-    int seconds = milliseconds / 1e3;
+    long seconds = milliseconds / 1000;
     oss << seconds << " sec";
   }
 
@@ -66,7 +74,7 @@ void Profiler::LogDuration(ProfileCategory cat, const std::string &section, long
 #endif
 }
 
-std::string Profiler::CategoryToString(ProfileCategory cat) { 
+auto Profiler::CategoryToString(ProfileCategory cat) -> std::string { 
   switch (cat) {
     case ProfileCategory::Window:
       return "Window";

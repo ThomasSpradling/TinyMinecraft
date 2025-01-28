@@ -17,12 +17,16 @@ public:
 
   BlockAtlas() = delete;
   ~BlockAtlas() = delete;
+  BlockAtlas(const BlockAtlas &) = delete;
+  auto operator=(const BlockAtlas &) -> BlockAtlas & = delete;
+  BlockAtlas(BlockAtlas &&) = delete;
+  auto operator=(BlockAtlas &&) -> BlockAtlas & = delete;
 
-  static glm::vec2 GetNormalizedTextureCoords(BlockType type, BlockFace face);
+  static auto GetNormalizedTextureCoords(BlockType type, BlockFace face) -> glm::vec2;
 
 
 private:
-  static glm::ivec2 GetTextureCoords(BlockType type, BlockFace face);
+  static auto GetTextureCoords(BlockType type, BlockFace face) -> glm::ivec2;
 };
 
 }

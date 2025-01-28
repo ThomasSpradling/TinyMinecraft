@@ -2,9 +2,6 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <iostream>
-#include <memory>
-#include <optional>
 #include "World/World.h"
 #include "Utils/Profiler.h"
 #include "Utils/defs.h"
@@ -16,33 +13,42 @@
 
 namespace World {
 
-World::World() : temperatureMap(seed + 1), humidityMap(seed + 2), blendMap(seed + 3), heightMap(seed + 4), stoneMap(seed + 5), treeMap(seed + 6), grassMap(seed + 7), worldGen(*this) {}
+World::World()
+  : m_temperatureMap(seed + 1)
+  , m_humidityMap(seed + 2)
+  , m_blendMap(seed + 3)
+  , m_heightMap(seed + 4)
+  , m_stoneMap(seed + 5)
+  , m_treeMap(seed + 6)
+  , m_grassMap(seed + 7)
+  , m_worldGen(*this)
+{}
 
-float World::GetTemperature(int x, int z) {
-  const float temperatureScale = 0.001;
+auto World::GetTemperature(int x, int z) -> double {
+  const double temperatureScale = 0.001;
 
-  float temperature = Utils::OctaveNoise(x * temperatureScale, z * temperatureScale, temperatureMap);
+  double temperature = Utils::OctaveNoise(x * temperatureScale, z * temperatureScale, m_temperatureMap);
   temperature = Utils::ScaleValue(0.3, 0.7, 0.1, 0.9, temperature);
-  temperature = std::clamp(temperature, 0.f, 1.f);
+  temperature = std::clamp(temperature, 0.0, 1.0);
 
   return temperature;
 }
 
-float World::GetHumidity(int x, int z) {
-  const float humidityScale = 0.003;
+auto World::GetHumidity(int x, int z) -> double {
+  const double humidityScale = 0.003;
 
-  float humidity = Utils::OctaveNoise(x * humidityScale, z * humidityScale, humidityMap);
+  double humidity = Utils::OctaveNoise(x * humidityScale, z * humidityScale, m_humidityMap);
   humidity = Utils::ScaleValue(0.3, 0.7, 0.1, 0.9, humidity);
-  humidity = std::clamp(humidity, 0.f, 1.f);
+  humidity = std::clamp(humidity, 0.0, 1.0);
 
-  return  humidity;
+  return humidity;
 }
 
-BiomeType World::GetBiome(int x, int z) {
-  return worldGen.SelectBiomes(GetTemperature(x, z), GetHumidity(x, z)).first->GetType();
+auto World::GetBiome(int x, int z) -> BiomeType {
+  return m_worldGen.SelectBiomes(GetTemperature(x, z), GetHumidity(x, z)).first->GetType();
 }
 
-void World::Render(Graphics::Texture &blockAtlasTexture, GLuint depthMap, Graphics::Shader &blockShader, Graphics::Shader &waterShader, const glm::vec3 &playerPos) {
+void World::Render(Graphics::Texture &blockAtlasTexture, Graphics::Shader &blockShader, Graphics::Shader &waterShader, const glm::vec3 &playerPos) {
   PROFILE_FUNCTION(World)
   
   std::vector<Chunk *> translucentChunks;
@@ -52,12 +58,12 @@ void World::Render(Graphics::Texture &blockAtlasTexture, GLuint depthMap, Graphi
       translucentChunks.push_back(&chunk);
     }
 
-    chunk.Render(blockAtlasTexture, depthMap, blockShader, playerPos);
+    chunk.Render(blockAtlasTexture, blockShader, playerPos);
   }
 
   glm::vec2 playerChunkPos = GetChunkPosFromCoords(playerPos);
 
-  std::sort(translucentChunks.begin(), translucentChunks.end(), [playerChunkPos](Chunk *a, Chunk *b) {
+  std::ranges::sort(translucentChunks, [playerChunkPos](Chunk *a, Chunk *b) {
     float distanceA = glm::distance(playerChunkPos, static_cast<glm::vec2>(a->GetChunkPos()));
     float distanceB = glm::distance(playerChunkPos, static_cast<glm::vec2>(b->GetChunkPos()));
 
@@ -65,7 +71,7 @@ void World::Render(Graphics::Texture &blockAtlasTexture, GLuint depthMap, Graphi
   });
 
   for (auto chunk : translucentChunks) {
-    chunk->RenderTranslucent(blockAtlasTexture, depthMap, blockShader, playerPos);
+    chunk->RenderTranslucent(blockAtlasTexture, blockShader, playerPos);
   }
 }
 
@@ -79,13 +85,13 @@ void World::Update(const glm::vec3 &playerPos) {
 
   std::vector<glm::ivec2> chunksToUnload;
 
-  for (auto &[chunkPos, chunk] : loadedChunks) {
+  for (auto &[chunkPos, chunk] : m_loadedChunks) {
     // if not nearby
 
     int dx = chunkPos.x - playerChunkPos.x;
     int dz = chunkPos.y - playerChunkPos.y;
 
-    float distanceSquared = dx * dx + dz * dz;
+    int distanceSquared = dx * dx + dz * dz;
 
     if (distanceSquared > loadRadius * loadRadius) {
       chunksToUnload.push_back(chunkPos);
@@ -93,17 +99,17 @@ void World::Update(const glm::vec3 &playerPos) {
   }
 
   for (const auto &chunkPos : chunksToUnload) {
-    UnloadChunk(loadedChunks.at(chunkPos));
+    UnloadChunk(m_loadedChunks.at(chunkPos));
   }
 
   for (int dz = -loadRadius; dz <= loadRadius; ++dz) {
     for (int dx = -loadRadius; dx <= loadRadius; ++dx) {
-      float distanceSquared = dx * dx + dz * dz;
+      int distanceSquared = dx * dx + dz * dz;
 
       if (distanceSquared <= loadRadius * loadRadius) {
         glm::ivec2 chunkPos { playerChunkPos.x + dx, playerChunkPos.y + dz };
 
-        if (!loadedChunks.contains(chunkPos)) {
+        if (!m_loadedChunks.contains(chunkPos)) {
           LoadChunk(chunkPos.x, chunkPos.y);
         }
       }
@@ -112,26 +118,26 @@ void World::Update(const glm::vec3 &playerPos) {
 
   for (int dz = -loadRadius; dz <= loadRadius; ++dz) {
     for (int dx = -loadRadius; dx <= loadRadius; ++dx) {
-      float distanceSquared = dx * dx + dz * dz;
+      int distanceSquared = dx * dx + dz * dz;
 
       if (distanceSquared <= loadRadius * loadRadius) {
         glm::ivec2 chunkPos { playerChunkPos.x + dx, playerChunkPos.y + dz };
 
-        worldGen.LoadUnloadedBlocks(GetChunkAt(chunkPos));
+        m_worldGen.LoadUnloadedBlocks(GetChunkAt(chunkPos));
       }
     }
   }
 
   // Figure out closet dirty chunk in range
 
-  float shortestDistance = std::numeric_limits<float>::max();
+  int shortestDistance = std::numeric_limits<int>::max();
   Chunk *closestDirtyChunk = nullptr;
 
-  for (auto &[chunkPos, chunk] : loadedChunks) {
+  for (auto &[chunkPos, chunk] : m_loadedChunks) {
     int dx = chunkPos.x - playerChunkPos.x;
     int dz = chunkPos.y - playerChunkPos.y;
 
-    float distanceSquared = dx * dx + dz * dz;
+    int distanceSquared = dx * dx + dz * dz;
 
     if (distanceSquared <= viewRadius * viewRadius && chunk.IsDirty()) {
       if (distanceSquared < shortestDistance) {
@@ -153,11 +159,11 @@ void World::Update(const glm::vec3 &playerPos) {
 void World::UnloadChunk(int x, int z) {
   const glm::ivec2 chunkPos { x, z };
 
-  if (loadedChunks.contains(chunkPos)) {
+  if (m_loadedChunks.contains(chunkPos)) {
 
     // Store into cache / persistent storage
 
-    loadedChunks.erase(chunkPos);
+    m_loadedChunks.erase(chunkPos);
   }
 }
 
@@ -172,14 +178,13 @@ void World::LoadChunk(int x, int z) {
 
   // Check cache / persistent storage. If not there, then move on
 
-  Chunk chunk { *this, chunkPos };
-  chunk.Initialize();
-  chunk.SetState(ChunkState::Loaded);
+  m_loadedChunks.emplace(chunkPos, Chunk(*this, chunkPos));
 
-  worldGen.GenerateTerrainChunk(chunk, blendMap, heightMap, stoneMap);
-  worldGen.GenerateFeatures(chunk, treeMap, grassMap);
+  m_loadedChunks.at(chunkPos).SetState(ChunkState::Loaded);
+  m_worldGen.GenerateTerrainChunk(m_loadedChunks.at(chunkPos), m_blendMap, m_heightMap, m_stoneMap);
+  m_worldGen.GenerateFeatures(m_loadedChunks.at(chunkPos), m_treeMap, m_grassMap);
 
-  loadedChunks.emplace(chunkPos, chunk);
+  // Utils::g_logger.Debug("Hello??");
 }
 
 void World::LoadChunk(Chunk &chunk) {
@@ -190,28 +195,28 @@ void World::LoadChunk(Chunk &chunk) {
   chunk.SetDirty(true);
 
   const glm::ivec2 &chunkPos = chunk.GetChunkPos();
-  if (!loadedChunks.contains(chunkPos)) {
-    worldGen.GenerateTerrainChunk(chunk, blendMap, heightMap, stoneMap);
-    worldGen.GenerateFeatures(chunk, treeMap, grassMap);
+  if (!m_loadedChunks.contains(chunkPos)) {
+    m_worldGen.GenerateTerrainChunk(chunk, m_blendMap, m_heightMap, m_stoneMap);
+    m_worldGen.GenerateFeatures(chunk, m_treeMap, m_grassMap);
 
-    loadedChunks.emplace(chunkPos, chunk);
+    m_loadedChunks.emplace(chunkPos, std::move(chunk));
   }
   chunk.SetState(ChunkState::Loaded);
 }
 
-Chunk &World::GetChunkAt(int x, int z) {
+auto World::GetChunkAt(int x, int z) -> Chunk & {
   return GetChunkAt(glm::ivec2(x, z));
 }
 
-Chunk &World::GetChunkAt(const glm::ivec2 &chunkPos) {
-  if (loadedChunks.contains(chunkPos)) {
-    return loadedChunks.at(chunkPos);
+auto World::GetChunkAt(const glm::ivec2 &chunkPos) -> Chunk & {
+  if (m_loadedChunks.contains(chunkPos)) {
+    return m_loadedChunks.at(chunkPos);
   }
   // TODO: More advanced logic here involving loading it first
 }
 
-std::unordered_map<glm::ivec2, Chunk, Utils::IVec2Hash> &World::GetLoadedChunks() {
-  return loadedChunks;
+auto World::GetLoadedChunks() -> std::unordered_map<glm::ivec2, Chunk, Utils::IVec2Hash> & {
+  return m_loadedChunks;
 }
 
 void World::SetBlockAt(const glm::vec3 &pos, BlockType type) {
@@ -219,18 +224,18 @@ void World::SetBlockAt(const glm::vec3 &pos, BlockType type) {
   block.SetType(type);
 }
 
-Block &World::GetBlockAt(const glm::vec3 &pos) {
+auto World::GetBlockAt(const glm::vec3 &pos) -> Block & {
   glm::ivec2 chunkPos = GetChunkPosFromCoords(pos);
   glm::vec3 offsetPos = GetLocalBlockCoords(pos);
 
-  return loadedChunks.at(chunkPos).GetBlockAt(offsetPos);
+  return m_loadedChunks.at(chunkPos).GetBlockAt(offsetPos);
 }
 
-bool World::HasBlock(const glm::vec3 &pos) {
+auto World::HasBlock(const glm::vec3 &pos) -> bool {
   return GetBlockAt(pos).GetType() != BlockType::AIR;
 }
 
-glm::vec3 World::GetLocalBlockCoords(const glm::vec3 &pos) {
+auto World::GetLocalBlockCoords(const glm::vec3 &pos) -> glm::vec3 {
   int localX = static_cast<int>(pos.x) % CHUNK_WIDTH;
   int localY = static_cast<int>(pos.y);
   int localZ = static_cast<int>(pos.z) % CHUNK_LENGTH;
@@ -239,10 +244,10 @@ glm::vec3 World::GetLocalBlockCoords(const glm::vec3 &pos) {
   if (localX < 0) localX += CHUNK_WIDTH;
   if (localZ < 0) localZ += CHUNK_LENGTH;
 
-  return glm::vec3(localX, localY, localZ);
+  return {localX, localY, localZ};
 }
 
-glm::ivec2 World::GetChunkPosFromCoords(const glm::vec3 &pos) {
+auto World::GetChunkPosFromCoords(const glm::vec3 &pos) -> glm::ivec2 {
   int offsetX = static_cast<int>(std::floor(pos.x / CHUNK_WIDTH));
   int offsetZ = static_cast<int>(std::floor(pos.z / CHUNK_LENGTH));
 
@@ -269,34 +274,31 @@ void World::HandlePlayerMovement(const glm::vec3 &before, const glm::vec3 &after
       GetChunkAt(playerChunkPosBefore).SortTranslucentBlocks(after);
     }
   } else {
-    // GetChunkAt(playerChunkPosBefore).SortTranslucentBlocks(after);
     for (const auto &offset : directions) {
       if (IsChunkLoaded(playerChunkPosBefore + offset)) {
         GetChunkAt(playerChunkPosBefore + offset).SortTranslucentBlocks(after);
       }
     }
   }
-
-
 }
 
-bool World::IsChunkLoaded(const glm::ivec2 &pos) {
-  return loadedChunks.contains(pos);
+auto World::IsChunkLoaded(const glm::ivec2 &pos) -> bool {
+  return m_loadedChunks.contains(pos);
 }
 
-bool World::IsFaceVisible(const Block &block, BlockFace face, const glm::vec3 &pos) {
+auto World::IsFaceVisible(const Block &block, BlockFace face, const glm::vec3 &pos) -> bool {
   glm::vec3 neighborPos = pos + face.GetNormal();
   glm::ivec2 neighborChunkPos = GetChunkPosFromCoords(neighborPos);
 
   // if not in a chunk
   if (neighborPos.y >= CHUNK_HEIGHT || neighborPos.y < 0 ||
-  !loadedChunks.contains(neighborChunkPos)) {
+  !m_loadedChunks.contains(neighborChunkPos)) {
     return true;
   }
 
   glm::vec3 neightborLocalPos = GetLocalBlockCoords(neighborPos);
 
-  Block neightboringBlock = loadedChunks.at(neighborChunkPos).GetBlockAt(neightborLocalPos);
+  Block neightboringBlock = m_loadedChunks.at(neighborChunkPos).GetBlockAt(neightborLocalPos);
 
   if (neightboringBlock.GetType() == BlockType::AIR) {
     return true;

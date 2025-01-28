@@ -1,21 +1,21 @@
 #ifndef CHUNK_H_
 #define CHUNK_H_
 
-#include <memory>
 #include <vector>
 
+#include "Graphics/BufferObject.h"
 #include "Graphics/Shader.h"
 #include "Graphics/Texture.h"
+#include "Graphics/VertexArray.h"
 #include "Utils/defs.h"
 #include "World/Block.h"
-#include "World/BlockFace.h"
 #include "Graphics/gfx.h"
 
 namespace World {
 
 class World;
 
-enum ChunkState {
+enum class ChunkState : uint8_t {
   Unloaded = 0,
   Loaded,
   Loading
@@ -30,61 +30,66 @@ struct FaceGeometry {
 
 class Chunk {
 public:
-  Chunk(World &world, const glm::ivec2 &chunkPos) : world(world), chunkPos(chunkPos) {}
+  Chunk(World &world, const glm::ivec2 &chunkPos);
+
   ~Chunk() = default;
+  Chunk(const Chunk &other) = delete;
+  auto operator=(const Chunk &other) -> Chunk & = delete;
+  Chunk(Chunk &&other) noexcept;
+  auto operator=(Chunk &&other) noexcept -> Chunk &;
 
-  void Initialize();
-
-  void Render(Graphics::Texture &blockAtlasTexture, GLuint depthMap, Graphics::Shader &blockShader, const glm::vec3 &playerPos);
-  void RenderTranslucent(Graphics::Texture &blockAtlasTexture, GLuint depthMap, Graphics::Shader &waterShader, const glm::vec3 &playerPos);
+  void Render(Graphics::Texture &blockAtlasTexture, Graphics::Shader &blockShader, const glm::vec3 &playerPos);
+  void RenderTranslucent(Graphics::Texture &blockAtlasTexture, Graphics::Shader &waterShader, const glm::vec3 &playerPos);
 
   void UpdateMesh();
   void UpdateTranslucentMesh(const glm::vec3 &playerPos);
   void SortTranslucentBlocks(const glm::vec3 &playerPos);
 
-  Block &GetBlockAt(GLuint x, GLuint y, GLuint z);
-  Block &GetBlockAt(const glm::vec3 &pos);
+  auto GetBlockAt(int x, int y, int z) -> Block &;
+  auto GetBlockAt(const glm::ivec3 &pos) -> Block &;
 
-  void SetBlockAt(GLuint x, GLuint y, GLuint z, const Block &block);
-  void SetBlockAt(const glm::vec3 &pos, const Block &block);
+  void SetBlockAt(int x, int y, int z, const Block &block);
+  void SetBlockAt(const glm::ivec3 &pos, const Block &block);
 
-  bool HasTranslucentBlocks();
+  [[nodiscard]] auto HasTranslucentBlocks() const -> bool;
   
-  GLsizei GetVertexCount();
+  auto GetVertexCount() -> GLsizei;
 
   void SetHidden(bool value);
-  bool IsHidden();
+  [[nodiscard]] auto IsHidden() const -> bool;
 
-  bool IsDirty() { return dirty; }
-  void SetDirty(bool value) { dirty = value; }
+  [[nodiscard]] auto IsDirty() const -> bool;
+  void SetDirty(bool value);
 
   void SetState(ChunkState value);
-  ChunkState GetState();
+  [[nodiscard]] auto GetState() const -> ChunkState;
 
-  glm::ivec2 &GetChunkPos();
+  [[nodiscard]] auto GetChunkPos() const -> glm::ivec2;
 
-  int GetSurfaceHeight(int x, int z);
+  auto GetSurfaceHeight(int x, int z) -> int;
+  
 private:
-  [[maybe_unused]]World &world;
+  World &m_world;
 
-  Block blocks[CHUNK_WIDTH][CHUNK_HEIGHT][CHUNK_LENGTH];
-  std::vector<FaceGeometry> translucentFaces;
+  static constexpr int BLOCK_COUNT = CHUNK_WIDTH * CHUNK_LENGTH * CHUNK_HEIGHT;
 
-  GLuint opaqueVAO, opaqueVBO, opaqueEBO;
-  GLuint transVAO, transVBO, transEBO;
+  std::array<Block, BLOCK_COUNT> m_blocks;
+  std::vector<FaceGeometry> m_translucentFaces;
 
-  glm::ivec2 chunkPos;
+  Graphics::VertexArray m_opaqueVAO, m_transVAO;
+  Graphics::BufferObject m_opaqueVBO, m_transVBO, m_opaqueEBO, m_transEBO;
 
-  bool hidden = true;
-  ChunkState state = ChunkState::Unloaded;
+  glm::ivec2 m_chunkPos;
 
-  bool dirty = true;
+  bool m_hidden = true;
+  ChunkState m_state = ChunkState::Unloaded;
 
-  bool hasTranslucentBlocks = false;
+  bool m_dirty = true;
 
-  int opaqueVertexCount = 0, transVertexCount = 0;
+  bool m_hasTranslucentBlocks = false;
 
-  // void InitializeBuffers(GLuint &VAO, GLuint &VBO, GLuint &EBO);
+  size_t m_opaqueVertexCount = 0, m_transVertexCount = 0;
+
   void InitializeOpaque();
   void InitializeTranslucent();
 };

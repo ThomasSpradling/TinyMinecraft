@@ -5,7 +5,7 @@
 #include "World/Block.h"
 namespace World {
 
-enum class BiomeType {
+enum class BiomeType : uint8_t {
   Tundra,
   Taiga,
   Grassland,
@@ -22,33 +22,33 @@ public:
     float minTemp, float maxTemp, 
     float minHumidity, float maxHumidity);
 
-  bool IsValid(float temperature, float humidity) const;
-  float GenerateHeight(int x, int z, PerlinNoise &heightMap) const;
-  Block GenerateBlock(int x, int y, int z, int height, float stoneMap) const;
+  [[nodiscard]] auto IsValid(double temperature, double humidity) const -> bool;
+  auto GenerateHeight(int x, int z, PerlinNoise &heightMap) const -> double;
+  [[nodiscard]] auto GenerateBlock(int x, int y, int z, int height, double stoneMap) const -> Block;
 
-  BiomeType GetType() const;
+  [[nodiscard]] auto GetType() const -> BiomeType;
 
-  float GetMinHeight() const;
-  float GetMaxHeight() const;
+  [[nodiscard]] auto GetMinHeight() const -> double;
+  [[nodiscard]] auto GetMaxHeight() const -> double;
 
-  float GetMinTemperature() const;
-  float GetMaxTemperature() const;
+  [[nodiscard]] auto GetMinTemperature() const -> double;
+  [[nodiscard]] auto GetMaxTemperature() const -> double;
 
-  float GetMinHumidity() const;
-  float GetMaxHumidty() const;
+  [[nodiscard]] auto GetMinHumidity() const -> double;
+  [[nodiscard]] auto GetMaxHumidty() const -> double;
 
-  static std::string GetBiomeName(BiomeType type);
+  static auto GetBiomeName(BiomeType type) -> std::string;
 private:
-  BiomeType type;
+  BiomeType m_type;
   
-  float minHeight;
-  float maxHeight;
+  double m_minHeight;
+  double m_maxHeight;
 
-  float minTemp;
-  float maxTemp;
+  double m_minTemp;
+  double m_maxTemp;
 
-  float minHumidity;
-  float maxHumidity;
+  double m_minHumidity;
+  double m_maxHumidity;
 };
 
 }

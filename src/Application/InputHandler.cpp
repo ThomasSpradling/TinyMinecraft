@@ -5,121 +5,117 @@ namespace Application {
 void InputHandler::KeyCallback(GLFWwindow *handle, int key, int, int action, int) {
   if (key < 0) return;
 
-  InputHandler *inputHandler = static_cast<InputHandler *>(glfwGetWindowUserPointer(handle));
+  auto *inputHandler = static_cast<InputHandler *>(glfwGetWindowUserPointer(handle));
   if (inputHandler == nullptr) return;
 
   if (action == GLFW_PRESS) {
-    inputHandler->keyboard.keys[key].pressed = true;
-    inputHandler->keyboard.keys[key].down = true;
+    inputHandler->m_keyboard.keys.at(key).pressed = true;
+    inputHandler->m_keyboard.keys.at(key).down = true;
   }
 
   if (action == GLFW_RELEASE) {
-    inputHandler->keyboard.keys[key].down = false;
+    inputHandler->m_keyboard.keys.at(key).down = false;
   }
 }
 
 void InputHandler::CursorCallback(GLFWwindow *handle, double x, double y) {
-  InputHandler *inputHandler = static_cast<InputHandler *>(glfwGetWindowUserPointer(handle));
+  auto *inputHandler = static_cast<InputHandler *>(glfwGetWindowUserPointer(handle));
   if (inputHandler == nullptr) return;
 
-  if (!inputHandler->mouse.grabbed) {
-    inputHandler->mouse.position = { x, y };
-    inputHandler->mouse.grabbed = true;
+  if (!inputHandler->m_mouse.grabbed) {
+    inputHandler->m_mouse.position = { x, y };
+    inputHandler->m_mouse.grabbed = true;
   }
 
   glm::vec2 curr { x, y };
-  inputHandler->mouse.delta = curr - inputHandler->mouse.position;
-  inputHandler->mouse.position = curr;
+  inputHandler->m_mouse.delta = curr - inputHandler->m_mouse.position;
+  inputHandler->m_mouse.position = curr;
 
   const float sensitivity = 0.1f;
-  inputHandler->mouse.delta *= sensitivity;
+  inputHandler->m_mouse.delta *= sensitivity;
 }
 
 void InputHandler::MouseCallback(GLFWwindow *handle, int button, int action, int) {
   if (button < 0) return;
 
-  InputHandler *inputHandler = static_cast<InputHandler *>(glfwGetWindowUserPointer(handle));
+  auto *inputHandler = static_cast<InputHandler *>(glfwGetWindowUserPointer(handle));
   if (inputHandler == nullptr) return;
 
   if (action == GLFW_PRESS) {
-    inputHandler->mouse.buttons[button].pressed = true;
-    inputHandler->mouse.buttons[button].down = true;
+    inputHandler->m_mouse.buttons.at(button).pressed = true;
+    inputHandler->m_mouse.buttons.at(button).down = true;
   }
 
   if (action == GLFW_RELEASE) {
-    inputHandler->mouse.buttons[button].down = false;
+    inputHandler->m_mouse.buttons.at(button).down = false;
   }
 
 }
 
 void InputHandler::ScrollCallback(GLFWwindow *handle, double, double offsetY) {
-  InputHandler *inputHandler = static_cast<InputHandler *>(glfwGetWindowUserPointer(handle));
+  auto *inputHandler = static_cast<InputHandler *>(glfwGetWindowUserPointer(handle));
   if (inputHandler == nullptr) return;
 
-  inputHandler->mouse.offsetY = offsetY;
+  inputHandler->m_mouse.offsetY = static_cast<float>(offsetY);
 }
 
 
-bool InputHandler::IsKeyPressed(int key) {
-  bool isPressed = keyboard.keys[key].pressed;
-  keyboard.keys[key].pressed = false;
+auto InputHandler::IsKeyPressed(int key) -> bool {
+  bool isPressed = m_keyboard.keys.at(key).pressed;
+  m_keyboard.keys.at(key).pressed = false;
 
   return isPressed;
 }
 
-bool InputHandler::IsKeyUp(int key) {
-  return !keyboard.keys[key].down;
+auto InputHandler::IsKeyUp(int key) const -> bool {
+  return !m_keyboard.keys.at(key).down;
 }
 
-bool InputHandler::IsKeyDown(int key) {
-  return keyboard.keys[key].down;
+auto InputHandler::IsKeyDown(int key) const -> bool {
+  return m_keyboard.keys.at(key).down;
 }
 
-bool InputHandler::IsMouseButtonPressed(int button) {
-  bool isPressed = mouse.buttons[button].pressed;
-  mouse.buttons[button].pressed = false;
+auto InputHandler::IsMouseButtonPressed(int button) -> bool {
+  bool isPressed = m_mouse.buttons.at(button).pressed;
+  m_mouse.buttons.at(button).pressed = false;
 
   return isPressed;
 }
 
-bool InputHandler::IsMouseButtonUp(int button) {
-  return !mouse.buttons[button].down;
+auto InputHandler::IsMouseButtonUp(int button) const -> bool {
+  return !m_mouse.buttons.at(button).down;
 }
 
-bool InputHandler::IsMouseButtonDown(int button) {
-  return mouse.buttons[button].down;
+auto InputHandler::IsMouseButtonDown(int button) const -> bool {
+  return m_mouse.buttons.at(button).down;
 }
 
-glm::vec2 InputHandler::GetMousePosition() {
-  return mouse.position;
+auto InputHandler::GetMousePosition() const -> glm::vec2 {
+  return m_mouse.position;
 }
 
-int InputHandler::GetMousePositionX() {
-  return mouse.position.x;
+auto InputHandler::GetMousePositionX() const -> float {
+  return m_mouse.position.x;
 }
 
-int InputHandler::GetMousePositionY() {
-  return mouse.position.x;
+auto InputHandler::GetMousePositionY() const -> float {
+  return m_mouse.position.x;
 }
 
-float InputHandler::GetMouseDeltaX() {
-  float delta = mouse.delta.x;
-  mouse.delta.x = 0.0f;
+auto InputHandler::GetMouseDeltaX() -> float {
+  float delta = m_mouse.delta.x;
+  m_mouse.delta.x = 0.0f;
   return delta;
 }
 
-float InputHandler::GetMouseDeltaY() {
- float delta = mouse.delta.y;
-  mouse.delta.y = 0.0f;
+auto InputHandler::GetMouseDeltaY() -> float {
+ float delta = m_mouse.delta.y;
+  m_mouse.delta.y = 0.0f;
   return delta;
 }
 
-float InputHandler::GetMouseWheelMove() {
-  return mouse.offsetY;
+auto InputHandler::GetMouseWheelMove() const -> float {
+  return m_mouse.offsetY;
 }
-
-// void InputHandler::UpdateMouse() {
-//   mouse.delta *= mouseSensitivity;
-// }
 
 }

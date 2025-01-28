@@ -10,24 +10,22 @@ namespace Application {
 
 class Game {
 public:
-  Game() = default;
-
-  /* Initializes all main game logic. */
-  void Initialize();
+  Game();
 
   /* Runs the Update() and Render() functions via a fixed-timestep game loop. */
   void Run();
 
-  void Shutdown();
-
 private:
-  Window window;
-  InputHandler inputHandler;
-  Graphics::Renderer renderer;
-  World::World world;
-  UI::UserInterface ui;
+  static constexpr int viewportWidth = 1920;
+  static constexpr int viewportHeight = 1080;
+
+  Window m_window;
+  InputHandler m_inputHandler;
+  Graphics::Renderer m_renderer;
+  World::World m_world;
+  UI::UserInterface m_ui;
   
-  std::shared_ptr<Scene::Camera> camera;
+  std::shared_ptr<Scene::Camera> m_camera;
 
   /* Handles all game inputs. */
   void ProcessInput();

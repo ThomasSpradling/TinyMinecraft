@@ -3,29 +3,16 @@ project(MinecraftClone)
 
 set(CMAKE_CXX_STANDARD 23)
 
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g")
-
 add_compile_options(
-  # -Wpedantic
-  # -Wall
-  # -Wextra
-  # -Wcast-align
-  # -Wcast-qual
-  # -Wctor-dtor-privacy
-  # -Wdisabled-optimization
-  # -Wformat=2
-  # -Winit-self
-  # -Wmissing-declarations
-  # -Wmissing-include-dirs
-  # -Woverloaded-virtual
-  # -Wredundant-decls
-  # -Wshadow
-  # -Wstrict-overflow=5
-  # -Wswitch-default
-  # -Wimplicit-fallthrough
-  # -Wundef
-  # -Werror
+  -pedantic-errors
+  -fno-gnu-keywords
+  -Wall
+  -Wextra
 )
+
+set(CLANG_TIDY_OPTIONS "--allow-no-checks")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_CLANG_TIDY "clang-tidy")
 
 ### Configure Dependencies
 

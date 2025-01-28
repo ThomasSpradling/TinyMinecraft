@@ -2,7 +2,7 @@
 
 namespace Utils {
 
-double OctaveNoise(double x, double z, PerlinNoise &perlin, int octaves, double persistence, double lacunarity) {
+auto OctaveNoise(double x, double z, PerlinNoise &perlin, int octaves, double persistence, double lacunarity) -> double {
   double total = 0.0;
   double frequency = 1.0;
   double amplitude = 1.0;
@@ -19,7 +19,7 @@ double OctaveNoise(double x, double z, PerlinNoise &perlin, int octaves, double 
   return total / maxValue;
 }
 
-double GenerateDomainNoise(double x, double z, PerlinNoise &perlin,  int octaves, double persistence, double lacunarity) {
+auto GenerateDomainNoise(double x, double z, PerlinNoise &perlin,  int octaves, double persistence, double lacunarity) -> double {
   double offset = OctaveNoise(x, z, perlin, octaves, persistence, lacunarity) * 20;
   // double offsetY = OctaveNoise(x, z, perlin, octaves, persistence, lacunarity) * 20;
 

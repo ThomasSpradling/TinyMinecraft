@@ -1,4 +1,6 @@
 #include "Graphics/Shader.h"
+#include "Graphics/gfx.h"
+#include "Utils/Logger.h"
 #include <cassert>
 #include <cstddef>
 #include <cstdio>
@@ -6,130 +8,90 @@
 #include <iostream>
 #include <sstream>
 
+#define LOG_READ_SIZE 512
+
 namespace Graphics {
 
+// NOLINTBEGIN(cppcoreguidelines-prefer-member-initializer)
+Shader::Shader(const std::string &vertexPath, const std::string &fragmentPath) {
+  std::string rawVertexFile = ReadFile(vertexPath);
+  std::string rawFragmentFile = ReadFile(fragmentPath);
+
+  m_vertexHandle = Compile(rawVertexFile.c_str(), GL_VERTEX_SHADER, vertexPath);
+  m_fragmentHandle = Compile(rawFragmentFile.c_str(), GL_FRAGMENT_SHADER, fragmentPath);
+
+  m_programHandle = Link();
+}
+// NOLINTEND(cppcoreguidelines-prefer-member-initializer)
+
 Shader::~Shader() {
-    glDeleteShader(handle);
+  glDeleteProgram(m_programHandle);
 }
-
-void Shader::Load(const std::string_view vs_path, const std::string_view fs_path) {
-  std::string vertex_code = ReadFile(vs_path);
-  std::string fragment_code = ReadFile(fs_path);
-
-  const char *vs_code = vertex_code.c_str();
-  const char *fs_code = fragment_code.c_str();
-
-  vs_handle = Compile(vs_code, GL_VERTEX_SHADER, vs_path);
-  fs_handle = Compile(fs_code, GL_FRAGMENT_SHADER, fs_path);
-
-  handle = Link();
-}
-
 
 auto Shader::Use() -> void {
-    glUseProgram(handle);
+  glUseProgram(m_programHandle);
 }
 
-template<>
-auto Shader::Uniform<bool>(std::string name, bool value) -> void {
-    glUniform1i(glGetUniformLocation(handle, name.c_str()), (int) value);
-}
+auto Shader::ReadFile(const std::string &path) const -> std::string {
+  std::string code;
+  std::ifstream file;
+  file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
-template<>
-auto Shader::Uniform<int>(std::string name, int value) -> void {
-    glUniform1i(glGetUniformLocation(handle, name.c_str()), value);
-}
+  try {
+    file.open(path);
 
-template<>
-auto Shader::Uniform<float>(std::string name, float value) -> void {
-    glUniform1f(glGetUniformLocation(handle, name.c_str()), value);
-}
+    std::stringstream stream;
+    stream << file.rdbuf();
 
-template<>
-auto Shader::Uniform<glm::mat4>(std::string name, glm::mat4 value) -> void {
-    glUniformMatrix4fv(glGetUniformLocation(handle, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
-}
+    file.close();
 
-template<>
-auto Shader::Uniform<glm::mat3>(std::string name, glm::mat3 value) -> void {
-    glUniformMatrix3fv(glGetUniformLocation(handle, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
-}
-
-template<>
-auto Shader::Uniform<glm::vec2>(std::string name, glm::vec2 value) -> void {
-    glUniform2fv(glGetUniformLocation(handle, name.c_str()), 1, glm::value_ptr(value));
-}
-
-template<>
-auto Shader::Uniform<glm::vec3>(std::string name, glm::vec3 value) -> void {
-    glUniform3fv(glGetUniformLocation(handle, name.c_str()), 1, glm::value_ptr(value));
-}
-
-template<>
-auto Shader::Uniform<glm::vec4>(std::string name, glm::vec4 value) -> void {
-    glUniform4fv(glGetUniformLocation(handle, name.c_str()), 1, glm::value_ptr(value));
-}
-
-//// PRIVATE METHODS ////
-
-auto Shader::ReadFile(const std::string_view path) const -> std::string {
-    std::string code;
-    std::ifstream file;
-    file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-
-    try {
-        file.open(path);
-
-        std::stringstream stream;
-        stream << file.rdbuf();
-
-        file.close();
-
-        code = stream.str();
-    } catch (std::ifstream::failure e) {
-        std::cerr << "Failed to read file: " << path << std::endl;
-    }
-    return code;
+    code = stream.str();
+  } catch (std::ifstream::failure e) {
+    Utils::g_logger.Error("Shader: Failed to read file {}.", path);
+    exit(1);
+  }
+  return code;
 }
 
 auto Shader::Compile(const char *source, GLenum type, const std::string_view filename) const -> GLuint {
-    assert(source != nullptr);
-    assert(type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER);
+  assert(source != nullptr);
+  assert(type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER);
 
-    GLuint shader = glCreateShader(type);
+  GLuint shader = glCreateShader(type);
 
-    glShaderSource(shader, 1, &source, NULL);
-    glCompileShader(shader);
+  glShaderSource(shader, 1, &source, nullptr);
+  glCompileShader(shader);
 
-    char info_log[512];
-    int success;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(shader, 512, NULL, info_log);
-        std::cout << "Failed to compile shader at path " << filename << ".\n" << info_log << std::endl;
-    }
 
-    return shader;
+  std::array<char, LOG_READ_SIZE> infoLog {};
+  int success = false;
+  glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+  if (!success) {
+    glGetShaderInfoLog(shader, LOG_READ_SIZE, nullptr, infoLog.data());
+    // Utils::g_logger.Error("Shader: Failed to compile shader at {}. Error Message:\n{}", filename, infoLog.data());
+  }
+
+  return shader;
 }
 
 auto Shader::Link() const -> GLuint {
-    GLuint program = glCreateProgram();
-    glAttachShader(program, vs_handle);
-    glAttachShader(program, fs_handle);
-    glLinkProgram(program);
+  GLuint program = glCreateProgram();
+  glAttachShader(program, m_vertexHandle);
+  glAttachShader(program, m_fragmentHandle);
+  glLinkProgram(program);
 
-    char info_log[512];
-    int success;
-    glGetProgramiv(handle, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(handle, 512, NULL, info_log);
-        std::cout << "Failed to link shaders at path.\n" << info_log << std::endl;
-    }
+  std::array<char, LOG_READ_SIZE> infoLog {};
+  int success = false;
+  glGetProgramiv(m_programHandle, GL_LINK_STATUS, &success);
+  if (!success) {
+    glGetShaderInfoLog(m_programHandle, LOG_READ_SIZE, nullptr, infoLog.data());
+    // Utils::g_logger.Error("Shader: Failed to link shaders. Error Message:\n{}", infoLog, infoLog.data());
+  }
 
-    glDeleteShader(vs_handle);
-    glDeleteShader(fs_handle);
+  glDeleteShader(m_vertexHandle);
+  glDeleteShader(m_fragmentHandle);
 
-    return program;
+  return program;
 }
 
 }

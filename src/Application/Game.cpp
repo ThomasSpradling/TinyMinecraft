@@ -1,5 +1,7 @@
 #include "Application/Game.h"
 #include "Application/InputHandler.h"
+#include "GLFW/glfw3.h"
+#include "Graphics/Renderer.h"
 #include "Utils/defs.h"
 #include "Utils/Profiler.h"
 #include <chrono>
@@ -8,24 +10,19 @@
 #include <unistd.h>
 
 namespace Application {
-
-void Game::Initialize() {
+Game::Game()
+  : m_window(viewportWidth, viewportHeight, "Look mum! I made some chunks!", m_inputHandler)
+  , m_renderer(viewportWidth, viewportHeight)
+{
   PROFILE_FUNCTION(Game)
 
-  constexpr int viewportWidth = 1920;
-  constexpr int viewportHeight = 1080;
-  // constexpr int viewportWidth = 600;
-  // constexpr int viewportHeight = 400;
-
-  window.Initialize(viewportWidth, viewportHeight, "Look mum! I made some chunks!", inputHandler);
-  renderer.Initialize(viewportWidth, viewportHeight);
-  ui.Initialize();
-  
+  const float fov = 45.f;
+    
   // TODO: Replace with player orientations
-  camera = std::make_shared<Scene::Camera>();
-  camera->SetPosition(glm::vec3(0.f, 100.f, 0.f));
-  camera->SetFOV(45.f);
-  camera->SetAspectRatio(static_cast<float>(window.GetWidth()) / static_cast<float>(window.GetHeight()));
+  m_camera = std::make_shared<Scene::Camera>();
+  m_camera->SetPosition(glm::vec3(0.f, 100.f, 0.f));
+  m_camera->SetFOV(fov);
+  m_camera->SetAspectRatio(static_cast<float>(m_window.GetWidth()) / static_cast<float>(m_window.GetHeight()));
 }
 
 void Game::Run() {
@@ -34,13 +31,16 @@ void Game::Run() {
   auto previousTime = clock::now();
   double lag = 0.0;
 
+  const double maxWaitTime = 250.f; // ms
+
 #ifdef UTILS_ShowFPS
   int frameCount = 0;
   double fpsTimer = 0.0;
   int fps = 0;
+  const double displayFPSInterval = 1000.f; // ms
 #endif
 
-  while (!window.ShouldClose()) {
+  while (!m_window.ShouldClose()) {
     ProcessInput();
 
     auto currentTime = clock::now();
@@ -48,7 +48,7 @@ void Game::Run() {
     std::chrono::duration<double, std::milli> elapsed = currentTime - previousTime;
     previousTime = currentTime;
 
-    double frameTime = std::clamp(elapsed.count(), 0.0, 250.0);
+    double frameTime = std::clamp(elapsed.count(), 0.0, maxWaitTime);
     lag += frameTime;
 
     // try to catch back up
@@ -62,103 +62,99 @@ void Game::Run() {
 #ifdef UTILS_ShowFPS
     frameCount++;
     fpsTimer += frameTime;
-    if (fpsTimer >= 1000.0f) {
+    if (fpsTimer >= displayFPSInterval) {
       fps = frameCount;
       frameCount = 0;
-      fpsTimer -= 1000.0f;
+      fpsTimer -= displayFPSInterval;
 
-      ui.SetCurrentFPS(fps);
+      m_ui.SetCurrentFPS(fps);
     }
 #endif
 
   }
 }
 
-void Game::Shutdown() {
-  glfwTerminate();
-}
-
-// Private Methods
-
 void Game::ProcessInput() {
-  window.PollEvents();
+  const float maxPitch = 89.f;
 
-  if (inputHandler.IsKeyPressed(GLFW_KEY_ESCAPE)) {
-    window.Close();
+  m_window.PollEvents();
+
+  if (m_inputHandler.IsKeyPressed(GLFW_KEY_ESCAPE)) {
+    m_window.Close();
   }
 
   // Camera keyboard
-  glm::vec3 cameraDirection = glm::vec3(0.0f);
-  if (inputHandler.IsKeyDown(GLFW_KEY_W))
-    cameraDirection += camera->GetFront();
-  if (inputHandler.IsKeyDown(GLFW_KEY_S))
-    cameraDirection -= camera->GetFront();
-  if (inputHandler.IsKeyDown(GLFW_KEY_D))
-    cameraDirection += camera->GetRight();
-  if (inputHandler.IsKeyDown(GLFW_KEY_A))
-    cameraDirection -= camera->GetRight();
+  glm::vec3 cameraDirection { 0.f };
+  if (m_inputHandler.IsKeyDown(GLFW_KEY_W))
+    cameraDirection += m_camera->GetFront();
+  if (m_inputHandler.IsKeyDown(GLFW_KEY_S))
+    cameraDirection -= m_camera->GetFront();
+  if (m_inputHandler.IsKeyDown(GLFW_KEY_D))
+    cameraDirection += m_camera->GetRight();
+  if (m_inputHandler.IsKeyDown(GLFW_KEY_A))
+    cameraDirection -= m_camera->GetRight();
 
-  if (inputHandler.IsKeyDown(GLFW_KEY_LEFT_SHIFT))
+  if (m_inputHandler.IsKeyDown(GLFW_KEY_LEFT_SHIFT))
     cameraDirection -= glm::vec3(0.0f, 1.0f, 0.0f);
   
-  if (inputHandler.IsKeyDown(GLFW_KEY_SPACE))
+  if (m_inputHandler.IsKeyDown(GLFW_KEY_SPACE))
     cameraDirection += glm::vec3(0.0f, 1.0f, 0.0f);
 
-  camera->SetMoveDirection(cameraDirection);
+  m_camera->SetMoveDirection(cameraDirection);
 
   // Camera mouse
 
-  float yaw = camera->GetYaw();
-  yaw += inputHandler.GetMouseDeltaX();
+  float yaw = m_camera->GetYaw();
+  yaw += m_inputHandler.GetMouseDeltaX();
+  
+  float pitch = m_camera->GetPitch();
+  pitch -= m_inputHandler.GetMouseDeltaY();
+  pitch = std::clamp(pitch, -maxPitch, maxPitch);
 
-  float pitch = camera->GetPitch();
-  pitch -= inputHandler.GetMouseDeltaY();
-  pitch = std::clamp(pitch, -89.0f, 89.0f);
-
-  camera->UpdateViewDirection(yaw, pitch);
+  m_camera->UpdateViewDirection(yaw, pitch);
 }
 
 void Game::Update() {
   PROFILE_FUNCTION(Game)
 
-  glm::vec3 before = camera->GetPosition();
-  camera->Move();
-  glm::vec3 after = camera->GetPosition();
-  world.HandlePlayerMovement(before, after);
+  glm::ivec3 before = m_camera->GetPosition();
+  m_camera->Move();
+  glm::ivec3 after = m_camera->GetPosition();
+  m_world.HandlePlayerMovement(before, after);
 
-  glm::vec3 pos = camera->GetPosition();
+  glm::ivec3 pos = m_camera->GetPosition();
 
-  ui.SetPlayerPosition(pos);
-  ui.SetChunkPosition(world.GetChunkPosFromCoords(pos));
-  ui.SetClimateValues(world.GetTemperature(pos.x, pos.z), world.GetHumidity(pos.x, pos.z), world.GetBiome(pos.x, pos.z));
+  m_ui.SetPlayerPosition(pos);
+  m_ui.SetChunkPosition(m_world.GetChunkPosFromCoords(pos));
+  m_ui.SetClimateValues(m_world.GetTemperature(pos.x, pos.z), m_world.GetHumidity(pos.x, pos.z), m_world.GetBiome(pos.x, pos.z));
 }
 
 void Game::Render(double) {
   PROFILE_FUNCTION(Game)
 
-  world.Update(camera->GetPosition());
+  m_world.Update(m_camera->GetPosition());
 
-  ui.Arrange();
-  renderer.ClearBackground(glm::vec3(0.0f));
+  m_ui.Arrange();
+  m_renderer.ClearBackground(glm::vec3(0.0f));
 
 
-  renderer.Begin3D(camera);
+  m_renderer.Begin3D(m_camera);
 
-    if (inputHandler.IsKeyPressed(GLFW_KEY_TAB)) {
-      renderer.ToggleWireframeMode();
+    if (m_inputHandler.IsKeyPressed(GLFW_KEY_TAB)) {
+      m_renderer.ToggleWireframeMode();
     }
 
 #ifdef GFX_ShadowMapping
-    renderer.RenderShadows(world);
+    m_renderer.RenderShadows(m_world);
 #endif
 
-    renderer.RenderWorld(world);
+    m_renderer.RenderWorld(m_world);
 
-  renderer.End3D();
+  m_renderer.End3D();
   
-  renderer.RenderUI(ui);
+  m_renderer.RenderUI(m_ui);
 
-  window.SwapBuffers();
+  m_window.SwapBuffers();
 }
 
 }
