@@ -19,7 +19,6 @@ namespace Graphics {
 
 int Texture::currentTextureId { 0 };
 
-// NOLINTBEGIN(cppcoreguidelines-pro-type-member-init)
 Texture::Texture(const std::string &filePath)
   : m_id(Texture::currentTextureId++)
 {
@@ -61,7 +60,6 @@ Texture::Texture(const std::string &filePath)
 
   glGenerateMipmap(GL_TEXTURE_2D);
 }
-// NOLINTEND(cppcoreguidelines-pro-type-member-init)
 
 Texture::~Texture() {
   glDeleteTextures(1, &m_id);

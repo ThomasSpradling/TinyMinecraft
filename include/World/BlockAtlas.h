@@ -1,9 +1,9 @@
 #ifndef BLOCK_ATLAS_H_
 #define BLOCK_ATLAS_H_
 
+#include "Geometry/geometry.h"
 #include "Utils/defs.h"
 #include "World/Block.h"
-#include "World/BlockFace.h"
 
 namespace World {
 
@@ -22,11 +22,11 @@ public:
   BlockAtlas(BlockAtlas &&) = delete;
   auto operator=(BlockAtlas &&) -> BlockAtlas & = delete;
 
-  static auto GetNormalizedTextureCoords(BlockType type, BlockFace face) -> glm::vec2;
+  static auto GetNormalizedTextureCoords(BlockType type, Geometry::Face face) -> glm::vec2;
 
 
 private:
-  static auto GetTextureCoords(BlockType type, BlockFace face) -> glm::ivec2;
+  static auto GetTextureCoords(BlockType type, Geometry::Face face) -> glm::ivec2;
 };
 
 }

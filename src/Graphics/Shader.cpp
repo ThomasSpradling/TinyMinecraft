@@ -12,7 +12,6 @@
 
 namespace Graphics {
 
-// NOLINTBEGIN(cppcoreguidelines-prefer-member-initializer)
 Shader::Shader(const std::string &vertexPath, const std::string &fragmentPath) {
   std::string rawVertexFile = ReadFile(vertexPath);
   std::string rawFragmentFile = ReadFile(fragmentPath);
@@ -22,7 +21,6 @@ Shader::Shader(const std::string &vertexPath, const std::string &fragmentPath) {
 
   m_programHandle = Link();
 }
-// NOLINTEND(cppcoreguidelines-prefer-member-initializer)
 
 Shader::~Shader() {
   glDeleteProgram(m_programHandle);

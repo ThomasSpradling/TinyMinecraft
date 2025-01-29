@@ -1,13 +1,12 @@
 #include "World/BlockAtlas.h"
 #include "Utils/defs.h"
 #include "World/Block.h"
-#include "World/BlockFace.h"
 
 namespace World {
 
 constexpr glm::vec2 BlockAtlas::tileSize;
 
-auto BlockAtlas::GetNormalizedTextureCoords(BlockType type, BlockFace face) -> glm::vec2 {
+auto BlockAtlas::GetNormalizedTextureCoords(BlockType type, Geometry::Face face) -> glm::vec2 {
   glm::ivec2 pixelCoords = GetTextureCoords(type, face);
 
   float normalizedX = static_cast<float>(pixelCoords.x) / BLOCK_TEXTURE_ATLAS_WIDTH;
@@ -16,14 +15,14 @@ auto BlockAtlas::GetNormalizedTextureCoords(BlockType type, BlockFace face) -> g
   return { normalizedX, normalizedY };
 }
 
-auto BlockAtlas::GetTextureCoords(BlockType type, BlockFace face) -> glm::ivec2 {
+auto BlockAtlas::GetTextureCoords(BlockType type, Geometry::Face face) -> glm::ivec2 {
   glm::ivec2 coords;
 
   switch(type) {
     case BlockType::GRASS:
-      if (face == BlockFace::Direction::Up)
+      if (face == Geometry::Face::Up)
         coords = { 0, 0 };
-      else if (face == BlockFace::Direction::Down)
+      else if (face == Geometry::Face::Down)
         coords = { 2, 0 };
       else coords = { 1, 0 };
       break;
@@ -37,7 +36,7 @@ auto BlockAtlas::GetTextureCoords(BlockType type, BlockFace face) -> glm::ivec2 
       coords = { 4, 0 };
       break;
     case BlockType::LOG:
-      if (face == BlockFace::Direction::Up || face == BlockFace::Direction::Down)
+      if (face == Geometry::Face::Up || face == Geometry::Face::Down)
         coords = { 0, 1 };
       else coords = { 1, 1 };
       break;

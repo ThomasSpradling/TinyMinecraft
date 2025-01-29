@@ -2,6 +2,7 @@
 #include "Application/InputHandler.h"
 #include "GLFW/glfw3.h"
 #include "Graphics/Renderer.h"
+#include "Graphics/Renderer2D.h"
 #include "Utils/defs.h"
 #include "Utils/Profiler.h"
 #include <chrono>
@@ -13,6 +14,7 @@ namespace Application {
 Game::Game()
   : m_window(viewportWidth, viewportHeight, "Look mum! I made some chunks!", m_inputHandler)
   , m_renderer(viewportWidth, viewportHeight)
+  , m_ortho(0, viewportWidth, viewportHeight, 0)
 {
   PROFILE_FUNCTION(Game)
 
@@ -134,7 +136,7 @@ void Game::Render(double) {
 
   m_world.Update(m_camera->GetPosition());
 
-  m_ui.Arrange();
+  // m_ui.Arrange();
   m_renderer.ClearBackground(glm::vec3(0.0f));
 
 
@@ -152,7 +154,9 @@ void Game::Render(double) {
 
   m_renderer.End3D();
   
-  m_renderer.RenderUI(m_ui);
+  Graphics::Renderer2D::BeginScene(m_ortho);
+   m_renderer.RenderUI(m_ui);
+  Graphics::Renderer2D::EndScene();
 
   m_window.SwapBuffers();
 }

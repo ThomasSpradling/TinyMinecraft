@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstddef>
 #include "World/World.h"
+#include "Geometry/geometry.h"
 #include "Utils/Profiler.h"
 #include "Utils/defs.h"
 #include "Utils/noise.h"
@@ -46,33 +47,6 @@ auto World::GetHumidity(int x, int z) -> double {
 
 auto World::GetBiome(int x, int z) -> BiomeType {
   return m_worldGen.SelectBiomes(GetTemperature(x, z), GetHumidity(x, z)).first->GetType();
-}
-
-void World::Render(Graphics::Texture &blockAtlasTexture, Graphics::Shader &blockShader, Graphics::Shader &waterShader, const glm::vec3 &playerPos) {
-  PROFILE_FUNCTION(World)
-  
-  std::vector<Chunk *> translucentChunks;
-  
-  for (auto &[offset, chunk] : GetLoadedChunks()) {
-    if (chunk.HasTranslucentBlocks()) {
-      translucentChunks.push_back(&chunk);
-    }
-
-    chunk.Render(blockAtlasTexture, blockShader, playerPos);
-  }
-
-  glm::vec2 playerChunkPos = GetChunkPosFromCoords(playerPos);
-
-  std::ranges::sort(translucentChunks, [playerChunkPos](Chunk *a, Chunk *b) {
-    float distanceA = glm::distance(playerChunkPos, static_cast<glm::vec2>(a->GetChunkPos()));
-    float distanceB = glm::distance(playerChunkPos, static_cast<glm::vec2>(b->GetChunkPos()));
-
-    return distanceA > distanceB;
-  });
-
-  for (auto chunk : translucentChunks) {
-    chunk->RenderTranslucent(blockAtlasTexture, blockShader, playerPos);
-  }
 }
 
 void World::Update(const glm::vec3 &playerPos) {
@@ -286,8 +260,8 @@ auto World::IsChunkLoaded(const glm::ivec2 &pos) -> bool {
   return m_loadedChunks.contains(pos);
 }
 
-auto World::IsFaceVisible(const Block &block, BlockFace face, const glm::vec3 &pos) -> bool {
-  glm::vec3 neighborPos = pos + face.GetNormal();
+auto World::IsFaceVisible(const Block &block, Geometry::Face face, const glm::vec3 &pos) -> bool {
+  glm::vec3 neighborPos = pos + Geometry::GetNormal(face);
   glm::ivec2 neighborChunkPos = GetChunkPosFromCoords(neighborPos);
 
   // if not in a chunk

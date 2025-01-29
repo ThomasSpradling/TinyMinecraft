@@ -1,5 +1,4 @@
 #include "World/Block.h"
-#include "glm/fwd.hpp"
 
 namespace World {
 
@@ -22,6 +21,16 @@ bool Block::IsBillboard() const {
   switch (m_type) {
     case World::BlockType::TALL_GRASS:
       return true;
+    default:
+      return false;
+  }
+}
+
+bool Block::IsFluid() const {
+  switch (m_type) {
+    case World::BlockType::WATER:
+      return true;
+      break;
     default:
       return false;
   }

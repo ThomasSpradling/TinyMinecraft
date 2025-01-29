@@ -168,7 +168,6 @@ auto WorldGeneration::SelectBiomes(double temperature, double humidity) const ->
   return {primaryBiome, secondaryBiome};
 }
 
-// NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays, modernize-avoid-c-arrays, cppcoreguidelines-pro-bounds-constant-array-index)
 void WorldGeneration::SpawnTree(Chunk &chunk, int x, int surfaceY, int z) {
 
   int structure[7][5][5] = {
@@ -261,8 +260,6 @@ void WorldGeneration::SpawnTree(Chunk &chunk, int x, int surfaceY, int z) {
     }
   }
 }
-
-// NOLINTEND(cppcoreguidelines-avoid-c-arrays, modernize-avoid-c-arrays, cppcoreguidelines-pro-bounds-constant-array-index)
 
 auto WorldGeneration::CanTreeSpawn(Chunk &chunk, int x, int surfaceY, int z, int radius) -> bool {
   if (chunk.GetBlockAt(x, surfaceY, z).GetType() != BlockType::GRASS) {

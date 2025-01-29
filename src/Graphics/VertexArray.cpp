@@ -3,11 +3,11 @@
 
 namespace Graphics {
 
-// NOLINTBEGIN(cppcoreguidelines-pro-type-member-init)
 VertexArray::VertexArray() {
   glGenVertexArrays(1, &m_handle);
+  // Utils::g_logger.Debug("VAO start: {}.", m_handle);
+  Bind();
 }
-// NOLINTEND(cppcoreguidelines-pro-type-member-init)
 
 VertexArray::~VertexArray() {
   glDeleteVertexArrays(1, &m_handle);
@@ -23,8 +23,9 @@ auto VertexArray::operator=(VertexArray &&other) noexcept -> VertexArray & {
   return *this;
 }
 
-// NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
-void VertexArray::AddAttribute(GLuint id, int attributeSize, GLenum attributeType, int stride, int offset) {  
+void VertexArray::AddAttribute(GLuint id, int attributeSize, GLenum attributeType, int stride, int offset) {
+  Bind();
+
   switch (attributeType) {
     case GL_HALF_FLOAT:
     case GL_FLOAT:
@@ -47,7 +48,6 @@ void VertexArray::AddAttribute(GLuint id, int attributeSize, GLenum attributeTyp
 
   glEnableVertexAttribArray(id);
 }
-// NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
 
 void VertexArray::Bind() {
   glBindVertexArray(m_handle);

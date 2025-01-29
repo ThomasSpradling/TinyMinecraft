@@ -1,6 +1,7 @@
 #ifndef GAME_H_
 #define GAME_H_
 
+#include "Graphics/OrthographicCamera.h"
 #include "Scene/Camera.h"
 #include "Graphics/Renderer.h"
 #include "Application/Window.h"
@@ -26,6 +27,7 @@ private:
   UI::UserInterface m_ui;
   
   std::shared_ptr<Scene::Camera> m_camera;
+  Graphics::OrthographicCamera m_ortho;
 
   /* Handles all game inputs. */
   void ProcessInput();

@@ -1,10 +1,10 @@
 #ifndef WORLD_H_
 #define WORLD_H_
 
+#include "Geometry/geometry.h"
 #include "Utils/mathgl.h"
 #include "Utils/noise.h"
 #include "World/Chunk.h"
-#include "World/BlockFace.h"
 #include "World/WorldGeneration.h"
 
 namespace World {
@@ -18,7 +18,6 @@ public:
   auto GetBiome(int x, int z) -> BiomeType;
 
   void Update(const glm::vec3 &playerPos);
-  void Render(Graphics::Texture &blockAtlasTexture, Graphics::Shader &blockShader, Graphics::Shader &waterShader, const glm::vec3 &playerPos);
 
   void UnloadChunk(int x, int z);
   void UnloadChunk(Chunk &chunk);
@@ -29,7 +28,7 @@ public:
 
   auto GetLoadedChunks() -> std::unordered_map<glm::ivec2, Chunk, Utils::IVec2Hash> &;
 
-  auto IsFaceVisible(const Block &block, BlockFace face, const glm::vec3 &pos) -> bool;
+  auto IsFaceVisible(const Block &block, Geometry::Face face, const glm::vec3 &pos) -> bool;
 
   void BreakBlock(const glm::vec3 &pos);
   void SetBlockAt(const glm::vec3 &pos, BlockType type);

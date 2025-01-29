@@ -45,14 +45,10 @@ Window::Window(int width, int height, const std::string &name, InputHandler &inp
 
   glfwMakeContextCurrent(m_handle);
 
-// NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
-
   if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
     Utils::g_logger.Error("GLAD: Error initializing.");
     exit(1);
   }
-
-// NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 
   glfwWindowHint(GLFW_DEPTH_BITS, DEPTH_BUFFER_SIZE);
 

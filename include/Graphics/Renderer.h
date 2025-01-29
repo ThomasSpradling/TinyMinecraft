@@ -1,6 +1,7 @@
 #ifndef RENDERER_H_
 #define RENDERER_H_
 
+#include "Geometry/Mesh.h"
 #include "Graphics/Texture.h"
 #include "Scene/Camera.h"
 #include "Graphics/Shader.h"
@@ -17,6 +18,7 @@ public:
   // void RenderShadows(World::World &world);
   void RenderWorld(World::World &world);
   void RenderUI(UI::UserInterface &ui);
+  void RenderMesh(Geometry::Mesh &mesh, Shader &shader, glm::mat4 &model);
 
   void Begin3D(const std::shared_ptr<Scene::Camera> &camera3D);
   void End3D();
@@ -26,19 +28,13 @@ public:
   void ToggleWireframeMode();
 
 private:
-  Shader m_uiShader, m_blockShader, m_waterShader, m_textShader, m_depthShader, m_debugDepthQuadShader;
-  Texture m_blockAtlasTexture, m_fontMap;
+  Shader m_blockShader, m_waterShader;
+  Texture m_blockAtlasTexture;
   std::shared_ptr<Scene::Camera> m_currentCamera = nullptr;
-
-  /// TODO: Remove
-  // GLuint m_depthMapFBO, m_depthMap;
-  // float m_shadowMapWidth, m_shadowMapHeight;
 
   float m_viewportWidth, m_viewportHeight;
 
   bool m_isWireframeMode = false;
-
-  // void InitializeShadowMapping();
 };
 
 }

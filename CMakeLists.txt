@@ -4,10 +4,10 @@ project(MinecraftClone)
 set(CMAKE_CXX_STANDARD 23)
 
 add_compile_options(
-  -pedantic-errors
-  -fno-gnu-keywords
-  -Wall
-  -Wextra
+  # -pedantic-errors
+  # -fno-gnu-keywords
+  # -Wall
+  # -Wextra
 )
 
 set(CLANG_TIDY_OPTIONS "--allow-no-checks")

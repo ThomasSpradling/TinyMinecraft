@@ -1,58 +1,51 @@
-#include "World/BlockFace.h"
+#include "Geometry/geometry.h"
+#include "Utils/Logger.h"
 
-namespace World {
+namespace Geometry {
 
-std::array<BlockFace, 6> BlockFace::allFaces {
-  BlockFace::Direction::North,
-  BlockFace::Direction::South,
-  BlockFace::Direction::West,
-  BlockFace::Direction::East,
-  BlockFace::Direction::Up,
-  BlockFace::Direction::Down
-};
+auto GetNormal(Face face) -> glm::vec3 {
+  switch (face) {
+    case Face::Up:
+      return { 0, 1, 0 };
+    case Face::Down:
+      return { 0, -1, 0 };
+    case Face::East:
+      return { 1, 0, 0 };
+    case Face::West:
+      return { -1, 0, 0 };
+    case Face::North:
+      return { 0, 0, 1 };
+    case Face::South:
+      return { 0, 0, -1 };
+    default:
+  }
 
-BlockFace::BlockFace(Direction face) : m_direction(face) {}
-
-auto BlockFace::operator==(const BlockFace &other) const -> bool {
-  return m_direction == other.m_direction;
+  Utils::g_logger.Warning("Invalid face normal.");
+  return { 0, 0, 0 };
 }
 
-auto BlockFace::GetNormal() const -> glm::vec3 {
-  static const std::array<glm::ivec3, 6> normals = {{
-    {  0,  0,  1 },
-    {  0,  0, -1 },
-    { -1,  0,  0 },
-    {  1,  0,  0 },
-    {  0,  1,  0 },
-    {  0, -1,  0 } 
-  }};
-
-  return normals.at(static_cast<int>(m_direction));
-}
-
-auto BlockFace::GetVertices(float width, float height) const -> std::array<glm::vec3, 4> {
-  switch (m_direction) {
-    case Direction::Up:
+auto GetVertices(Face face, float width, float height) -> std::array<glm::vec3, 4> {
+  switch (face) {
+    case Face::Up:
       return { glm::vec3(0, 1, 0), glm::vec3(0, 1, width), glm::vec3(height, 1, width), glm::vec3(height, 1, 0) };
-    case Direction::Down:
+    case Face::Down:
       return { glm::vec3(0, 0, width), glm::vec3(0, 0, 0), glm::vec3(height, 0, 0), glm::vec3(height, 0, width) };
-    case Direction::North:
+    case Face::North:
       return { glm::vec3(0, height, 1), glm::vec3(0, 0, 1), glm::vec3(width, 0, 1), glm::vec3(width, height, 1) };
-    case Direction::South:
+    case Face::South:
       return { glm::vec3(width, height, 0), glm::vec3(width, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0, height, 0) };
-    case Direction::East:
+    case Face::East:
       return { glm::vec3(1, height, width), glm::vec3(1, 0, width), glm::vec3(1, 0, 0), glm::vec3(1, height, 0) };
-    case Direction::West:
+    case Face::West:
       return { glm::vec3(0, height, 0), glm::vec3(0, 0, 0), glm::vec3(0, 0, width), glm::vec3(0, height, width) };
     default:
       throw std::invalid_argument("Invalid face direction.");
   }
 }
 
-auto BlockFace::GetFluidVertices(int depth, int maxDepth, Direction dir, bool floating) const -> std::array<glm::vec3, 4> {
+auto GetFluidVertices(Face face, int depth, int maxDepth, Face direction, bool floating) -> std::array<glm::vec3, 4> {
   const float maxHeight = 0.8f;
   const float minHeight = 0.2f;
-
 
   float frontHeight = 0.0, backHeight = 0.0;
   
@@ -73,26 +66,26 @@ auto BlockFace::GetFluidVertices(int depth, int maxDepth, Direction dir, bool fl
   float northwestHeight = maxHeight;
   float northeastHeight = maxHeight;
 
-  switch (dir) {
-    case Direction::South:
+  switch (direction) {
+    case Face::South:
       southwestHeight = backHeight;
       southeastHeight = backHeight;
       northwestHeight = frontHeight;
       northeastHeight = frontHeight;
       break;
-    case Direction::North:
+    case Face::North:
       southwestHeight = frontHeight;
       southeastHeight = frontHeight;
       northwestHeight = backHeight;
       northeastHeight = backHeight;
       break;
-    case Direction::East:
+    case Face::East:
       southwestHeight = backHeight;
       southeastHeight = frontHeight;
       northwestHeight = backHeight;
       northeastHeight = frontHeight;
       break;
-    case Direction::West:
+    case Face::West:
       southwestHeight = frontHeight;
       southeastHeight = backHeight;
       northwestHeight = frontHeight;
@@ -107,18 +100,18 @@ auto BlockFace::GetFluidVertices(int depth, int maxDepth, Direction dir, bool fl
   glm::vec3 southeastVert = glm::vec3(1.0f, southeastHeight, 0.0f);
 
 
-  switch (m_direction) {
-    case Direction::Up:
+  switch (face) {
+    case Face::Up:
       return { southwestVert, northwestVert, northeastVert, southeastVert };
-    case Direction::Down:
+    case Face::Down:
       return { glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 1.0f) };
-    case Direction::North:
+    case Face::North:
       return { northwestVert, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(1.0f, 0.0f, 1.0f), northeastVert };
-    case Direction::South:
+    case Face::South:
       return { southeastVert, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), southwestVert };
-    case Direction::East:
+    case Face::East:
       return { northeastVert, glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(1.0f, 0.0f, 0.0f), southeastVert };
-    case Direction::West:
+    case Face::West:
       return { southwestVert, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), northwestVert };
     default:
       throw std::invalid_argument("Invalid face direction.");

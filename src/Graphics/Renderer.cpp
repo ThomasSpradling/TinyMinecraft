@@ -1,23 +1,22 @@
 #include "Graphics/Renderer.h"
+#include "Graphics/Renderer2D.h"
 #include "Utils/Profiler.h"
 #include "World/Chunk.h"
 #include "Graphics/gfx.h"
+#include <algorithm>
 
 namespace Graphics {
 
 Renderer::Renderer(float viewportWidth, float viewportHeight)
-  : m_uiShader("../resources/shaders/ui.vs", "../resources/shaders/ui.fs")
-  , m_blockShader("../resources/shaders/block_solid.vs", "../resources/shaders/block_solid.fs")
+  : m_blockShader("../resources/shaders/block_solid.vs", "../resources/shaders/block_solid.fs")
   , m_waterShader("../resources/shaders/block_translucent.vs", "../resources/shaders/block_translucent.fs")
-  , m_textShader("../resources/shaders/text.vs", "../resources/shaders/text.fs")
-  , m_depthShader("../resources/shaders/depth.vs", "../resources/shaders/depth.fs")
-  , m_debugDepthQuadShader("../resources/shaders/debug_quad.vs", "../resources/shaders/debug_quad.fs")
   , m_blockAtlasTexture("../resources/textures/block_atlas.png")
-  , m_fontMap("../resources/font/pixel_2w.png")
   , m_viewportWidth(viewportWidth)
   , m_viewportHeight(viewportHeight)
 {
   PROFILE_SCOPE(Graphics, "Renderer::Initialize") 
+
+  Renderer2D::Initialize();
 
   // Graphic settings
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -29,14 +28,6 @@ Renderer::Renderer(float viewportWidth, float viewportHeight)
   m_waterShader.Use();
   m_waterShader.Uniform("uBlockAtlas", 0);
 
-  m_uiShader.Use();
-  const glm::mat4 projection = glm::ortho(0.0f, viewportWidth, viewportHeight, 0.0f);
-  m_uiShader.Uniform("uProjection", projection);
-
-  m_textShader.Use();
-  m_textShader.Uniform("uProjection", projection);
-  m_textShader.Uniform("uFontMap", 1);
-
   //// TODO: Remove
   // Shadows
 
@@ -46,56 +37,61 @@ Renderer::Renderer(float viewportWidth, float viewportHeight)
 }
 
 void Renderer::RenderWorld(World::World &world) {
-  world.Render(m_blockAtlasTexture, m_blockShader, m_waterShader, m_currentCamera->GetPosition());
+  m_blockShader.Use();
+  m_blockShader.Uniform("uBlockAtlas", static_cast<int>(m_blockAtlasTexture.GetId()));
+  m_blockShader.Uniform("uCameraPos", m_currentCamera->GetPosition());
+
+  glm::vec3 playerPos = m_currentCamera->GetPosition();
+  
+  std::vector<World::Chunk *> translucentChunks;
+  
+  for (auto &[chunkPos, chunk] : world.GetLoadedChunks()) {
+    if (chunk.HasTranslucentBlocks()) {
+      translucentChunks.push_back(&chunk);
+    }
+
+    glm::mat4 model { 1.0f };
+    model = glm::translate(model, glm::vec3(chunkPos.x * CHUNK_WIDTH, 0.0f, chunkPos.y * CHUNK_LENGTH));
+
+    RenderMesh(chunk.GetMesh(), m_blockShader, model);
+  }
+
+  glm::vec2 playerChunkPos = world.GetChunkPosFromCoords(playerPos);
+
+  std::ranges::sort(translucentChunks, [playerChunkPos](World::Chunk *a, World::Chunk *b) {
+    float distanceA = glm::distance(playerChunkPos, static_cast<glm::vec2>(a->GetChunkPos()));
+    float distanceB = glm::distance(playerChunkPos, static_cast<glm::vec2>(b->GetChunkPos()));
+
+    return distanceA > distanceB;
+  });
+
+  for (auto chunk : translucentChunks) {
+
+    const glm::ivec2 chunkPos = chunk->GetChunkPos();
+
+    glm::mat4 model { 1.0f };
+    model = glm::translate(model, glm::vec3(chunkPos.x * CHUNK_WIDTH, 0.0f, chunkPos.y * CHUNK_LENGTH));
+
+    glDisable(GL_CULL_FACE);
+    glDepthMask(GL_FALSE);
+
+    RenderMesh(chunk->GetTranslucentMesh(), m_blockShader, model);
+
+    glEnable(GL_CULL_FACE);
+    glDepthMask(GL_TRUE);
+  }
 }
 
-// void Renderer::RenderShadows(World::World &world) {
-//   float near_plane = 1.f, far_plane = 100.f;
+void Renderer::RenderMesh(Geometry::Mesh &mesh, Shader &shader, glm::mat4 &model) {
+  shader.Use();
+  shader.Uniform("uModel", model);
 
-//   // TODO: Fix this!!
-//   glm::mat4 lightProjection, lightView;
-//   glm::mat4 lightViewProjection;
-
-//   // float chunkDistance = 12;
-
-//   lightProjection = glm::ortho(-100.f, 100.f, -100.f, 100.f, near_plane, far_plane);
-//   lightView = glm::lookAt(glm::vec3(-40, 80, -50), glm::vec3(0.f), glm::vec3(0.0, 1.0, 0.0));
-//   lightViewProjection = lightProjection * lightView;
-
-//   m_depthShader.Use();
-//   m_depthShader.Uniform("uLightViewProjection", lightViewProjection);
-  
-//   glViewport(0, 0, m_shadowMapWidth, m_shadowMapHeight);
-//   glBindFramebuffer(GL_FRAMEBUFFER, m_depthMapFBO);
-//     glClear(GL_DEPTH_BUFFER_BIT);
-//     m_blockAtlasTexture.Bind();
-//     for (auto &[offset, chunk] : world.GetLoadedChunks()) {
-//       if (!chunk.IsHidden() && chunk.GetState() == World::ChunkState::Loaded) {
-//         // chunk.Render(m_blockAtlasTexture, depthMap, m_depthShader, currentCamera->GetPosition());
-//       }
-//     }
-//   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-//   m_blockShader.Use();
-//   m_blockShader.Uniform("uLightViewProjection", lightViewProjection);
-
-//   glViewport(0, 0, m_viewportWidth * 2, m_viewportHeight * 2);
-//   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-//   // m_debugDepthQuad.Use();
-//   // m_debugDepthQuad.Uniform("uNearPlane", near_plane);
-//   // m_debugDepthQuad.Uniform("uFarPlane", far_plane);
-//   // glActiveTexture(GL_TEXTURE2);
-//   // glBindTexture(GL_TEXTURE_2D, depthMap);
-
-//   // // render onto quad
-//   // renderQuad();
-// }
+  mesh.BindVertexArray();
+  glDrawElements(GL_TRIANGLES, mesh.GetVertexCount(), GL_UNSIGNED_INT, nullptr);
+}
 
 void Renderer::RenderUI(UI::UserInterface &ui) {
-  PROFILE_FUNCTION(UserInterface)
-  
-  ui.Render(m_uiShader, m_textShader, m_fontMap);
+  ui.Draw();
 }
 
 void Renderer::Begin3D(const std::shared_ptr<Scene::Camera> &camera3D) {
@@ -143,38 +139,5 @@ void Renderer::ClearBackground(const glm::vec3 &color) const {
 void Renderer::ToggleWireframeMode() {
   m_isWireframeMode = !m_isWireframeMode;
 }
-
-// void Renderer::InitializeShadowMapping() {
-//   m_blockShader.Use();
-//   m_blockShader.Uniform("uShadowMap", 2);
-
-//   glGenFramebuffers(1, &m_depthMapFBO);
-
-//   m_shadowMapWidth = 4096;
-//   m_shadowMapHeight = 4096;
-//   glGenTextures(1, &m_depthMap);
-//   glBindTexture(GL_TEXTURE_2D, m_depthMap);
-//   glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_shadowMapWidth, m_shadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-//   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER); 
-//   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-//   float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-//   glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-//   glBindFramebuffer(GL_FRAMEBUFFER, m_depthMapFBO);
-//     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthMap, 0);
-//     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-//         std::cerr << "ERROR: Framebuffer is not complete!" << std::endl;
-//     }
-
-//     glDrawBuffer(GL_NONE);
-//     glReadBuffer(GL_NONE);
-//   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-//   m_debugDepthQuadShader.Use();
-//   m_debugDepthQuadShader.Uniform("uDepthMap", 2);
-// }
 
 }

@@ -2,13 +2,12 @@
 
 namespace Graphics {
 
-// NOLINTBEGIN(cppcoreguidelines-pro-type-member-init)
 BufferObject::BufferObject(GLenum target)
   : m_target(target)
 {
   glGenBuffers(1, &m_handle);
+  Bind();
 }
-// NOLINTEND(cppcoreguidelines-pro-type-member-init)
 
 BufferObject::~BufferObject() {
   glDeleteBuffers(1, &m_handle);

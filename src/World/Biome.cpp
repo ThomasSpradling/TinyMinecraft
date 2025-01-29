@@ -37,8 +37,6 @@ auto Biome::GenerateBlock(int x, int y, int z, int height, double stoneNoise) co
   const int seaLevel = 62;
   const float stoneThreshold = 0.75;
 
-// NOLINTBEGIN(bugprone-branch-clone)  
-
   switch(m_type) {
     case BiomeType::Desert:
       if (y >= height - 2 && y <= height) return BlockType::SAND;
@@ -97,7 +95,6 @@ auto Biome::GenerateBlock(int x, int y, int z, int height, double stoneNoise) co
       break;
     default:
   }
-// NOLINTEND(bugprone-branch-clone)  
 
   return BlockType::AIR;
 }

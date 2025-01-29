@@ -29,6 +29,7 @@ public:
 
   bool IsTransparent() const;
   bool IsBillboard() const;
+  bool IsFluid() const;
 
   BlockType GetType() const;
   void SetType(BlockType value);
