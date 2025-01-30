@@ -31,11 +31,15 @@ add_library(GLAD_LIB "third_party/glad/src/glad.c")
 # NOISE
 add_library(PERLIN_LIB "third_party/noise/PerlinNoise/PerlinNoise.cpp")
 
+# GLAZE (JSON reading/writing)
+add_subdirectory("third_party/json")
+
 include_directories(
   "include"
   third_party/glad/include
   third_party/glfw/include
   third_party/glm
+  third_party/json/include
   third_party/noise
   third_party
   third_party/stb 

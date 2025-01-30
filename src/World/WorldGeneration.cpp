@@ -10,12 +10,15 @@
 #include "World/World.h"
 #include <array>
 #include <cstddef>
+#include <string>
 #include <unordered_set>
 #include <utility>
 
 namespace World {
 
 WorldGeneration::WorldGeneration(World &world) : m_world(world) {
+  // load splines
+
   m_biomes.emplace(BiomeType::Tundra, Biome(BiomeType::Tundra, 
                                           35.0f, 100.0f, 0.0, 0.1, 0.0, 1.0));
   m_biomes.emplace(BiomeType::Taiga, Biome(BiomeType::Taiga,
