@@ -1,7 +1,6 @@
 #ifndef BIOME_H_
 #define BIOME_H_
 
-#include "Utils/noise.h"
 #include "World/Block.h"
 namespace World {
 
@@ -23,7 +22,6 @@ public:
     float minHumidity, float maxHumidity);
 
   [[nodiscard]] auto IsValid(double temperature, double humidity) const -> bool;
-  auto GenerateHeight(int x, int z, PerlinNoise &heightMap) const -> double;
   [[nodiscard]] auto GenerateBlock(int x, int y, int z, int height, double stoneMap) const -> Block;
 
   [[nodiscard]] auto GetType() const -> BiomeType;

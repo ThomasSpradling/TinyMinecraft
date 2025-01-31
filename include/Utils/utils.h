@@ -14,7 +14,6 @@ auto ScaleValue(T min1, T max1, T min2, T max2, T value) -> T {
   return slope * value + intercept;
 }
 
-// Face
 template <int VertCount>
 auto CalculateConvexCenter(const std::array<glm::vec3, VertCount> &vertices) -> glm::vec3 {
   glm::vec3 res { 0.0f };

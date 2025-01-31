@@ -10,10 +10,6 @@ add_compile_options(
   # -Wextra
 )
 
-set(CLANG_TIDY_OPTIONS "--allow-no-checks")
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_CLANG_TIDY "clang-tidy")
-
 ### Configure Dependencies
 
 # GLFW
@@ -28,10 +24,7 @@ add_subdirectory("third_party/glm")
 # GLAD
 add_library(GLAD_LIB "third_party/glad/src/glad.c")
 
-# NOISE
-add_library(PERLIN_LIB "third_party/noise/PerlinNoise/PerlinNoise.cpp")
-
-# GLAZE (JSON reading/writing)
+# JSON
 add_subdirectory("third_party/json")
 
 include_directories(
@@ -42,7 +35,8 @@ include_directories(
   third_party/json/include
   third_party/noise
   third_party
-  third_party/stb 
+  third_party/stb
+  third_party/noise
 )
 
 if (APPLE)
@@ -52,7 +46,7 @@ endif()
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_link_libraries(${PROJECT_NAME} glfw GLAD_LIB PERLIN_LIB ${FRAMEWORKS})
+target_link_libraries(${PROJECT_NAME} glfw GLAD_LIB ${FRAMEWORKS})
 
 target_compile_options(${PROJECT_NAME} PRIVATE 
     $<$<CONFIG:DEBUG>:-g>
@@ -60,6 +54,5 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 )
 
 target_compile_options(GLAD_LIB PRIVATE -w)
-target_compile_options(PERLIN_LIB PRIVATE -w)
 target_compile_options(glfw PRIVATE -w)
 target_compile_options(glm PRIVATE -w)

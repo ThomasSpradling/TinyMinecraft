@@ -120,6 +120,12 @@ private:
     return oss.str();
   }
 
+  [[nodiscard]] auto ToString(const glm::vec4 &vec) const -> std::string {
+    std::ostringstream oss;
+    oss << "vec3(" << vec.x << ", " << vec.y <<  ", " << vec.z << ", " << vec.w << ")";
+    return oss.str();
+  }
+
   [[nodiscard]] auto ToString(const glm::ivec2 &vec) const -> std::string {
     std::ostringstream oss;
     oss << "vec3(" << vec.x << ", " << vec.y << ")";

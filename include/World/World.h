@@ -3,7 +3,6 @@
 
 #include "Geometry/geometry.h"
 #include "Utils/mathgl.h"
-#include "Utils/noise.h"
 #include "World/Chunk.h"
 #include "World/WorldGeneration.h"
 
@@ -15,6 +14,9 @@ public:
 
   auto GetTemperature(int x, int z) -> double;
   auto GetHumidity(int x, int z) -> double;
+  auto GetContinentalness(int x, int z) -> double;
+  auto GetErosion(int x, int z) -> double;
+
   auto GetBiome(int x, int z) -> BiomeType;
 
   void Update(const glm::vec3 &playerPos);
@@ -47,7 +49,7 @@ public:
 private:
   const unsigned int seed = 3782;
 
-  PerlinNoise m_temperatureMap, m_humidityMap, m_blendMap, m_heightMap, m_stoneMap, m_treeMap, m_grassMap;
+  // PerlinNoise m_temperatureMap, m_humidityMap, m_blendMap, m_heightMap, m_stoneMap, m_treeMap, m_grassMap, m_continentalnessMap, m_erosionMap;
   
   std::unordered_map<glm::ivec2, Chunk, Utils::IVec2Hash> m_loadedChunks;
   WorldGeneration m_worldGen;

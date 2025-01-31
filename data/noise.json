@@ -1,0 +1,73 @@
+{
+  "noise_maps": {
+    "stone": {
+      "amplitude": [
+        1.0,
+        0.5,
+        0.25,
+        0.125
+      ],
+      "octave_offset": 0
+    },
+    "tree": {
+      "amplitude": [
+        1.0,
+        0.5,
+        0.25,
+        0.125
+      ],
+      "octave_offset": 0
+    },
+    "continentalness": {
+      "amplitude": [
+        1.0,
+        0.5,
+        0.25,
+        0.125
+      ],
+      "octave_offset": 0
+    },
+    "erosion": {
+      "amplitude": [
+        1.0,
+        0.5,
+        0.25,
+        0.125
+      ],
+      "octave_offset": 0
+    },
+    "humidity": {
+      "amplitude": [
+        1.0,
+        0.5,
+        0.25,
+        0.125
+      ],
+      "octave_offset": 0
+    },
+    "temperature": {
+      "amplitude": [
+        1.0,
+        0.5,
+        0.25,
+        0.125
+      ],
+      "octave_offset": 0
+    },
+    "ridges": {
+      "amplitude": [
+        1.0,
+        0.5,
+        0.25,
+        0.125
+      ],
+      "octave_offset": 0
+    },
+    "grass": {
+      "amplitude": [
+        1.0
+      ],
+      "octave_offset": 0
+    }
+  }
+}

@@ -1,6 +1,5 @@
 #include "Application/Game.h"
 #include "Application/InputHandler.h"
-#include "GLFW/glfw3.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Renderer2D.h"
 #include "Utils/defs.h"
@@ -128,7 +127,13 @@ void Game::Update() {
 
   m_ui.SetPlayerPosition(pos);
   m_ui.SetChunkPosition(m_world.GetChunkPosFromCoords(pos));
-  m_ui.SetClimateValues(m_world.GetTemperature(pos.x, pos.z), m_world.GetHumidity(pos.x, pos.z), m_world.GetBiome(pos.x, pos.z));
+  m_ui.SetDebugValues(
+    m_world.GetTemperature(pos.x, pos.z),
+    m_world.GetHumidity(pos.x, pos.z),
+    m_world.GetContinentalness(pos.x, pos.z),
+    m_world.GetErosion(pos.x, pos.z),
+    m_world.GetBiome(pos.x, pos.z)
+  );
 }
 
 void Game::Render(double) {

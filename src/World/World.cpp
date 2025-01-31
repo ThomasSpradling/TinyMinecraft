@@ -1,9 +1,13 @@
+#include <MacTypes.h>
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <cstdlib>
 #include "World/World.h"
 #include "Geometry/geometry.h"
+#include "Math/NoiseManager.h"
+#include "Utils/Logger.h"
 #include "Utils/Profiler.h"
 #include "Utils/defs.h"
 #include "Utils/noise.h"
@@ -15,34 +19,49 @@
 namespace World {
 
 World::World()
-  : m_temperatureMap(seed + 1)
-  , m_humidityMap(seed + 2)
-  , m_blendMap(seed + 3)
-  , m_heightMap(seed + 4)
-  , m_stoneMap(seed + 5)
-  , m_treeMap(seed + 6)
-  , m_grassMap(seed + 7)
-  , m_worldGen(*this)
-{}
+  : m_worldGen(*this)
+{
+  Math::NoiseManager::Initialize(seed);
+}
 
 auto World::GetTemperature(int x, int z) -> double {
-  const double temperatureScale = 0.001;
+  const double temperatureScale = 1;
 
-  double temperature = Utils::OctaveNoise(x * temperatureScale, z * temperatureScale, m_temperatureMap);
-  temperature = Utils::ScaleValue(0.3, 0.7, 0.1, 0.9, temperature);
-  temperature = std::clamp(temperature, 0.0, 1.0);
+  double temperature = Math::NoiseManager::GetImprovedSimplexNoise(
+    Math::Noise::Temperature,
+    glm::vec2(x * temperatureScale, z * temperatureScale));
+
+  // temperature = Utils::ScaleValue(0.3, 0.7, 0.1, 0.9, temperature);
+  // temperature = std::clamp(temperature, 0.0, 1.0);
 
   return temperature;
 }
 
 auto World::GetHumidity(int x, int z) -> double {
-  const double humidityScale = 0.003;
+  const double humidityScale = 1;
 
-  double humidity = Utils::OctaveNoise(x * humidityScale, z * humidityScale, m_humidityMap);
-  humidity = Utils::ScaleValue(0.3, 0.7, 0.1, 0.9, humidity);
-  humidity = std::clamp(humidity, 0.0, 1.0);
-
+  double humidity = Math::NoiseManager::GetImprovedSimplexNoise(
+    Math::Noise::Humidity,
+    glm::vec2(x * humidityScale, z * humidityScale));
   return humidity;
+}
+
+auto World::GetContinentalness(int x, int z) -> double {
+  const double continentalnessScale = 1;
+  double continentalness = Math::NoiseManager::GetImprovedSimplexNoise(
+    Math::Noise::Humidity,
+    glm::vec2(x * continentalnessScale, z * continentalnessScale));
+  return continentalness;
+}
+
+auto World::GetErosion(int x, int z) -> double {
+  const double erosionScale = 1;
+  double erosion = Math::NoiseManager::GetImprovedSimplexNoise(
+    Math::Noise::Humidity,
+    glm::vec2(x * erosionScale, z * erosionScale));
+
+  // erosion = std::clamp(erosion, 0.0, 1.0);
+  return erosion;
 }
 
 auto World::GetBiome(int x, int z) -> BiomeType {
@@ -155,8 +174,8 @@ void World::LoadChunk(int x, int z) {
   m_loadedChunks.emplace(chunkPos, Chunk(*this, chunkPos));
 
   m_loadedChunks.at(chunkPos).SetState(ChunkState::Loaded);
-  m_worldGen.GenerateTerrainChunk(m_loadedChunks.at(chunkPos), m_blendMap, m_heightMap, m_stoneMap);
-  m_worldGen.GenerateFeatures(m_loadedChunks.at(chunkPos), m_treeMap, m_grassMap);
+  m_worldGen.GenerateTerrainChunk(m_loadedChunks.at(chunkPos));
+  m_worldGen.GenerateFeatures(m_loadedChunks.at(chunkPos));
 
   // Utils::g_logger.Debug("Hello??");
 }
@@ -170,8 +189,8 @@ void World::LoadChunk(Chunk &chunk) {
 
   const glm::ivec2 &chunkPos = chunk.GetChunkPos();
   if (!m_loadedChunks.contains(chunkPos)) {
-    m_worldGen.GenerateTerrainChunk(chunk, m_blendMap, m_heightMap, m_stoneMap);
-    m_worldGen.GenerateFeatures(chunk, m_treeMap, m_grassMap);
+    m_worldGen.GenerateTerrainChunk(chunk);
+    m_worldGen.GenerateFeatures(chunk);
 
     m_loadedChunks.emplace(chunkPos, std::move(chunk));
   }

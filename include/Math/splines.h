@@ -12,22 +12,21 @@ namespace Math {
  * interval [x_i, x_{i+1}] is:
  *    y(x) = a + b*(x - x_i) + c*(x - x_i)^2 + d*(x - x_i)^3
  */
-template <int SplineCount>
-inline auto ComputeCubicSplines(const std::array<glm::vec2, SplineCount> &splinePoints) -> std::array<glm::vec4, SplineCount - 1> {
-  if (SplineCount < 2) {
+inline auto ComputeCubicSplines(const std::vector<glm::vec2> &splinePoints) -> std::vector<glm::vec4> {
+  const int N = static_cast<int>(splinePoints.size()) - 1;
+
+  if (N < 1) {
     Utils::g_logger.Error("Splines: Require at least two spline points.");
+    exit(1);
   }
 
-  constexpr int N = SplineCount - 1;
-
-  std::array<float, N + 1> x;
-  std::array<float, N + 1> y; // a
-  for (int i = 0; i < N + 1; ++i) {
+  std::vector<float> x(N + 1);
+  std::vector<float> y(N + 1);
+  for (int i = 0; i <= N; ++i) {
     x[i] = splinePoints[i].x;
     y[i] = splinePoints[i].y;
   }
 
-  // ensure x-values are strictly increasing
   for (int i = 0; i < N; ++i) {
     if (x[i] >= x[i + 1]) {
       Utils::g_logger.Error("Splines: x-values are not monotonically increasing!");
@@ -35,31 +34,28 @@ inline auto ComputeCubicSplines(const std::array<glm::vec2, SplineCount> &spline
     }
   }
 
-  std::array<float, N> segmentLengths; // h
+  std::vector<float> segmentLengths(N);
   for (int i = 0; i < N; ++i)
     segmentLengths[i] = x[i+1] - x[i];
 
-  // Solve for second derivatives using tridiagonal system:
-  // A * secondDerivatives = derivativeDifference
-
-  std::array<float, N+1> derivDifferences;
-  std::array<float, N+1> secondDerivatives;
-  std::array<float, N+1> diag;
-  std::array<float, N+1> upper;
-  std::array<float, N+1> z;
-
-  for (int i = 0; i < N; ++i) {
-    int rightSlope = (y[i+1] - y[i]) / segmentLengths[i];
-    int leftSlope = (y[i] - y[i-1]) / segmentLengths[i-1];
+  std::vector<float> derivDifferences(N+1);
+  for (int i = 1; i < N; ++i) {
+    float rightSlope = (y[i+1] - y[i]) / segmentLengths[i];
+    float leftSlope = (y[i] - y[i-1]) / segmentLengths[i-1];
     derivDifferences[i] = 3.0f * (rightSlope - leftSlope);
   }
 
-  diag[0] = 1.0f; // l
-  upper[0] = 0.0f; // mu
+  std::vector<float> secondDerivatives(N+1);
+  std::vector<float> diag(N+1);
+  std::vector<float> upper(N+1);
+  std::vector<float> z(N+1);
+
+  diag[0] = 1.0f;
+  upper[0] = 0.0f;
   z[0] = 0.0f;
 
   for (int i = 1; i < N; ++i) {
-    diag = 2.0f * (x[i+1] - x[i-1] - segmentLengths[i-1] * upper[i-1]);
+    diag[i] = 2.0f * (x[i+1] - x[i-1]) - segmentLengths[i-1] * upper[i-1];
     upper[i] = segmentLengths[i] / diag[i];
     z[i] = (derivDifferences[i] - segmentLengths[i-1] * z[i-1]) / diag[i];
   }
@@ -69,17 +65,67 @@ inline auto ComputeCubicSplines(const std::array<glm::vec2, SplineCount> &spline
   secondDerivatives[N] = 0.0f;
 
   for (int i = N - 1; i >= 0; --i) {
-    secondDerivatives = z[i] - upper[i] * secondDerivatives[i+1];
+    secondDerivatives[i] = z[i] - upper[i] * secondDerivatives[i+1];
   }
 
-  std::array<glm::vec4, N> coeffs;
+  std::vector<glm::vec4> coeffs(N);
   for (int i = 0; i < N; ++i) {
     float a = y[i];
     float b = (y[i+1] - y[i]) / segmentLengths[i]
             - (segmentLengths[i] / 3.0f) * (2.0f * secondDerivatives[i] + secondDerivatives[i+1]);
     float c = secondDerivatives[i];
     float d = (secondDerivatives[i+1] - secondDerivatives[i]) / (3.0f * segmentLengths[i]);
+    coeffs[i] = glm::vec4(a, b, c, d);
+  }
 
+  return coeffs;
+}
+
+inline auto ComputeMonotonicCubicSplines(const std::vector<glm::vec2> &splinePoints) -> std::vector<glm::vec4> {
+  const int N = static_cast<int>(splinePoints.size()) - 1;
+  if (N < 1) {
+    Utils::g_logger.Error("Splines: Require at least two spline points.");
+    exit(1);
+  }
+
+  std::vector<float> x(N+1), y(N+1);
+  for (int i = 0; i <= N; ++i) {
+    x[i] = splinePoints[i].x;
+    y[i] = splinePoints[i].y;
+  }
+  for (int i = 0; i < N; ++i) {
+    if (x[i] >= x[i+1]) {
+      Utils::g_logger.Error("Splines: x-values are not monotonically increasing!");
+      exit(1);
+    }
+  }
+
+  std::vector<float> segmentLengths(N);
+  for (int i = 0; i < N; ++i)
+    segmentLengths[i] = x[i+1] - x[i];
+
+  std::vector<float> slope(N), tangent(N+1);
+  for (int i = 0; i < N; ++i)
+    slope[i] = (y[i+1] - y[i]) / segmentLengths[i];
+
+  tangent[0] = slope[0];
+  tangent[N] = slope[N-1];
+  for (int i = 1; i < N; ++i) {
+    if (slope[i-1] * slope[i] <= 0.0f) {
+      tangent[i] = 0.0f;
+    } else {
+      float alpha = slope[i-1] + slope[i];
+      float beta = (2.0f * slope[i]) + (2.0f * slope[i-1]);
+      tangent[i] = 3.0f * alpha / beta;
+    }
+  }
+
+  std::vector<glm::vec4> coeffs(N);
+  for (int i = 0; i < N; ++i) {
+    float a = y[i];
+    float b = tangent[i];
+    float c = (3.0f * slope[i] - 2.0f * tangent[i] - tangent[i+1]) / segmentLengths[i];
+    float d = (tangent[i] + tangent[i+1] - 2.0f * slope[i]) / (segmentLengths[i] * segmentLengths[i]);
     coeffs[i] = glm::vec4(a, b, c, d);
   }
 
@@ -88,17 +134,16 @@ inline auto ComputeCubicSplines(const std::array<glm::vec2, SplineCount> &spline
 
 
 /**
- *
+ * Evalues cubic spline givin input-output of `ComputeCubicSplines` or `ComputeMonotonicCubicSplines` and a point to compute at.
  */
-template <int SplineCount>
-inline auto EvaluateCubicSpline(const std::array<glm::vec2, SplineCount> &splinePoints,
-                                const std::array<glm::vec4, SplineCount - 1> &splineCoeffs,
+inline auto EvaluateCubicSpline(const std::vector<glm::vec2> &splinePoints,
+                                const std::vector<glm::vec4> &splineCoeffs,
                                 float value) -> float {
   // binary search for segment i where x_i <= value < x_{i+1}
   
   int ilow = 0;
-  int ihigh = SplineCount - 1;
-  while (ilow < ihigh) {
+  int ihigh = static_cast<int>(splinePoints.size()) - 1;
+  while (ilow < ihigh - 1) {
     int mid = (ilow + ihigh) / 2;
     if (value < splinePoints[mid].x) {
       ihigh = mid;

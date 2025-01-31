@@ -26,8 +26,8 @@ void UserInterface::Draw() {
         << m_chunkPosition.y << "\n\n";
 
   debug << std::fixed << std::setprecision(5);
-  debug << "Climate: "
-        << "T " << m_temperature << ", H " << m_humidity << "\n";
+  debug << "Environment: "
+        << "T " << m_temperature << ", H " << m_humidity << ", C " << m_continentalness << ", E " << m_erosion << "\n";
 
   debug << "Biome: "
         << World::Biome::GetBiomeName(m_biome) << "\n";
@@ -35,9 +35,12 @@ void UserInterface::Draw() {
   Graphics::Renderer2D::DrawText(debug.str(), 15, 15, glm::vec4(1.0f));
 }
 
-void UserInterface::SetClimateValues(float temperature, float humidity, World::BiomeType biome) {
+void UserInterface::SetDebugValues(float temperature, float humidity, float continentalness, float erosion, World::BiomeType biome) {
   m_temperature = temperature;
   m_humidity = humidity;
+  m_erosion = erosion;
+  m_continentalness = continentalness;
+
   m_biome = biome;
 }
 
