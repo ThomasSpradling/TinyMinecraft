@@ -5,7 +5,6 @@ namespace Graphics {
 
 VertexArray::VertexArray() {
   glGenVertexArrays(1, &m_handle);
-  // Utils::g_logger.Debug("VAO start: {}.", m_handle);
   Bind();
 }
 

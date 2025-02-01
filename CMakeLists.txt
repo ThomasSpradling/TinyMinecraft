@@ -27,13 +27,17 @@ add_library(GLAD_LIB "third_party/glad/src/glad.c")
 # JSON
 add_subdirectory("third_party/json")
 
+# FastNoise2
+set(FASTNOISE2_NOISETOOL OFF CACHE BOOL "Build Noise Tool" FORCE)
+add_subdirectory("third_party/FastNoise2")
+
 include_directories(
   "include"
   third_party/glad/include
   third_party/glfw/include
   third_party/glm
   third_party/json/include
-  third_party/noise
+  third_party/FastNoise2/include
   third_party
   third_party/stb
   third_party/noise
@@ -46,7 +50,7 @@ endif()
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_link_libraries(${PROJECT_NAME} glfw GLAD_LIB ${FRAMEWORKS})
+target_link_libraries(${PROJECT_NAME} glfw GLAD_LIB FastNoise ${FRAMEWORKS})
 
 target_compile_options(${PROJECT_NAME} PRIVATE 
     $<$<CONFIG:DEBUG>:-g>
@@ -54,5 +58,6 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 )
 
 target_compile_options(GLAD_LIB PRIVATE -w)
+target_compile_options(FastNoise PRIVATE -w)
 target_compile_options(glfw PRIVATE -w)
 target_compile_options(glm PRIVATE -w)

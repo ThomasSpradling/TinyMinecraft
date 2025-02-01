@@ -1,6 +1,11 @@
 #ifndef WORLD_GENERATION_H_
 #define WORLD_GENERATION_H_
 
+#include <FastNoise/FastNoise.h>
+#include "FastNoise/Generators/Fractal.h"
+#include "FastNoise/Generators/Perlin.h"
+#include "FastNoise/Generators/Simplex.h"
+#include "FastNoise/SmartNode.h"
 #include "Utils/Logger.h"
 #include "Utils/noise.h"
 #include "Utils/mathgl.h"
@@ -46,6 +51,17 @@ private:
 
   std::function<float(float)> ContinentalnessPart;
   std::function<float(float)> ErosionPart;
+  std::function<float(float)> RidgesPart;
+
+  FastNoise::SmartNode<FastNoise::Perlin> m_noise;
+  FastNoise::SmartNode<FastNoise::FractalFBm> m_baseTerrain;
+  FastNoise::SmartNode<FastNoise::Perlin> m_ridges;
+  FastNoise::SmartNode<FastNoise::OpenSimplex2S> m_caves;
+  FastNoise::SmartNode<FastNoise::Simplex> m_featureNoise;
+
+  // FastNoise::SmartNode<FastNoise::Simplex> m_simplex;
+  // FastNoise::SmartNode<FastNoise::FractalFBm> m_fractal;
+  // FastNoise::SmartNode<FastNoise::DomainScale> m_domainScale;
 };
 
 }

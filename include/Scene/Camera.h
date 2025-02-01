@@ -42,7 +42,7 @@ private:
   glm::vec3 m_moveDirection { 0.0f, 0.0f, 0.0f };
 
   float m_pitch = 0.0f, m_yaw = -90.0f;
-  float m_speed = 0.05f;
+  float m_speed = 0.2f;
 
   float m_fov { 45.0f };
   float m_aspect { 1.6f };

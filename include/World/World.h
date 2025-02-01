@@ -16,6 +16,7 @@ public:
   auto GetHumidity(int x, int z) -> double;
   auto GetContinentalness(int x, int z) -> double;
   auto GetErosion(int x, int z) -> double;
+  auto GetRidges(int x, int z) -> double;
 
   auto GetBiome(int x, int z) -> BiomeType;
 

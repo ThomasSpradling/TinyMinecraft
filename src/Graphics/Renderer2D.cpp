@@ -4,7 +4,6 @@
 #include "Graphics/Texture.h"
 #include "Graphics/VertexArray.h"
 #include "Graphics/gfx.h"
-#include "Utils/Logger.h"
 #include "Utils/defs.h"
 #include <array>
 #include <cstddef>
@@ -135,12 +134,6 @@ void Renderer2D::EndScene() {
     s_data.rectShader->Use();
 
     s_data.rectVBO->BufferData(s_data.rectVertices, GL_DYNAMIC_DRAW);
-
-    Utils::g_logger.Debug("START");
-    for (int i = 0; i < s_data.rectVertices.size(); ++i) {
-      Utils::g_logger.Debug("VERT: {}", glm::vec3(s_data.rectVertices[i].position, 0));
-    }
-    Utils::g_logger.Debug("END");
 
     glDrawElements(GL_TRIANGLES, s_data.rectIndexCount, GL_UNSIGNED_INT, nullptr);
     s_data.rectVertices.clear();

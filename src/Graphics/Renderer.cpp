@@ -72,12 +72,12 @@ void Renderer::RenderWorld(World::World &world) {
     glm::mat4 model { 1.0f };
     model = glm::translate(model, glm::vec3(chunkPos.x * CHUNK_WIDTH, 0.0f, chunkPos.y * CHUNK_LENGTH));
 
-    glDisable(GL_CULL_FACE);
+    // glDisable(GL_CULL_FACE);
     glDepthMask(GL_FALSE);
 
     RenderMesh(chunk->GetTranslucentMesh(), m_blockShader, model);
 
-    glEnable(GL_CULL_FACE);
+    // glEnable(GL_CULL_FACE);
     glDepthMask(GL_TRUE);
   }
 }

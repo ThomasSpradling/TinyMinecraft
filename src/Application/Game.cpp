@@ -132,6 +132,7 @@ void Game::Update() {
     m_world.GetHumidity(pos.x, pos.z),
     m_world.GetContinentalness(pos.x, pos.z),
     m_world.GetErosion(pos.x, pos.z),
+    m_world.GetRidges(pos.x, pos.z),
     m_world.GetBiome(pos.x, pos.z)
   );
 }

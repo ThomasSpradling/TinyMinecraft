@@ -21,18 +21,35 @@
     "continentalness": {
       "amplitude": [
         1.0,
-        0.5,
-        0.25,
-        0.125
+        1.0,
+        2.0,
+        2.0,
+        2.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
       ],
-      "octave_offset": 0
+      "octave_offset": 1
     },
     "erosion": {
       "amplitude": [
         1.0,
-        0.5,
-        0.25,
-        0.125
+        1.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "octave_offset": 1
+    },
+    "ridges": {
+      "amplitude": [
+        1.0,
+        2.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
       ],
       "octave_offset": 0
     },
@@ -54,18 +71,17 @@
       ],
       "octave_offset": 0
     },
-    "ridges": {
-      "amplitude": [
-        1.0,
-        0.5,
-        0.25,
-        0.125
-      ],
-      "octave_offset": 0
-    },
     "grass": {
       "amplitude": [
         1.0
+      ],
+      "octave_offset": 0
+    },
+    "density": {
+      "amplitude": [
+        1.0,
+        0.5,
+        0.25
       ],
       "octave_offset": 0
     }

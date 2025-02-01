@@ -101,22 +101,25 @@ inline auto ComputeMonotonicCubicSplines(const std::vector<glm::vec2> &splinePoi
   }
 
   std::vector<float> segmentLengths(N);
-  for (int i = 0; i < N; ++i)
+  std::vector<float> slope(N);
+  for (int i = 0; i < N; ++i) {
     segmentLengths[i] = x[i+1] - x[i];
-
-  std::vector<float> slope(N), tangent(N+1);
-  for (int i = 0; i < N; ++i)
     slope[i] = (y[i+1] - y[i]) / segmentLengths[i];
+  }
 
+  std::vector<float> tangent(N+1);
   tangent[0] = slope[0];
   tangent[N] = slope[N-1];
+
   for (int i = 1; i < N; ++i) {
     if (slope[i-1] * slope[i] <= 0.0f) {
       tangent[i] = 0.0f;
     } else {
-      float alpha = slope[i-1] + slope[i];
-      float beta = (2.0f * slope[i]) + (2.0f * slope[i-1]);
-      tangent[i] = 3.0f * alpha / beta;
+      float h0 = segmentLengths[i-1];
+      float h1 = segmentLengths[i];
+      float w1 = 2.0f * h1 + h0;
+      float w2 = h1 + 2.0f * h0;
+      tangent[i] = (w1 + w2) / ((w1 / slope[i-1]) + (w2 / slope[i]));
     }
   }
 

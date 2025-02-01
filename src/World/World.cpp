@@ -1,5 +1,4 @@
 #include <MacTypes.h>
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -7,11 +6,8 @@
 #include "World/World.h"
 #include "Geometry/geometry.h"
 #include "Math/NoiseManager.h"
-#include "Utils/Logger.h"
 #include "Utils/Profiler.h"
 #include "Utils/defs.h"
-#include "Utils/noise.h"
-#include "Utils/utils.h"
 #include "World/Biome.h"
 #include "World/Block.h"
 #include "World/Chunk.h"
@@ -21,47 +17,59 @@ namespace World {
 World::World()
   : m_worldGen(*this)
 {
-  Math::NoiseManager::Initialize(seed);
+  // Math::NoiseManager::Initialize(seed);
 }
 
 auto World::GetTemperature(int x, int z) -> double {
-  const double temperatureScale = 1;
+  // const double temperatureScale = 1;
 
-  double temperature = Math::NoiseManager::GetImprovedSimplexNoise(
-    Math::Noise::Temperature,
-    glm::vec2(x * temperatureScale, z * temperatureScale));
+  // double temperature = Math::NoiseManager::GetImprovedSimplexNoise(
+  //   Math::Noise::Temperature,
+  //   glm::vec2(x * temperatureScale, z * temperatureScale));
 
   // temperature = Utils::ScaleValue(0.3, 0.7, 0.1, 0.9, temperature);
   // temperature = std::clamp(temperature, 0.0, 1.0);
 
-  return temperature;
+  // return temperature;
+
+  return 0;
 }
 
 auto World::GetHumidity(int x, int z) -> double {
-  const double humidityScale = 1;
+  // const double humidityScale = 0.05;
 
-  double humidity = Math::NoiseManager::GetImprovedSimplexNoise(
-    Math::Noise::Humidity,
-    glm::vec2(x * humidityScale, z * humidityScale));
-  return humidity;
+  // double humidity = Math::NoiseManager::GetImprovedSimplexNoise(
+  //   Math::Noise::Humidity,
+  //   glm::vec2(x * humidityScale, z * humidityScale));
+  // return humidity;
+  return 0;
 }
 
 auto World::GetContinentalness(int x, int z) -> double {
-  const double continentalnessScale = 1;
-  double continentalness = Math::NoiseManager::GetImprovedSimplexNoise(
-    Math::Noise::Humidity,
-    glm::vec2(x * continentalnessScale, z * continentalnessScale));
-  return continentalness;
+  // double continentalness = Math::NoiseManager::GetImprovedSimplexNoise(
+  //   Math::Noise::Continentalness,
+  //   glm::vec2(x, z));
+
+  // return continentalness;
+  return 0;
+}
+
+auto World::GetRidges(int x, int z) -> double {
+  // double ridges = Math::NoiseManager::GetImprovedSimplexNoise(
+  //   Math::Noise::Ridges,
+  //   glm::vec2(x, z));
+
+  // return 1 - ridges;
+  return 0;
 }
 
 auto World::GetErosion(int x, int z) -> double {
-  const double erosionScale = 1;
-  double erosion = Math::NoiseManager::GetImprovedSimplexNoise(
-    Math::Noise::Humidity,
-    glm::vec2(x * erosionScale, z * erosionScale));
+  // double erosion = Math::NoiseManager::GetImprovedSimplexNoise(
+  //   Math::Noise::Erosion,
+  //   glm::vec2(x, z));
 
-  // erosion = std::clamp(erosion, 0.0, 1.0);
-  return erosion;
+  // return erosion;
+  return 0;
 }
 
 auto World::GetBiome(int x, int z) -> BiomeType {
@@ -72,11 +80,11 @@ void World::Update(const glm::vec3 &playerPos) {
   PROFILE_FUNCTION(Chunk)
 
   const glm::ivec2 playerChunkPos = GetChunkPosFromCoords(playerPos);
-
   constexpr int viewRadius = GFX_RENDER_DISTANCE;
   constexpr int loadRadius = viewRadius + 1;
-
   std::vector<glm::ivec2> chunksToUnload;
+
+  // unload all nearby chunks
 
   for (auto &[chunkPos, chunk] : m_loadedChunks) {
     // if not nearby
@@ -176,8 +184,6 @@ void World::LoadChunk(int x, int z) {
   m_loadedChunks.at(chunkPos).SetState(ChunkState::Loaded);
   m_worldGen.GenerateTerrainChunk(m_loadedChunks.at(chunkPos));
   m_worldGen.GenerateFeatures(m_loadedChunks.at(chunkPos));
-
-  // Utils::g_logger.Debug("Hello??");
 }
 
 void World::LoadChunk(Chunk &chunk) {
