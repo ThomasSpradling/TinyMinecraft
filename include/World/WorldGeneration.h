@@ -7,7 +7,6 @@
 #include "FastNoise/Generators/Simplex.h"
 #include "FastNoise/SmartNode.h"
 #include "Utils/Logger.h"
-#include "Utils/noise.h"
 #include "Utils/mathgl.h"
 #include "World/Biome.h"
 #include "World/Block.h"

@@ -4,7 +4,6 @@
 #include "FastNoise/Generators/Fractal.h"
 #include "FastNoise/Generators/Perlin.h"
 #include "FastNoise/Generators/Simplex.h"
-#include "Math/NoiseManager.h"
 #include "Utils/Logger.h"
 #include "Utils/Profiler.h"
 #include "Utils/defs.h"
@@ -22,7 +21,6 @@
 #include <string>
 #include <unordered_set>
 #include <utility>
-
 
 namespace World {
 
@@ -130,12 +128,12 @@ void WorldGeneration::GenerateTerrainChunk(Chunk &chunk) {
   m_baseTerrain->GenUniformGrid2D(erosionMap.data(), chunkPos.x * 16.0f, chunkPos.y * 16.0f, 16.0f, 16.0f, 0.1f / 16.0f, 1336);
 
   std::vector<float> terrain(16 * 16 * 256);
-  std::vector<float> spaghettiCaves(16 * 16 * 256);
-  std::vector<float> cheeseCaves(16 * 16 * 256);
+  // std::vector<float> spaghettiCaves(16 * 16 * 256);
+  // std::vector<float> cheeseCaves(16 * 16 * 256);
 
   m_baseTerrain->GenUniformGrid3D(terrain.data(), 0, chunkPos.x * 16, chunkPos.y * 16, 256, 16, 16, 0.2f/16.0f, 1337);
-  m_caves->GenUniformGrid3D(spaghettiCaves.data(), 0, chunkPos.x * 16, chunkPos.y * 16, 256, 16, 16, 0.8f/16.0f, 1339);
-  m_caves->GenUniformGrid3D(cheeseCaves.data(), 0, chunkPos.x * 16, chunkPos.y * 16, 256, 16, 16, 0.8f/16.0f, 1340);
+  // m_caves->GenUniformGrid3D(spaghettiCaves.data(), 0, chunkPos.x * 16, chunkPos.y * 16, 256, 16, 16, 0.8f/16.0f, 1339);
+  // m_caves->GenUniformGrid3D(cheeseCaves.data(), 0, chunkPos.x * 16, chunkPos.y * 16, 256, 16, 16, 0.8f/16.0f, 1340);
 
   int index2D = 0;
   int index = 0;
@@ -173,12 +171,12 @@ void WorldGeneration::GenerateTerrainChunk(Chunk &chunk) {
         // double ridgeNoise = std::fabs(ridges[index]);
 
         double density = terrainNoise - (y - baseHeight) / 32.0f;
-        double spaghettiNoise = spaghettiCaves[index];
-        double cheeseNoise = cheeseCaves[index];
+        // double spaghettiNoise = spaghettiCaves[index];
+        // double cheeseNoise = cheeseCaves[index];
 
-        if (cheeseNoise > 1 - cavesSize && y < 62.0f || spaghettiNoise > -caveThickness && spaghettiNoise < caveThickness && y < 62.0f) {
-          density = 0;
-        }
+        // if (cheeseNoise > 1 - cavesSize && y < 62.0f || spaghettiNoise > -caveThickness && spaghettiNoise < caveThickness && y < 62.0f) {
+        //   density = 0;
+        // }
 
         if (nz > 0) {
           if (density > 0.0f) {

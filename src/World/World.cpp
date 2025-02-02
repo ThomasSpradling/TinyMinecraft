@@ -5,7 +5,6 @@
 #include <cstdlib>
 #include "World/World.h"
 #include "Geometry/geometry.h"
-#include "Math/NoiseManager.h"
 #include "Utils/Profiler.h"
 #include "Utils/defs.h"
 #include "World/Biome.h"
