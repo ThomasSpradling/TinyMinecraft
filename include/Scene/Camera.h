@@ -4,51 +4,55 @@
 #include "Graphics/gfx.h"
 #include "Utils/mathgl.h"
 
-namespace Scene {
+namespace TinyMinecraft {
 
-class Camera {
-public:
-  Camera() = default;
+  namespace Scene {
 
-  void SetPosition(glm::vec3 pos);
-  void SetUpVector(glm::vec3 vec);
+    class Camera {
+    public:
+      Camera() = default;
 
-  void SetFOV(float angle);
-  void SetAspectRatio(float aspectRatio);
-  void SetNearPlane(GLfloat nearPlane);
-  void SetFarPlane(GLfloat farPlane);
+      void SetPosition(glm::vec3 pos);
+      void SetUpVector(glm::vec3 vec);
 
-  auto GetViewProjection() -> glm::mat4;
+      void SetFOV(float angle);
+      void SetAspectRatio(float aspectRatio);
+      void SetNearPlane(GLfloat nearPlane);
+      void SetFarPlane(GLfloat farPlane);
 
-  [[nodiscard]] auto GetFront() const -> glm::vec3;
-  [[nodiscard]] auto GetRight() const -> glm::vec3;
-  [[nodiscard]] auto GetUp() const -> glm::vec3;
+      auto GetViewProjection() -> glm::mat4;
 
-  [[nodiscard]] auto GetYaw() const -> float;
-  [[nodiscard]] auto GetPitch() const -> float;
+      [[nodiscard]] auto GetFront() const -> glm::vec3;
+      [[nodiscard]] auto GetRight() const -> glm::vec3;
+      [[nodiscard]] auto GetUp() const -> glm::vec3;
 
-  void Move();
-  void SetMoveDirection(const glm::vec3 &direction);
-  void UpdateViewDirection(float newYaw, float newPitch);
+      [[nodiscard]] auto GetYaw() const -> float;
+      [[nodiscard]] auto GetPitch() const -> float;
 
-  [[nodiscard]] auto GetPosition() const -> glm::vec3;
+      void Move();
+      void SetMoveDirection(const glm::vec3 &direction);
+      void UpdateViewDirection(float newYaw, float newPitch);
 
-private:
-  glm::vec3 m_position { 0.0f };
+      [[nodiscard]] auto GetPosition() const -> glm::vec3;
 
-  glm::vec3 m_up { 0.0f, 1.0f, 0.0f };
-  glm::vec3 m_front { 0.0f, 0.0f, -1.0f };
+    private:
+      glm::vec3 m_position { 0.0f };
 
-  glm::vec3 m_moveDirection { 0.0f, 0.0f, 0.0f };
+      glm::vec3 m_up { 0.0f, 1.0f, 0.0f };
+      glm::vec3 m_front { 0.0f, 0.0f, -1.0f };
 
-  float m_pitch = 0.0f, m_yaw = -90.0f;
-  float m_speed = 0.2f;
+      glm::vec3 m_moveDirection { 0.0f, 0.0f, 0.0f };
 
-  float m_fov { 45.0f };
-  float m_aspect { 1.6f };
-  float m_near = 0.1;
-  float m_far = 1024.0f;
-};
+      float m_pitch = 0.0f, m_yaw = -90.0f;
+      float m_speed = 0.2f;
+
+      float m_fov { 45.0f };
+      float m_aspect { 1.6f };
+      float m_near = 0.1;
+      float m_far = 1024.0f;
+    };
+
+  }
 
 }
 

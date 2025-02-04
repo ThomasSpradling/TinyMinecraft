@@ -2,6 +2,8 @@
 #include "Utils/Profiler.h"
 #include "Utils/utils.h"
 
+using namespace TinyMinecraft;
+
 auto main() -> int {
   Utils::SetThreadName("main");
 

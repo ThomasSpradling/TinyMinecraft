@@ -3,43 +3,47 @@
 
 #include "Utils/mathgl.h"
 
-namespace Geometry {
+namespace TinyMinecraft {
 
-enum class Face : uint8_t {
-  Up,
-  Down,
-  East,
-  West,
-  North,
-  South,
-  None
-};
+  namespace Geometry {
 
-struct Rectangle {
-  float x;
-  float y;
-  float width;
-  float height;
+    enum class Face : uint8_t {
+      Up,
+      Down,
+      East,
+      West,
+      North,
+      South,
+      None
+    };
 
-  Rectangle(float x, float y, float width, float height)
-    : x(x)
-    , y(y)
-    , width(width)
-    , height(height)
-  {}
+    struct Rectangle {
+      float x;
+      float y;
+      float width;
+      float height;
 
-  Rectangle(const glm::vec2 &pos0, const glm::vec2 &pos1)
-    : x(std::min(pos0.x, pos1.x))
-    , y(std::min(pos0.y, pos1.y))
-    , width(std::abs(pos0.x - pos1.x))
-    , height(std::abs(pos0.y - pos1.y))
-  {}
-};
+      Rectangle(float x, float y, float width, float height)
+        : x(x)
+        , y(y)
+        , width(width)
+        , height(height)
+      {}
 
-auto GetNormal(Face face) -> glm::vec3;
+      Rectangle(const glm::vec2 &pos0, const glm::vec2 &pos1)
+        : x(std::min(pos0.x, pos1.x))
+        , y(std::min(pos0.y, pos1.y))
+        , width(std::abs(pos0.x - pos1.x))
+        , height(std::abs(pos0.y - pos1.y))
+      {}
+    };
 
-auto GetVertices(Face face, float width = 1, float height = 1) -> std::array<glm::vec3, 4>;
-auto GetFluidVertices(Face face, int depth = 0, int maxDepth = 7, Face direction = Face::None, bool floating = false) -> std::array<glm::vec3, 4>;
+    auto GetNormal(Face face) -> glm::vec3;
+
+    auto GetVertices(Face face, float width = 1, float height = 1) -> std::array<glm::vec3, 4>;
+    auto GetFluidVertices(Face face, int depth = 0, int maxDepth = 7, Face direction = Face::None, bool floating = false) -> std::array<glm::vec3, 4>;
+
+  }
 
 }
 

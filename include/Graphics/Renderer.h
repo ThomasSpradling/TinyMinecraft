@@ -9,34 +9,37 @@
 #include "World/World.h"
 #include <memory>
 
-namespace Graphics {
+namespace TinyMinecraft {
 
-class Renderer {
-public:
-  Renderer(float viewportWidth, float viewportHeight);
-  
-  // void RenderShadows(World::World &world);
-  void RenderWorld(World::World &world);
-  void RenderUI(UI::UserInterface &ui);
-  void RenderMesh(Geometry::Mesh &mesh, Shader &shader, glm::mat4 &model);
+  namespace Graphics {
 
-  void Begin3D(const std::shared_ptr<Scene::Camera> &camera3D);
-  void End3D();
-  [[nodiscard]] auto HasCamera() const -> bool;
+    class Renderer {
+    public:
+      Renderer(float viewportWidth, float viewportHeight);
+      
+      // void RenderShadows(World::World &world);
+      void RenderWorld(World::World &world);
+      void RenderUI(UI::UserInterface &ui);
+      void RenderMesh(Geometry::Mesh &mesh, Shader &shader, glm::mat4 &model);
 
-  void ClearBackground(const glm::vec3 &color) const;
-  void ToggleWireframeMode();
+      void Begin3D(const std::shared_ptr<Scene::Camera> &camera3D);
+      void End3D();
+      [[nodiscard]] auto HasCamera() const -> bool;
 
-private:
-  Shader m_blockShader, m_waterShader;
-  Texture m_blockAtlasTexture;
-  std::shared_ptr<Scene::Camera> m_currentCamera = nullptr;
+      void ClearBackground(const glm::vec3 &color) const;
+      void ToggleWireframeMode();
 
-  float m_viewportWidth, m_viewportHeight;
+    private:
+      Shader m_blockShader, m_waterShader;
+      Texture m_blockAtlasTexture;
+      std::shared_ptr<Scene::Camera> m_currentCamera = nullptr;
 
-  bool m_isWireframeMode = false;
-};
+      float m_viewportWidth, m_viewportHeight;
 
+      bool m_isWireframeMode = false;
+    };
+
+  }
 }
 
 #endif // RENDERER_H_

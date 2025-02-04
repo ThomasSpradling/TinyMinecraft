@@ -5,33 +5,37 @@
 #include <array>
 #include <vector>
 
-namespace Graphics {
+namespace TinyMinecraft {
 
-class BufferObject {
-public:
-  BufferObject(GLenum target);
+  namespace Graphics {
 
-  ~BufferObject();
-  BufferObject(const BufferObject &) = delete;
-  auto operator=(const BufferObject &) -> BufferObject & = delete;
-  BufferObject(BufferObject &&other) noexcept ;
-  auto operator=(BufferObject &&other) noexcept -> BufferObject & ;
+    class BufferObject {
+    public:
+      BufferObject(GLenum target);
 
-  void Bind() const;
-  
-  template <typename T> void BufferData(const std::vector<T> &data, GLenum usage) const {
-    Bind();
-    glBufferData(m_target, static_cast<GLsizeiptr>(sizeof(T) * data.size()), data.data(), usage);
+      ~BufferObject();
+      BufferObject(const BufferObject &) = delete;
+      auto operator=(const BufferObject &) -> BufferObject & = delete;
+      BufferObject(BufferObject &&other) noexcept ;
+      auto operator=(BufferObject &&other) noexcept -> BufferObject & ;
+
+      void Bind() const;
+      
+      template <typename T> void BufferData(const std::vector<T> &data, GLenum usage) const {
+        Bind();
+        glBufferData(m_target, static_cast<GLsizeiptr>(sizeof(T) * data.size()), data.data(), usage);
+      }
+
+      template <typename T, size_t Count> void BufferData(const std::array<T, Count> &data, GLenum usage) const {
+        Bind();
+        glBufferData(m_target, static_cast<GLsizeiptr>(sizeof(T) * Count), data.data(), usage);
+      }
+    private:
+      GLuint m_handle;
+      GLenum m_target;
+    };
+
   }
-
-  template <typename T, size_t Count> void BufferData(const std::array<T, Count> &data, GLenum usage) const {
-    Bind();
-    glBufferData(m_target, static_cast<GLsizeiptr>(sizeof(T) * Count), data.data(), usage);
-  }
-private:
-  GLuint m_handle;
-  GLenum m_target;
-};
 
 }
 

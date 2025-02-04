@@ -10,131 +10,135 @@
 #include "Utils/utils.h"
 #include "mathgl.h"
 
-namespace Utils {
+namespace TinyMinecraft {
 
-class Logger {
-public:
-  enum class Level : uint8_t {
-    Message,
-    Debug,
-    Profile,
-    Warning,
-    Error,
-    Fatal
-  };
+  namespace Utils {
 
-  Logger() = default;
+    class Logger {
+    public:
+      enum class Level : uint8_t {
+        Message,
+        Debug,
+        Profile,
+        Warning,
+        Error,
+        Fatal
+      };
 
-  void SetOutputCallback(std::function<void(const std::string &)> func);
+      Logger() = default;
 
-  template<typename... Args>
-  void Log(Level level, const std::string &format, Args... args) const {
-    std::ostringstream oss;
+      void SetOutputCallback(std::function<void(const std::string &)> func);
 
-    if constexpr (sizeof...(args) > 0) FormatString(oss, format, args...);
-    else oss << format;
+      template<typename... Args>
+      void Log(Level level, const std::string &format, Args... args) const {
+        std::ostringstream oss;
 
-    std::string color = GetColor(level);
-    std::string levelStr = LevelToString(level);
+        if constexpr (sizeof...(args) > 0) FormatString(oss, format, args...);
+        else oss << format;
 
-    std::ostringstream out;
-    out << color << "[ " << levelStr << " (" << Utils::GetThreadName() << ") ] " << oss.str() << RESET << "\n";
+        std::string color = GetColor(level);
+        std::string levelStr = LevelToString(level);
 
-    outputCallback(out.str());
+        std::ostringstream out;
+        out << color << "[ " << levelStr << " (" << Utils::GetThreadName() << ") ] " << oss.str() << RESET << "\n";
+
+        outputCallback(out.str());
+      }
+
+      template<typename... Args>
+      void Message(const std::string &format, Args... args) const {
+        Log(Level::Message, format, args...);
+      }
+      
+      template<typename... Args>
+      void Debug(const std::string &format, Args... args) const {
+        Log(Level::Debug, format, args...);
+      }
+      
+      template<typename... Args>
+      void Warning(const std::string &format, Args... args) const {
+        Log(Level::Warning, format, args...);
+      }
+
+      template<typename... Args>
+      void Error(const std::string &format, Args... args) const {
+        Log(Level::Error, format, args...);
+      }
+
+      template<typename... Args>
+      void Fatal(const std::string &format, Args... args) const {
+        Log(Level::Fatal, format, args...);
+      }
+
+    private:
+      const std::string RESET = "\033[0m";
+      const std::string YELLOW = "\033[33m";
+      const std::string RED = "\033[31m";
+      const std::string MAGENTA = "\033[35m";
+      const std::string BLUE = "\033[34m";
+
+      std::function<void(const std::string &)> outputCallback = [](const std::string &msg) {
+        std::cout << msg;
+      };
+
+      [[nodiscard]] auto GetColor(Level level) const -> std::string;
+
+      [[nodiscard]] auto LevelToString(Level level) const -> std::string;
+
+      template<typename T>
+      void FormatString(std::ostringstream &oss, const std::string &format, const T &value) const {
+        size_t placeholderPos = format.find("{}");
+        if (placeholderPos != std::string::npos) {
+          oss << format.substr(0, placeholderPos) << ToString(value) << format.substr(placeholderPos + 2);
+        } else {
+          oss << format;
+        }
+      }
+
+      template<typename T, typename... Args>
+      void FormatString(std::ostringstream &oss, const std::string& format, const T& value, Args... args) const {
+        size_t placeholderPos = format.find("{}");
+        if (placeholderPos != std::string::npos) {
+            oss << format.substr(0, placeholderPos) << ToString(value);
+            FormatString(oss, format.substr(placeholderPos + 2), args...);
+        } else {
+            oss << format;
+        }
+      }
+
+      template<typename T>
+      auto ToString(const T &value) const -> std::string {
+        if constexpr (std::is_arithmetic_v<T>) {
+          return std::to_string(value);
+        } else {
+          std::ostringstream oss;
+          oss << value;
+          return oss.str();
+        }
+      }
+
+      [[nodiscard]] auto ToString(const glm::vec3 &vec) const -> std::string {
+        std::ostringstream oss;
+        oss << "vec3(" << vec.x << ", " << vec.y <<  ", " << vec.z << ")";
+        return oss.str();
+      }
+
+      [[nodiscard]] auto ToString(const glm::vec4 &vec) const -> std::string {
+        std::ostringstream oss;
+        oss << "vec3(" << vec.x << ", " << vec.y <<  ", " << vec.z << ", " << vec.w << ")";
+        return oss.str();
+      }
+
+      [[nodiscard]] auto ToString(const glm::ivec2 &vec) const -> std::string {
+        std::ostringstream oss;
+        oss << "vec3(" << vec.x << ", " << vec.y << ")";
+        return oss.str();
+      }
+    };
+
+    extern const Logger g_logger;
+
   }
-
-  template<typename... Args>
-  void Message(const std::string &format, Args... args) const {
-    Log(Level::Message, format, args...);
-  }
-  
-  template<typename... Args>
-  void Debug(const std::string &format, Args... args) const {
-    Log(Level::Debug, format, args...);
-  }
-  
-  template<typename... Args>
-  void Warning(const std::string &format, Args... args) const {
-    Log(Level::Warning, format, args...);
-  }
-
-  template<typename... Args>
-  void Error(const std::string &format, Args... args) const {
-    Log(Level::Error, format, args...);
-  }
-
-  template<typename... Args>
-  void Fatal(const std::string &format, Args... args) const {
-    Log(Level::Fatal, format, args...);
-  }
-
-private:
-  const std::string RESET = "\033[0m";
-  const std::string YELLOW = "\033[33m";
-  const std::string RED = "\033[31m";
-  const std::string MAGENTA = "\033[35m";
-  const std::string BLUE = "\033[34m";
-
-  std::function<void(const std::string &)> outputCallback = [](const std::string &msg) {
-    std::cout << msg;
-  };
-
-  [[nodiscard]] auto GetColor(Level level) const -> std::string;
-
-  [[nodiscard]] auto LevelToString(Level level) const -> std::string;
-
-  template<typename T>
-  void FormatString(std::ostringstream &oss, const std::string &format, const T &value) const {
-    size_t placeholderPos = format.find("{}");
-    if (placeholderPos != std::string::npos) {
-      oss << format.substr(0, placeholderPos) << ToString(value) << format.substr(placeholderPos + 2);
-    } else {
-      oss << format;
-    }
-  }
-
-  template<typename T, typename... Args>
-  void FormatString(std::ostringstream &oss, const std::string& format, const T& value, Args... args) const {
-    size_t placeholderPos = format.find("{}");
-    if (placeholderPos != std::string::npos) {
-        oss << format.substr(0, placeholderPos) << ToString(value);
-        FormatString(oss, format.substr(placeholderPos + 2), args...);
-    } else {
-        oss << format;
-    }
-  }
-
-  template<typename T>
-  auto ToString(const T &value) const -> std::string {
-    if constexpr (std::is_arithmetic_v<T>) {
-      return std::to_string(value);
-    } else {
-      std::ostringstream oss;
-      oss << value;
-      return oss.str();
-    }
-  }
-
-  [[nodiscard]] auto ToString(const glm::vec3 &vec) const -> std::string {
-    std::ostringstream oss;
-    oss << "vec3(" << vec.x << ", " << vec.y <<  ", " << vec.z << ")";
-    return oss.str();
-  }
-
-  [[nodiscard]] auto ToString(const glm::vec4 &vec) const -> std::string {
-    std::ostringstream oss;
-    oss << "vec3(" << vec.x << ", " << vec.y <<  ", " << vec.z << ", " << vec.w << ")";
-    return oss.str();
-  }
-
-  [[nodiscard]] auto ToString(const glm::ivec2 &vec) const -> std::string {
-    std::ostringstream oss;
-    oss << "vec3(" << vec.x << ", " << vec.y << ")";
-    return oss.str();
-  }
-};
-
-extern const Logger g_logger;
 
 }
 

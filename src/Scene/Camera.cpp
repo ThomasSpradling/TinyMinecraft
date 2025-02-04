@@ -2,71 +2,75 @@
 #include "Utils/defs.h"
 #include "glm/geometric.hpp"
 
-namespace Scene {
+namespace TinyMinecraft {
 
-void Camera::SetPosition(glm::vec3 pos) { m_position = pos; }
-void Camera::SetUpVector(glm::vec3 vec) { m_up = vec; }
+  namespace Scene {
 
-void Camera::SetFOV(float angle) { m_fov = angle; }
-void Camera::SetAspectRatio(float aspectRatio) { m_aspect = aspectRatio; }
-void Camera::SetNearPlane(GLfloat nearPlane) { m_near = nearPlane; }
-void Camera::SetFarPlane(GLfloat farPlane) { m_far = farPlane; }
+    void Camera::SetPosition(glm::vec3 pos) { m_position = pos; }
+    void Camera::SetUpVector(glm::vec3 vec) { m_up = vec; }
 
-auto Camera::GetViewProjection() -> glm::mat4 {
-  glm::mat4 projection = glm::perspective(
-    m_fov,
-    m_aspect,
-    m_near,
-    m_far
-  );
+    void Camera::SetFOV(float angle) { m_fov = angle; }
+    void Camera::SetAspectRatio(float aspectRatio) { m_aspect = aspectRatio; }
+    void Camera::SetNearPlane(GLfloat nearPlane) { m_near = nearPlane; }
+    void Camera::SetFarPlane(GLfloat farPlane) { m_far = farPlane; }
 
-  glm::mat4 view = glm::lookAt(m_position, m_position + m_front, GetUp());
+    auto Camera::GetViewProjection() -> glm::mat4 {
+      glm::mat4 projection = glm::perspective(
+        m_fov,
+        m_aspect,
+        m_near,
+        m_far
+      );
 
-  return projection * view;
-}
+      glm::mat4 view = glm::lookAt(m_position, m_position + m_front, GetUp());
 
-auto Camera::GetFront() const -> glm::vec3 {
-  return m_front;
-}
+      return projection * view;
+    }
 
-auto Camera::GetRight() const -> glm::vec3 {
-  return glm::normalize(glm::cross(GetFront(), glm::vec3(0.0f, 1.0f, 0.0f)));
-}
+    auto Camera::GetFront() const -> glm::vec3 {
+      return m_front;
+    }
 
-auto Camera::GetUp() const -> glm::vec3 {
-  return glm::normalize(glm::cross(GetRight(), GetFront()));
-}
+    auto Camera::GetRight() const -> glm::vec3 {
+      return glm::normalize(glm::cross(GetFront(), glm::vec3(0.0f, 1.0f, 0.0f)));
+    }
 
-auto Camera::GetYaw() const -> float {
-  return m_yaw;
-}
+    auto Camera::GetUp() const -> glm::vec3 {
+      return glm::normalize(glm::cross(GetRight(), GetFront()));
+    }
 
-auto Camera::GetPitch() const -> float {
-  return m_pitch;
-}
+    auto Camera::GetYaw() const -> float {
+      return m_yaw;
+    }
 
-void Camera::Move() {
-  m_position += m_moveDirection != glm::vec3(0.0f) ? (m_speed * FIXED_UPDATE_INTERVAL * glm::normalize(m_moveDirection)) : m_moveDirection;
-}
+    auto Camera::GetPitch() const -> float {
+      return m_pitch;
+    }
 
-void Camera::SetMoveDirection(const glm::vec3 &direction) {
-  m_moveDirection = direction;
-}
+    void Camera::Move() {
+      m_position += m_moveDirection != glm::vec3(0.0f) ? (m_speed * FIXED_UPDATE_INTERVAL * glm::normalize(m_moveDirection)) : m_moveDirection;
+    }
 
-void Camera::UpdateViewDirection(float newYaw, float newPitch) {
-  m_yaw = newYaw;
-  m_pitch = newPitch;
+    void Camera::SetMoveDirection(const glm::vec3 &direction) {
+      m_moveDirection = direction;
+    }
 
-  glm::vec3 direction;
-  direction.x = cos(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
-  direction.y = sin(glm::radians(m_pitch));
-  direction.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
+    void Camera::UpdateViewDirection(float newYaw, float newPitch) {
+      m_yaw = newYaw;
+      m_pitch = newPitch;
 
-  m_front = glm::normalize(direction);
-}
+      glm::vec3 direction;
+      direction.x = cos(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
+      direction.y = sin(glm::radians(m_pitch));
+      direction.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
 
-auto Camera::GetPosition() const -> glm::vec3 {
-  return m_position;
-}
+      m_front = glm::normalize(direction);
+    }
+
+    auto Camera::GetPosition() const -> glm::vec3 {
+      return m_position;
+    }
+
+  }
 
 }

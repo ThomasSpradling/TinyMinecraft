@@ -7,38 +7,42 @@
 #include "Application/Window.h"
 #include "World/World.h"
 
-namespace Application {
+namespace TinyMinecraft {
 
-class Game {
-public:
-  Game();
+  namespace Application {
 
-  /* Runs the Update() and Render() functions via a fixed-timestep game loop. */
-  void Run();
+    class Game {
+    public:
+      Game();
 
-private:
-  static constexpr int viewportWidth = 1920;
-  static constexpr int viewportHeight = 1080;
+      /* Runs the Update() and Render() functions via a fixed-timestep game loop. */
+      void Run();
 
-  Window m_window;
-  InputHandler m_inputHandler;
-  Graphics::Renderer m_renderer;
-  World::World m_world;
-  UI::UserInterface m_ui;
-  
-  std::shared_ptr<Scene::Camera> m_camera;
-  Graphics::OrthographicCamera m_ortho;
+    private:
+      static constexpr int viewportWidth = 1920;
+      static constexpr int viewportHeight = 1080;
 
-  /* Handles all game inputs. */
-  void ProcessInput();
+      Window m_window;
+      InputHandler m_inputHandler;
+      Graphics::Renderer m_renderer;
+      World::World m_world;
+      UI::UserInterface m_ui;
+      
+      std::shared_ptr<Scene::Camera> m_camera;
+      Graphics::OrthographicCamera m_ortho;
 
-  /* Game updating logic. */
-  void Update();
+      /* Handles all game inputs. */
+      void ProcessInput();
 
-  /* Game rendering logic where `0 <= interpolation <= 1` is the fraction of a frame we intend to try
-    to render ahead of the current frame. */
-  void Render(double interpolation);
-};
+      /* Game updating logic. */
+      void Update();
+
+      /* Game rendering logic where `0 <= interpolation <= 1` is the fraction of a frame we intend to try
+        to render ahead of the current frame. */
+      void Render(double interpolation);
+    };
+
+  }
 
 }
 

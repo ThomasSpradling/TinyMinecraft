@@ -4,30 +4,34 @@
 #include "Graphics/gfx.h"
 #include <string>
 
-namespace Graphics {
+namespace TinyMinecraft {
 
-class Texture {
-public:
-  Texture(const std::string &filePath);
+  namespace Graphics {
 
-  ~Texture();
-  Texture(const Texture &) = delete;
-  auto operator=(const Texture &) -> Texture & = delete;
-  Texture(const Texture &&) = delete;
-  auto operator=(const Texture &&) -> Texture & = delete;
+    class Texture {
+    public:
+      Texture(const std::string &filePath);
 
-  void Bind() const;
-  [[nodiscard]] auto GetId() const -> GLuint;
+      ~Texture();
+      Texture(const Texture &) = delete;
+      auto operator=(const Texture &) -> Texture & = delete;
+      Texture(const Texture &&) = delete;
+      auto operator=(const Texture &&) -> Texture & = delete;
 
-private:
-  static int currentTextureId;
+      void Bind() const;
+      [[nodiscard]] auto GetId() const -> GLuint;
 
-  GLuint m_handle;
-  GLuint m_id;
-  int m_width = 0;
-  int m_height = 0;
-  int m_channelCount = 0;
-};
+    private:
+      static int currentTextureId;
+
+      GLuint m_handle;
+      GLuint m_id;
+      int m_width = 0;
+      int m_height = 0;
+      int m_channelCount = 0;
+    };
+
+  }
 
 }
 

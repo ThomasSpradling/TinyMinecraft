@@ -3,40 +3,44 @@
 
 #include "Utils/mathgl.h"
 
-namespace World {
+namespace TinyMinecraft {
 
-typedef enum BlockType {
-  AIR = 0,
-  GRASS = 1,
-  DIRT = 2,
-  STONE = 3,
-  SAND = 4,
-  LOG = 5,
-  SNOW = 6,
-  WATER = 7,
-  SANDSTONE = 8,
-  GLASS = 9,
-  LEAVES = 10,
-  TALL_GRASS
-} BlockType;
+  namespace World {
 
-class Block {
-public:
-  Block() = default;
-  Block(BlockType type);
+    typedef enum BlockType {
+      AIR = 0,
+      GRASS = 1,
+      DIRT = 2,
+      STONE = 3,
+      SAND = 4,
+      LOG = 5,
+      SNOW = 6,
+      WATER = 7,
+      SANDSTONE = 8,
+      GLASS = 9,
+      LEAVES = 10,
+      TALL_GRASS
+    } BlockType;
 
-  ~Block() = default;
+    class Block {
+    public:
+      Block() = default;
+      Block(BlockType type);
 
-  bool IsTransparent() const;
-  bool IsBillboard() const;
-  bool IsFluid() const;
+      ~Block() = default;
 
-  BlockType GetType() const;
-  void SetType(BlockType value);
+      bool IsTransparent() const;
+      bool IsBillboard() const;
+      bool IsFluid() const;
 
-private:
-  BlockType m_type = BlockType::AIR;
-};
+      BlockType GetType() const;
+      void SetType(BlockType value);
+
+    private:
+      BlockType m_type = BlockType::AIR;
+    };
+
+  }
 
 }
 

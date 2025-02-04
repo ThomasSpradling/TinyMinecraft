@@ -1,44 +1,48 @@
 #ifndef WINDOW_H_
 #define WINDOW_H_
 
+#include <string>
 #include "Application/InputHandler.h"
 
-namespace Application {
+namespace TinyMinecraft {
 
-class Window {
-public:
-  Window(int width, int height, const std::string &name, InputHandler &inputHandler);
-  
-  ~Window();
-  Window(const Window &) = delete;
-  auto operator=(const Window &) -> Window & = delete;
-  Window(Window &&) = delete;
-  auto operator=(Window &&) -> Window & = delete;
+  namespace Application {
 
-  // Sets up GLFW and attaches the inputHandler to it
-  // void Initialize(int width, int height, const std::string &name, InputHandler &inputHandler);
+    class Window {
+    public:
+      Window(int width, int height, const std::string &name, InputHandler &inputHandler);
+      
+      ~Window();
+      Window(const Window &) = delete;
+      auto operator=(const Window &) -> Window & = delete;
+      Window(Window &&) = delete;
+      auto operator=(Window &&) -> Window & = delete;
 
-  auto ShouldClose() -> bool;
+      // Sets up GLFW and attaches the inputHandler to it
+      // void Initialize(int width, int height, const std::string &name, InputHandler &inputHandler);
 
-  void PollEvents() const;
+      auto ShouldClose() -> bool;
 
-  void Close();
+      void PollEvents() const;
 
-  [[nodiscard]] auto GetWidth() const -> int;
-  [[nodiscard]] auto GetHeight() const -> int;
+      void Close();
 
-  [[nodiscard]] auto GetHandle() const -> GLFWwindow *;
+      [[nodiscard]] auto GetWidth() const -> int;
+      [[nodiscard]] auto GetHeight() const -> int;
 
-  void SwapBuffers();
+      [[nodiscard]] auto GetHandle() const -> GLFWwindow *;
 
-private:
-  int m_width, m_height;
-  GLFWwindow *m_handle;
+      void SwapBuffers();
 
-  void static ErrorCallback(int code, const char *description);
-};
+    private:
+      int m_width, m_height;
+      GLFWwindow *m_handle;
+
+      void static ErrorCallback(int code, const char *description);
+    };
+
+  }
 
 }
-
 
 #endif // WINDOW_H_

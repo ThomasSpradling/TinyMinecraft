@@ -1,33 +1,38 @@
 #include "Graphics/BufferObject.h"
+#include <utility>
 
-namespace Graphics {
+namespace TinyMinecraft {
 
-BufferObject::BufferObject(GLenum target)
-  : m_target(target)
-{
-  glGenBuffers(1, &m_handle);
-  Bind();
-}
+  namespace Graphics {
 
-BufferObject::~BufferObject() {
-  glDeleteBuffers(1, &m_handle);
-}
+    BufferObject::BufferObject(GLenum target)
+      : m_target(target)
+    {
+      glGenBuffers(1, &m_handle);
+      Bind();
+    }
 
-BufferObject::BufferObject(BufferObject &&other) noexcept
-  : m_handle(std::exchange(other.m_handle, 0))
-  , m_target(other.m_target)
-{}
+    BufferObject::~BufferObject() {
+      glDeleteBuffers(1, &m_handle);
+    }
 
-auto BufferObject::operator=(BufferObject &&other) noexcept -> BufferObject & {
-  BufferObject temp(std::move(other));
-  std::swap(m_handle, temp.m_handle);
-  std::swap(m_target, temp.m_target);
+    BufferObject::BufferObject(BufferObject &&other) noexcept
+      : m_handle(std::exchange(other.m_handle, 0))
+      , m_target(other.m_target)
+    {}
 
-  return *this;
-}
+    auto BufferObject::operator=(BufferObject &&other) noexcept -> BufferObject & {
+      BufferObject temp(std::move(other));
+      std::swap(m_handle, temp.m_handle);
+      std::swap(m_target, temp.m_target);
 
-void BufferObject::Bind() const {
-  glBindBuffer(m_target, m_handle);
-}
+      return *this;
+    }
+
+    void BufferObject::Bind() const {
+      glBindBuffer(m_target, m_handle);
+    }
+
+  }
 
 }
