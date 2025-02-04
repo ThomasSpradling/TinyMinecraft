@@ -7,6 +7,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include "Utils/utils.h"
 #include "mathgl.h"
 
 namespace Utils {
@@ -37,7 +38,7 @@ public:
     std::string levelStr = LevelToString(level);
 
     std::ostringstream out;
-    out << color << "[ " << std::left << std::setw(8) << levelStr << "] " << oss.str() << RESET << "\n";
+    out << color << "[ " << levelStr << " (" << Utils::GetThreadName() << ") ] " << oss.str() << RESET << "\n";
 
     outputCallback(out.str());
   }

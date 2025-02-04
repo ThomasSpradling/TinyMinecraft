@@ -4,6 +4,7 @@
 #include "Graphics/Renderer2D.h"
 #include "Utils/defs.h"
 #include "Utils/Profiler.h"
+#include "World/Biome.h"
 #include <chrono>
 #include <algorithm>
 #include <ratio>
@@ -133,7 +134,8 @@ void Game::Update() {
     m_world.GetContinentalness(pos.x, pos.z),
     m_world.GetErosion(pos.x, pos.z),
     m_world.GetRidges(pos.x, pos.z),
-    m_world.GetBiome(pos.x, pos.z)
+    World::BiomeType::Desert
+    // m_world.GetBiome(pos.x, pos.z)
   );
 }
 

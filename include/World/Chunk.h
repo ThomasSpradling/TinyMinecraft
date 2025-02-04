@@ -13,9 +13,12 @@ namespace World {
 class World;
 
 enum class ChunkState : uint8_t {
-  Unloaded = 0,
+  Empty = 0,
+  Unloading,
+  Generating,
+  Generated,
+  Meshing,
   Loaded,
-  Loading
 };
 
 struct FaceGeometry {
@@ -36,6 +39,7 @@ public:
   auto operator=(Chunk &&other) noexcept -> Chunk &;
 
   void UpdateMesh();
+  void BufferVertices();
   void UpdateTranslucentMesh(const glm::vec3 &playerPos);
   void SortTranslucentBlocks(const glm::vec3 &playerPos);
 
@@ -58,11 +62,16 @@ public:
   [[nodiscard]] inline auto IsHidden() const -> bool { return m_hidden; }
   inline void SetHidden(bool value) { m_hidden = value; }
 
-  [[nodiscard]] inline auto IsDirty() const -> bool { return m_dirty; }
-  inline void SetDirty(bool value) { m_dirty = value; }
+  [[nodiscard]] inline auto IsDirty() const -> bool { return m_dirty.load(std::memory_order_acquire); }
+  inline void SetDirty(bool value) { m_dirty.store(value, std::memory_order_release); }
 
-  [[nodiscard]] auto GetState() const -> ChunkState { return m_state; }
-  void SetState(ChunkState value) { m_state = value; }
+  [[nodiscard]] inline auto GetState() const -> ChunkState {
+    return m_state.load(std::memory_order_acquire);
+  }
+
+  auto SetState(ChunkState expected, ChunkState desired) -> bool {
+    return m_state.compare_exchange_strong(expected, desired);
+  }
 
   [[nodiscard]] auto GetChunkPos() const -> glm::ivec2 { return m_chunkPos; }
   
@@ -78,10 +87,12 @@ private:
   } m_data;
 
   std::unique_ptr<Geometry::Mesh> m_opaqueMesh, m_translucentMesh;
+  std::vector<Geometry::MeshVertex> m_opaqueVertices, m_translucentVertices;
+  std::vector<GLuint> m_opaqueIndices, m_translucentIndices;
 
   bool m_hidden = true;
-  ChunkState m_state = ChunkState::Unloaded;
-  bool m_dirty = true;
+  std::atomic<ChunkState> m_state { ChunkState::Empty };
+  std::atomic<bool> m_dirty = false;
 
   bool m_hasTranslucentBlocks = false;
 };

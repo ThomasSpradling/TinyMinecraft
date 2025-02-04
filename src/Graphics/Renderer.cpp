@@ -44,16 +44,28 @@ void Renderer::RenderWorld(World::World &world) {
   glm::vec3 playerPos = m_currentCamera->GetPosition();
   
   std::vector<World::Chunk *> translucentChunks;
+
+  // mutex
   
-  for (auto &[chunkPos, chunk] : world.GetLoadedChunks()) {
-    if (chunk.HasTranslucentBlocks()) {
-      translucentChunks.push_back(&chunk);
+  for (auto &[chunkPos, chunk] : world.GetChunks()) {
+    if (!world.IsChunkLoaded(chunkPos)) {
+      continue;
+    }
+
+    if (chunk->HasTranslucentBlocks()) {
+      translucentChunks.push_back(chunk.get());
     }
 
     glm::mat4 model { 1.0f };
     model = glm::translate(model, glm::vec3(chunkPos.x * CHUNK_WIDTH, 0.0f, chunkPos.y * CHUNK_LENGTH));
 
-    RenderMesh(chunk.GetMesh(), m_blockShader, model);
+    if (chunk->IsDirty()) {
+      chunk->BufferVertices();
+
+      chunk->SetDirty(false);
+    }
+
+    RenderMesh(chunk->GetMesh(), m_blockShader, model);
   }
 
   glm::vec2 playerChunkPos = world.GetChunkPosFromCoords(playerPos);
@@ -67,6 +79,11 @@ void Renderer::RenderWorld(World::World &world) {
 
   for (auto chunk : translucentChunks) {
 
+    // if (chunk->IsDirty()) {
+    //   chunk->BufferVertices();
+
+    //   chunk->SetDirty(false);
+    // }
     const glm::ivec2 chunkPos = chunk->GetChunkPos();
 
     glm::mat4 model { 1.0f };

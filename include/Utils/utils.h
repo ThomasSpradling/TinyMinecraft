@@ -6,6 +6,23 @@
 
 namespace Utils {
 
+void inline SetThreadName(const std::string &name) {
+#ifdef __APPLE__
+    pthread_setname_np(name.c_str());
+#elif defined(__linux__)
+    pthread_setname_np(pthread_self(), name.substr(0, 15).c_str());
+#endif
+}
+
+auto inline GetThreadName() -> std::string {
+  char name[16] = {0};
+  int err = pthread_getname_np(pthread_self(), name, sizeof(name));
+  if (err != 0) {
+      return std::string();
+  }
+  return std::string(name);
+}
+
 // Linearly scales a value from starting range to end range
 template <typename T>
 auto ScaleValue(T min1, T max1, T min2, T max2, T value) -> T {

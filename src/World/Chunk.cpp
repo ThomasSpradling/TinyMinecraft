@@ -53,8 +53,8 @@ void Chunk::UpdateMesh() {
     Geometry::Face::West, Geometry::Face::North, Geometry::Face::South
   };
 
-  std::vector<Geometry::MeshVertex> vertices;
-  std::vector<GLuint> indices;
+  // std::vector<Geometry::MeshVertex> vertices;
+  // std::vector<GLuint> indices;
   GLuint indexOffset = 0;
 
   m_hasTranslucentBlocks = false;
@@ -91,7 +91,7 @@ void Chunk::UpdateMesh() {
           // push verts and indices
 
           for (int i = 0; i < 4; ++i) {
-            vertices.insert(vertices.end(), {
+            m_opaqueVertices.insert(m_opaqueVertices.end(), {
               glm::vec3(x, y, z) + faceVertices.at(i),
               blockColor,
               faceTexCoords[i],
@@ -99,7 +99,7 @@ void Chunk::UpdateMesh() {
             });
           }
 
-          indices.insert(indices.end(), {
+          m_opaqueIndices.insert(m_opaqueIndices.end(), {
             indexOffset + 0, indexOffset + 1, indexOffset + 2,
             indexOffset + 2, indexOffset + 3, indexOffset + 0,
           });
@@ -109,12 +109,14 @@ void Chunk::UpdateMesh() {
     }
   }
 
-  m_opaqueMesh->Update(vertices, indices);
-  
   // cleanup
 
-  vertices.clear();
-  indices.clear();
+  // vertices.clear();
+  // indices.clear();
+}
+
+void Chunk::BufferVertices() {
+  m_opaqueMesh->Update(m_opaqueVertices, m_opaqueIndices);
 }
 
 void Chunk::UpdateTranslucentMesh(const glm::vec3 &playerPos) {

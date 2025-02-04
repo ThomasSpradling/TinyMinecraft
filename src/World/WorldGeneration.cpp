@@ -114,10 +114,10 @@ WorldGeneration::WorldGeneration(World &world) : m_world(world) {
                                           35.0f, 100.0f, 0.6f, 1.0f, 0.0f, 0.40f));
 }
 
-void WorldGeneration::GenerateTerrainChunk(Chunk &chunk) {
+void WorldGeneration::GenerateTerrainChunk(Chunk *chunk) {
   PROFILE_FUNCTION(Chunk)
   
-  const glm::ivec2 &chunkPos = chunk.GetChunkPos();
+  const glm::ivec2 &chunkPos = chunk->GetChunkPos();
 
   std::vector<float> continentalnessMap(16 * 16);
   std::vector<float> peaksMap(16 * 16);
@@ -178,15 +178,13 @@ void WorldGeneration::GenerateTerrainChunk(Chunk &chunk) {
         //   density = 0;
         // }
 
-        if (nz > 0) {
-          if (density > 0.0f) {
-            chunk.SetBlockAt(glm::vec3(x, y, z), BlockType::GRASS);
-          } else {
-            if (y <= 62 && y >= baseHeight - 10) {
-              // if (cheeseNoise < cavesSize + 0.05f && std::fabs(spaghettiNoise) > caveThickness) {
-                chunk.SetBlockAt(glm::vec3(x, y, z), BlockType::WATER);
-              // }
-            }
+        if (density > 0.0f) {
+          chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::GRASS);
+        } else {
+          if (y <= 62 && y >= baseHeight - 10) {
+            // if (cheeseNoise < cavesSize + 0.05f && std::fabs(spaghettiNoise) > caveThickness) {
+              chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::WATER);
+            // }
           }
         }
 
@@ -197,7 +195,7 @@ void WorldGeneration::GenerateTerrainChunk(Chunk &chunk) {
   }
 }
 
-void WorldGeneration::GenerateFeatures(Chunk &chunk) {
+void WorldGeneration::GenerateFeatures(Chunk *chunk) {
   PROFILE_FUNCTION(Chunk)
   
   constexpr float TREE_GENERATION_THRESHOLD = 0.95f;
@@ -216,18 +214,18 @@ void WorldGeneration::GenerateFeatures(Chunk &chunk) {
         continue;
       }
 
-      int globalX = CHUNK_WIDTH * chunk.GetChunkPos().x + x;
-      int globalZ = CHUNK_WIDTH * chunk.GetChunkPos().y + z;
+      int globalX = CHUNK_WIDTH * chunk->GetChunkPos().x + x;
+      int globalZ = CHUNK_WIDTH * chunk->GetChunkPos().y + z;
 
       double grassNoise = m_featureNoise->GenSingle2D(globalX, globalZ, 100);
       grassNoise = Utils::ScaleValue(-1.0, 1.0, 0.0, 1.0, grassNoise);
 
       // double grassNoise = Math::NoiseManager::GetImprovedSimplexNoise(Math::Noise::Grass, glm::vec2(globalX * GRASS_NOISE_SCALE, globalZ * GRASS_NOISE_SCALE));
       if (grassNoise > GRASS_GENERATION_THRESHOLD) {
-        int surfaceHeight = chunk.GetSurfaceHeight(x, z);
+        int surfaceHeight = chunk->GetSurfaceHeight(x, z);
 
-        if (chunk.GetBlockAt(x, surfaceHeight, z).GetType() == BlockType::GRASS) {
-          chunk.SetBlockAt(x, surfaceHeight + 1, z, BlockType::TALL_GRASS);
+        if (chunk->GetBlockAt(x, surfaceHeight, z).GetType() == BlockType::GRASS) {
+          chunk->SetBlockAt(x, surfaceHeight + 1, z, BlockType::TALL_GRASS);
           reservedPositions.insert(position);
         }
       }
@@ -240,7 +238,7 @@ void WorldGeneration::GenerateFeatures(Chunk &chunk) {
       treeNoise = Utils::ScaleValue(-1.0, 1.0, 0.0, 1.0, treeNoise);
       // double treeNoise = Math::NoiseManager::GetImprovedSimplexNoise(Math::Noise::Tree, glm::vec2(globalX * TREE_NOISE_SCALE, globalZ * TREE_NOISE_SCALE));
       if (treeNoise >= TREE_GENERATION_THRESHOLD) {
-        int surfaceY = chunk.GetSurfaceHeight(x, z);
+        int surfaceY = chunk->GetSurfaceHeight(x, z);
 
         if (CanTreeSpawn(chunk, x, surfaceY, z, TREE_RADIUS)) {
           SpawnTree(chunk, x, surfaceY, z);
@@ -261,8 +259,8 @@ void WorldGeneration::GenerateFeatures(Chunk &chunk) {
   }
 }
 
-void WorldGeneration::LoadUnloadedBlocks(Chunk &chunk) {
-  glm::ivec2 chunkPos = chunk.GetChunkPos();
+void WorldGeneration::LoadUnloadedBlocks(Chunk *chunk) {
+  glm::ivec2 chunkPos = chunk->GetChunkPos();
 
   if (!m_unloadedBlocks.contains(chunkPos)) {
     return;
@@ -272,7 +270,7 @@ void WorldGeneration::LoadUnloadedBlocks(Chunk &chunk) {
 
   for (auto &[pos, block] : m_unloadedBlocks.at(chunkPos)) {
     glm::vec3 globalPos = glm::vec3(CHUNK_WIDTH * chunkPos.x + pos.x, pos.y, CHUNK_WIDTH * chunkPos.y + pos.y);
-    chunk.SetBlockAt(pos, block);
+    chunk->SetBlockAt(pos, block);
   }
 
   m_unloadedBlocks.erase(chunkPos);
@@ -301,7 +299,7 @@ auto WorldGeneration::SelectBiomes(double temperature, double humidity) const ->
   return {primaryBiome, secondaryBiome};
 }
 
-void WorldGeneration::SpawnTree(Chunk &chunk, int x, int surfaceY, int z) {
+void WorldGeneration::SpawnTree(Chunk *chunk, int x, int surfaceY, int z) {
 
   int structure[7][5][5] = {
     {
@@ -375,9 +373,9 @@ void WorldGeneration::SpawnTree(Chunk &chunk, int x, int surfaceY, int z) {
         // place this in list of blocks to be loaded again later
 
         if (localX < 0 || localZ < 0 || localX >= CHUNK_WIDTH || localZ >= CHUNK_LENGTH) {
-          int globalX = chunk.GetChunkPos().x * CHUNK_WIDTH + localX;
+          int globalX = chunk->GetChunkPos().x * CHUNK_WIDTH + localX;
           int globalY = localY;
-          int globalZ = chunk.GetChunkPos().y * CHUNK_LENGTH + localZ;
+          int globalZ = chunk->GetChunkPos().y * CHUNK_LENGTH + localZ;
 
 
           glm::vec3 globalPos { globalX, globalY, globalZ };
@@ -388,14 +386,14 @@ void WorldGeneration::SpawnTree(Chunk &chunk, int x, int surfaceY, int z) {
           continue;
         }
 
-        chunk.SetBlockAt(localX, localY, localZ, block);
+        chunk->SetBlockAt(localX, localY, localZ, block);
       }
     }
   }
 }
 
-auto WorldGeneration::CanTreeSpawn(Chunk &chunk, int x, int surfaceY, int z, int radius) -> bool {
-  if (chunk.GetBlockAt(x, surfaceY, z).GetType() != BlockType::GRASS) {
+auto WorldGeneration::CanTreeSpawn(Chunk *chunk, int x, int surfaceY, int z, int radius) -> bool {
+  if (chunk->GetBlockAt(x, surfaceY, z).GetType() != BlockType::GRASS) {
     return false;
   }
 
@@ -407,7 +405,7 @@ auto WorldGeneration::CanTreeSpawn(Chunk &chunk, int x, int surfaceY, int z, int
         continue;
       }
 
-      if (chunk.GetBlockAt(x, surfaceY + 1, z).GetType() != BlockType::AIR) {
+      if (chunk->GetBlockAt(x, surfaceY + 1, z).GetType() != BlockType::AIR) {
         return false;
       }
     }

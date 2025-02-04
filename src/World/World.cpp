@@ -1,22 +1,48 @@
 #include <MacTypes.h>
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdlib>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <vector>
 #include "World/World.h"
 #include "Geometry/geometry.h"
+#include "Utils/Logger.h"
 #include "Utils/Profiler.h"
 #include "Utils/defs.h"
+#include "Utils/utils.h"
 #include "World/Biome.h"
 #include "World/Block.h"
 #include "World/Chunk.h"
+#include "glm/fwd.hpp"
 
 namespace World {
 
 World::World()
   : m_worldGen(*this)
 {
-  // Math::NoiseManager::Initialize(seed);
+  constexpr int NUM_THREADS = 10;
+
+  for (int i = 0; i < NUM_THREADS; ++i) {
+    m_workers.emplace_back(&World::DoTasks, this, i);
+  }
+  Utils::g_logger.Debug("All threads made...");
+}
+
+World::~World() {
+  m_shouldTerminate = true;
+  m_nonempty.notify_all();
+
+  for (int i = 0; i < m_workers.size(); ++i) {
+    if (m_workers[i].joinable())
+      m_workers[i].join();
+  }
+
+  m_workers.clear();
 }
 
 auto World::GetTemperature(int x, int z) -> double {
@@ -29,7 +55,7 @@ auto World::GetTemperature(int x, int z) -> double {
   // temperature = Utils::ScaleValue(0.3, 0.7, 0.1, 0.9, temperature);
   // temperature = std::clamp(temperature, 0.0, 1.0);
 
-  // return temperature;
+  // return tsemperature;
 
   return 0;
 }
@@ -78,143 +104,174 @@ auto World::GetBiome(int x, int z) -> BiomeType {
 void World::Update(const glm::vec3 &playerPos) {
   PROFILE_FUNCTION(Chunk)
 
-  const glm::ivec2 playerChunkPos = GetChunkPosFromCoords(playerPos);
+  constexpr std::array<glm::ivec2, 5> neighborOffsets = {
+    glm::ivec2(0, 0), glm::ivec2(1, 0), glm::ivec2(-1, 0), glm::ivec2(0, 1), glm::ivec2(0, -1)
+  };
+
+  std::unique_lock lk(m_chunkMutex);
+
   constexpr int viewRadius = GFX_RENDER_DISTANCE;
   constexpr int loadRadius = viewRadius + 1;
-  std::vector<glm::ivec2> chunksToUnload;
 
-  // unload all nearby chunks
+  const glm::ivec2 playerChunkPos = GetChunkPosFromCoords(playerPos);
+  std::vector<glm::ivec2> nearbyChunks;
 
-  for (auto &[chunkPos, chunk] : m_loadedChunks) {
-    // if not nearby
+  std::function<bool(const glm::ivec2 &, int)> IsNearby = [&playerChunkPos](const glm::ivec2 &chunkPos, int radius) {
+    float distance = std::max(std::abs(chunkPos.x - playerChunkPos.x), std::abs(chunkPos.y - playerChunkPos.y));
+    return distance <= radius;
+  };
 
-    int dx = chunkPos.x - playerChunkPos.x;
-    int dz = chunkPos.y - playerChunkPos.y;
+  for (int z = -loadRadius; z <= loadRadius; ++z) {
+    for (int x = -loadRadius; x <= loadRadius; ++x) {
+      int dx = playerChunkPos.x + x;
+      int dz = playerChunkPos.y + z;
 
-    int distanceSquared = dx * dx + dz * dz;
-
-    if (distanceSquared > loadRadius * loadRadius) {
-      chunksToUnload.push_back(chunkPos);
+      nearbyChunks.push_back(glm::ivec2(dx, dz));
     }
   }
 
-  for (const auto &chunkPos : chunksToUnload) {
-    UnloadChunk(m_loadedChunks.at(chunkPos));
+  for (const glm::ivec2 &chunkPos : nearbyChunks) {
+    if (!HasChunk(chunkPos)) {
+      m_chunks[chunkPos] = std::make_unique<Chunk>(*this, chunkPos);
+    }
   }
 
-  for (int dz = -loadRadius; dz <= loadRadius; ++dz) {
-    for (int dx = -loadRadius; dx <= loadRadius; ++dx) {
-      int distanceSquared = dx * dx + dz * dz;
+  for (const auto &[chunkPos, chunk] : m_chunks) {
+    Chunk *c = chunk.get();
+    const ChunkState state = c->GetState();
 
-      if (distanceSquared <= loadRadius * loadRadius) {
-        glm::ivec2 chunkPos { playerChunkPos.x + dx, playerChunkPos.y + dz };
+    const int withinLoadRadius = IsNearby(chunkPos, loadRadius);
 
-        if (!m_loadedChunks.contains(chunkPos)) {
-          LoadChunk(chunkPos.x, chunkPos.y);
+    if (withinLoadRadius) {
+      if (state == ChunkState::Empty && c->SetState(ChunkState::Empty, ChunkState::Generating)) {
+        Utils::g_logger.Debug("Scheduling generate task: {}", chunkPos);
+        ScheduleGenerateTask(c);
+        continue;
+      }
+
+      // check that this chunk and all its neighbors are generated before attempting to mesh
+
+      // needs to atomically assure this stuff....
+      bool neighborsGenerated = true;
+      std::ranges::for_each(neighborOffsets, [&](glm::ivec2 offset) {
+        glm::ivec2 pos = glm::ivec2(chunkPos.x + offset.x, chunkPos.y + offset.y);
+        if (!HasChunk(pos) || GetChunkAt(pos)->GetState() < ChunkState::Generated) {
+          neighborsGenerated = false;
+        }
+      });
+
+      if (neighborsGenerated && c->SetState(ChunkState::Generated, ChunkState::Meshing)) {
+        Utils::g_logger.Debug("Scheduling meshing task: {}", chunkPos);
+        ScheduleMeshTask(c);
+      }
+
+      continue;
+    }
+
+    if (!IsNearby(chunkPos, viewRadius)) {
+      Utils::g_logger.Debug("Chunk out of range: {}. It has state {}", chunkPos, static_cast<int>(state));
+
+      if (!withinLoadRadius && state == ChunkState::Empty) {
+        m_chunks.erase(chunkPos);
+        continue;
+      }
+
+      if ((!withinLoadRadius && state == ChunkState::Generated) || state == ChunkState::Loaded) {
+        // check that deleting this chunk won't prevent proper working of Meshing chunks
+        bool hasNearbyIntermateChunk = false;
+        std::ranges::for_each(neighborOffsets, [&](glm::ivec2 offset) {
+          glm::ivec2 pos = glm::ivec2(chunkPos.x + offset.x, chunkPos.y + offset.y);
+          if (HasChunk(pos) && GetChunkAt(pos)->GetState() == ChunkState::Meshing) {
+            hasNearbyIntermateChunk = true;
+          }
+        });
+
+        if (!hasNearbyIntermateChunk) {
+          m_chunks.erase(chunkPos);
         }
       }
     }
   }
 
-  for (int dz = -loadRadius; dz <= loadRadius; ++dz) {
-    for (int dx = -loadRadius; dx <= loadRadius; ++dx) {
-      int distanceSquared = dx * dx + dz * dz;
+  // compute which chunks are nearby right now
+  // for each 
 
-      if (distanceSquared <= loadRadius * loadRadius) {
-        glm::ivec2 chunkPos { playerChunkPos.x + dx, playerChunkPos.y + dz };
+  // const glm::ivec2 playerChunkPos = GetChunkPosFromCoords(playerPos);
+  // constexpr int viewRadius = GFX_RENDER_DISTANCE;
+  // constexpr int loadRadius = viewRadius + 1;
+  // std::vector<glm::ivec2> chunksToUnload;
 
-        m_worldGen.LoadUnloadedBlocks(GetChunkAt(chunkPos));
-      }
-    }
-  }
+  // // unload all nearby chunks
 
-  // Figure out closet dirty chunk in range
+  // for (auto &[chunkPos, chunk] : m_loadedChunks) {
+  //   // if not nearby
 
-  int shortestDistance = std::numeric_limits<int>::max();
-  Chunk *closestDirtyChunk = nullptr;
+  //   int dx = chunkPos.x - playerChunkPos.x;
+  //   int dz = chunkPos.y - playerChunkPos.y;
 
-  for (auto &[chunkPos, chunk] : m_loadedChunks) {
-    int dx = chunkPos.x - playerChunkPos.x;
-    int dz = chunkPos.y - playerChunkPos.y;
+  //   int distanceSquared = dx * dx + dz * dz;
 
-    int distanceSquared = dx * dx + dz * dz;
+  //   if (distanceSquared > loadRadius * loadRadius) {
+  //     chunksToUnload.push_back(chunkPos);
+  //   }
+  // }
 
-    if (distanceSquared <= viewRadius * viewRadius && chunk.IsDirty()) {
-      if (distanceSquared < shortestDistance) {
-        closestDirtyChunk = &chunk;
-        shortestDistance = distanceSquared;
-      }
-    }
-  }
+  // for (const auto &chunkPos : chunksToUnload) {
+  //   UnloadChunk(m_loadedChunks.at(chunkPos));
+  // }
 
-  // if there is a closet dirty chunk in range, update its mesh
+  // for (int dz = -loadRadius; dz <= loadRadius; ++dz) {
+  //   for (int dx = -loadRadius; dx <= loadRadius; ++dx) {
+  //     int distanceSquared = dx * dx + dz * dz;
 
-  if (closestDirtyChunk) {
-    closestDirtyChunk->UpdateMesh();
-    closestDirtyChunk->UpdateTranslucentMesh(playerPos);
-    closestDirtyChunk->SetDirty(false);
-  }
-}
+  //     if (distanceSquared <= loadRadius * loadRadius) {
+  //       glm::ivec2 chunkPos { playerChunkPos.x + dx, playerChunkPos.y + dz };
 
-void World::UnloadChunk(int x, int z) {
-  const glm::ivec2 chunkPos { x, z };
+  //       if (!m_loadedChunks.contains(chunkPos)) {
+  //         LoadChunk(chunkPos.x, chunkPos.y);
+  //       }
+  //     }
+  //   }
+  // }
 
-  if (m_loadedChunks.contains(chunkPos)) {
+  // for (int dz = -loadRadius; dz <= loadRadius; ++dz) {
+  //   for (int dx = -loadRadius; dx <= loadRadius; ++dx) {
+  //     int distanceSquared = dx * dx + dz * dz;
 
-    // Store into cache / persistent storage
+  //     if (distanceSquared <= loadRadius * loadRadius) {
+  //       glm::ivec2 chunkPos { playerChunkPos.x + dx, playerChunkPos.y + dz };
 
-    m_loadedChunks.erase(chunkPos);
-  }
-}
+  //       m_worldGen.LoadUnloadedBlocks(GetChunkAt(chunkPos));
+  //     }
+  //   }
+  // }
 
-void World::UnloadChunk(Chunk &chunk) {
-  const glm::ivec2 &chunkPos = chunk.GetChunkPos();
+  // // Figure out closet dirty chunk in range
 
-  UnloadChunk(chunkPos.x, chunkPos.y);
-}
+  // int shortestDistance = std::numeric_limits<int>::max();
+  // Chunk *closestDirtyChunk = nullptr;
 
-void World::LoadChunk(int x, int z) {
-  const glm::ivec2 chunkPos { x, z };
+  // for (auto &[chunkPos, chunk] : m_loadedChunks) {
+  //   int dx = chunkPos.x - playerChunkPos.x;
+  //   int dz = chunkPos.y - playerChunkPos.y;
 
-  // Check cache / persistent storage. If not there, then move on
+  //   int distanceSquared = dx * dx + dz * dz;
 
-  m_loadedChunks.emplace(chunkPos, Chunk(*this, chunkPos));
+  //   if (distanceSquared <= viewRadius * viewRadius && chunk.IsDirty()) {
+  //     if (distanceSquared < shortestDistance) {
+  //       closestDirtyChunk = &chunk;
+  //       shortestDistance = distanceSquared;
+  //     }
+  //   }
+  // }
 
-  m_loadedChunks.at(chunkPos).SetState(ChunkState::Loaded);
-  m_worldGen.GenerateTerrainChunk(m_loadedChunks.at(chunkPos));
-  m_worldGen.GenerateFeatures(m_loadedChunks.at(chunkPos));
-}
+  // // if there is a closet dirty chunk in range, update its mesh
 
-void World::LoadChunk(Chunk &chunk) {
-  if (chunk.GetState() == ChunkState::Loaded) {
-    return;
-  }
-  
-  chunk.SetDirty(true);
-
-  const glm::ivec2 &chunkPos = chunk.GetChunkPos();
-  if (!m_loadedChunks.contains(chunkPos)) {
-    m_worldGen.GenerateTerrainChunk(chunk);
-    m_worldGen.GenerateFeatures(chunk);
-
-    m_loadedChunks.emplace(chunkPos, std::move(chunk));
-  }
-  chunk.SetState(ChunkState::Loaded);
-}
-
-auto World::GetChunkAt(int x, int z) -> Chunk & {
-  return GetChunkAt(glm::ivec2(x, z));
-}
-
-auto World::GetChunkAt(const glm::ivec2 &chunkPos) -> Chunk & {
-  if (m_loadedChunks.contains(chunkPos)) {
-    return m_loadedChunks.at(chunkPos);
-  }
-  // TODO: More advanced logic here involving loading it first
-}
-
-auto World::GetLoadedChunks() -> std::unordered_map<glm::ivec2, Chunk, Utils::IVec2Hash> & {
-  return m_loadedChunks;
+  // if (closestDirtyChunk) {
+  //   closestDirtyChunk->UpdateMesh();
+  //   closestDirtyChunk->UpdateTranslucentMesh(playerPos);
+  //   closestDirtyChunk->SetDirty(false);
+  // }
 }
 
 void World::SetBlockAt(const glm::vec3 &pos, BlockType type) {
@@ -226,7 +283,7 @@ auto World::GetBlockAt(const glm::vec3 &pos) -> Block & {
   glm::ivec2 chunkPos = GetChunkPosFromCoords(pos);
   glm::vec3 offsetPos = GetLocalBlockCoords(pos);
 
-  return m_loadedChunks.at(chunkPos).GetBlockAt(offsetPos);
+  return GetChunkAt(chunkPos)->GetBlockAt(offsetPos);
 }
 
 auto World::HasBlock(const glm::vec3 &pos) -> bool {
@@ -269,34 +326,35 @@ void World::HandlePlayerMovement(const glm::vec3 &before, const glm::vec3 &after
   // if moving within same chunk, always re-sort that chunk
   if (playerChunkPosBefore == playerChunkPosAfter) {
     if (IsChunkLoaded(playerChunkPosBefore)) {
-      GetChunkAt(playerChunkPosBefore).SortTranslucentBlocks(after);
+      GetChunkAt(playerChunkPosBefore)->SortTranslucentBlocks(after);
     }
   } else {
     for (const auto &offset : directions) {
       if (IsChunkLoaded(playerChunkPosBefore + offset)) {
-        GetChunkAt(playerChunkPosBefore + offset).SortTranslucentBlocks(after);
+        GetChunkAt(playerChunkPosBefore + offset)->SortTranslucentBlocks(after);
       }
     }
   }
 }
 
-auto World::IsChunkLoaded(const glm::ivec2 &pos) -> bool {
-  return m_loadedChunks.contains(pos);
-}
 
+// thread-safe since all updates are atomic, making this read-only section OK
 auto World::IsFaceVisible(const Block &block, Geometry::Face face, const glm::vec3 &pos) -> bool {
   glm::vec3 neighborPos = pos + Geometry::GetNormal(face);
   glm::ivec2 neighborChunkPos = GetChunkPosFromCoords(neighborPos);
 
   // if not in a chunk
-  if (neighborPos.y >= CHUNK_HEIGHT || neighborPos.y < 0 ||
-  !m_loadedChunks.contains(neighborChunkPos)) {
+  if (neighborPos.y >= CHUNK_HEIGHT || neighborPos.y < 0 || !HasChunk(neighborChunkPos)) {
+    return true;
+  }
+
+  if (GetChunkAt(neighborChunkPos)->GetState() < ChunkState::Generated) {
     return true;
   }
 
   glm::vec3 neightborLocalPos = GetLocalBlockCoords(neighborPos);
 
-  Block neightboringBlock = m_loadedChunks.at(neighborChunkPos).GetBlockAt(neightborLocalPos);
+  Block neightboringBlock = GetChunkAt(neighborChunkPos)->GetBlockAt(neightborLocalPos);
 
   if (neightboringBlock.GetType() == BlockType::AIR) {
     return true;
@@ -315,5 +373,107 @@ auto World::IsFaceVisible(const Block &block, Geometry::Face face, const glm::ve
   return false;
 }
 
+void World::SubmitTask(std::function<void()> task) {
+  {
+    std::unique_lock lk(m_taskMutex);
+    m_tasks.push(std::move(task));
+  }
+
+  m_nonempty.notify_one();
+}
+
+void World::ScheduleGenerateTask(Chunk *chunk) {
+
+  if (!chunk) {
+    Utils::g_logger.Error("Cannot generate task for null chunks");
+    exit(1);
+  }
+
+  SubmitTask([this, chunk]() {    
+    const ChunkState state = chunk->GetState();
+    if (state != ChunkState::Generating) {
+      Utils::g_logger.Warning("Chunk {} had incorrect state while generating!", chunk->GetChunkPos());
+      return;
+    }
+
+    Utils::g_logger.Debug("Doing generating task. {}", chunk->GetChunkPos());
+
+    m_worldGen.GenerateTerrainChunk(chunk);
+
+    chunk->SetState(ChunkState::Generating, ChunkState::Generated);
+  });
+}
+
+void World::ScheduleMeshTask(Chunk *chunk) {
+  if (!chunk) {
+    Utils::g_logger.Error("Cannot mesh task for null chunks");
+    exit(1);
+  }
+
+  SubmitTask([this, chunk]() {
+    const ChunkState state = chunk->GetState();
+
+    if (state != ChunkState::Meshing) {
+      Utils::g_logger.Warning("Chunk {} had incorrect state while meshing!", chunk->GetChunkPos());
+      return;
+    }
+
+    Utils::g_logger.Debug("Doing meshing task. {}", chunk->GetChunkPos());
+
+    chunk->UpdateMesh();
+    chunk->SetDirty(true);
+
+    chunk->SetState(ChunkState::Meshing, ChunkState::Loaded);
+  });
+}
+
+void World::ScheduleUnloadTask(Chunk *chunk) {
+  if (!chunk) {
+    Utils::g_logger.Error("Cannot unload task for null chunks");
+    exit(1);
+  }
+
+  SubmitTask([this, chunk]() {
+    const ChunkState state = chunk->GetState();
+
+    if (state != ChunkState::Unloading) {
+      Utils::g_logger.Warning("Chunk {} had incorrect state while unloading!", chunk->GetChunkPos());
+      return;
+    }
+
+    Utils::g_logger.Debug("Doing unloading task. {}", chunk->GetChunkPos());
+
+    chunk->SetState(ChunkState::Unloading, ChunkState::Empty);
+
+    std::lock_guard<std::mutex> lk(m_chunkMutex);
+    glm::ivec2 chunkPos = chunk->GetChunkPos();
+    if (HasChunk(chunkPos)) {
+      m_chunks.erase(chunkPos);
+    }
+  });
+}
+
+
+void World::DoTasks(int i) {
+  Utils::SetThreadName("chunk_worker " + std::to_string(i));
+
+  while(true) {
+    std::function<void()> task;
+    {
+      std::unique_lock lk(m_chunkMutex);
+      m_nonempty.wait(lk, [&]() { return !m_tasks.empty() || m_shouldTerminate; });
+
+      if (m_shouldTerminate) {
+        Utils::g_logger.Debug("Terminating.");
+        return;
+      }
+
+      task = std::move(m_tasks.front());
+      m_tasks.pop();
+    }
+
+    task();
+  }
+}
 
 }
