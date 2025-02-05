@@ -1,13 +1,15 @@
 #ifndef DEF_H_
 #define DEF_H_
 
+#define __DEBUG__
+
 // Graphics
 
 // Shadow mapping (BROKEN!)
   // #define GFX_ShadowMapping
 
 // Values
-  #define GFX_RENDER_DISTANCE 32
+  #define GFX_RENDER_DISTANCE 12
 
 // text
 #define TEXT_CHAR_WIDTH 12

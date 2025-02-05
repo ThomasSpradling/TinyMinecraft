@@ -1,9 +1,11 @@
 #ifndef CHUNK_H_
 #define CHUNK_H_
 
+#include <array>
 #include <vector>
 #include <memory>
 #include <atomic>
+#include <algorithm>
 
 #include "Geometry/Mesh.h"
 #include "Utils/defs.h"
@@ -44,14 +46,24 @@ namespace TinyMinecraft {
 
       void UpdateMesh();
       void BufferVertices();
+      void BufferTranslucentVertices();
       void UpdateTranslucentMesh(const glm::vec3 &playerPos);
       void SortTranslucentBlocks(const glm::vec3 &playerPos);
 
-      auto GetBlockAt(int x, int y, int z) -> Block &;
-      auto GetBlockAt(const glm::ivec3 &pos) -> Block &;
+      void ReserveBlocks() {
+        m_data.blocks.resize(m_data.BLOCK_COUNT, BlockType::AIR);
+      }
+      void ClearBlocks() { m_data.blocks.clear(); }
 
-      void SetBlockAt(int x, int y, int z, const Block &block);
-      void SetBlockAt(const glm::ivec3 &pos, const Block &block);
+      inline auto GetBlockAt(int x, int y, int z) -> Block & {
+        return m_data.blocks.at(CHUNK_LENGTH * CHUNK_HEIGHT * x + CHUNK_LENGTH * y + z);
+      }
+      auto GetBlockAt(const glm::ivec3 &pos) -> Block & { return GetBlockAt(pos.x, pos.y, pos.z); }
+
+      inline void SetBlockAt(int x, int y, int z, const Block &block) {
+        m_data.blocks.at(CHUNK_LENGTH * CHUNK_HEIGHT * x + CHUNK_LENGTH * y + z) = block;
+      }
+      void SetBlockAt(const glm::ivec3 &pos, const Block &block) { SetBlockAt(pos.x, pos.y, pos.z, block); }
 
       auto GetSurfaceHeight(int x, int z) -> int;
 
@@ -68,6 +80,9 @@ namespace TinyMinecraft {
 
       [[nodiscard]] inline auto IsDirty() const -> bool { return m_dirty.load(std::memory_order_acquire); }
       inline void SetDirty(bool value) { m_dirty.store(value, std::memory_order_release); }
+
+      [[nodiscard]] inline auto IsTranslucentDirty() const -> bool { return m_translucentDirty.load(std::memory_order_acquire); }
+      inline void SetTranslucentDirty(bool value) { m_translucentDirty.store(value, std::memory_order_release); }
 
       [[nodiscard]] inline auto GetState() const -> ChunkState {
         return m_state.load(std::memory_order_acquire);
@@ -86,7 +101,7 @@ namespace TinyMinecraft {
       struct ChunkData {
         static constexpr int BLOCK_COUNT = CHUNK_WIDTH * CHUNK_LENGTH * CHUNK_HEIGHT;
 
-        std::array<Block, BLOCK_COUNT> blocks;
+        std::vector<Block> blocks;
         std::vector<FaceGeometry> translucentFaces;
       } m_data;
 
@@ -97,6 +112,7 @@ namespace TinyMinecraft {
       bool m_hidden = true;
       std::atomic<ChunkState> m_state { ChunkState::Empty };
       std::atomic<bool> m_dirty = false;
+      std::atomic<bool> m_translucentDirty = false;
 
       bool m_hasTranslucentBlocks = false;
     };

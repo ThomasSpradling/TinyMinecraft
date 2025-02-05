@@ -22,14 +22,6 @@ namespace TinyMinecraft {
     {
       m_opaqueMesh = std::make_unique<Geometry::Mesh>();
       m_translucentMesh = std::make_unique<Geometry::Mesh>();
-
-      for (int x = 0; x < CHUNK_WIDTH; ++x) {
-        for (int y = 0; y < CHUNK_HEIGHT; ++y) {
-          for (int z = 0; z < CHUNK_LENGTH; ++z) {
-            SetBlockAt(glm::vec3(x, y, z), Block(BlockType::AIR));
-          }
-        }
-      }
     }
 
     Chunk::Chunk(Chunk &&other) noexcept
@@ -119,6 +111,10 @@ namespace TinyMinecraft {
 
     void Chunk::BufferVertices() {
       m_opaqueMesh->Update(m_opaqueVertices, m_opaqueIndices);
+    }
+ 
+    void Chunk::BufferTranslucentVertices(){
+      m_translucentMesh->Update(m_translucentVertices, m_translucentIndices);
     }
 
     void Chunk::UpdateTranslucentMesh(const glm::vec3 &playerPos) {
@@ -274,41 +270,17 @@ namespace TinyMinecraft {
         return distanceA > distanceB;
       });
 
-      std::vector<Geometry::MeshVertex> vertices;
-      std::vector<GLuint> indices;
-
       GLuint indexOffset = 0;
 
       for (const auto &faceGeom : m_data.translucentFaces) {
-        vertices.insert(vertices.end(), faceGeom.vertices.begin(), faceGeom.vertices.end());
+        m_translucentVertices.insert(m_translucentVertices.end(), faceGeom.vertices.begin(), faceGeom.vertices.end());
 
         for (GLuint index : faceGeom.indices) {
-          indices.push_back(index + indexOffset);
+          m_translucentIndices.push_back(index + indexOffset);
         }
 
         indexOffset += 4;
       }
-
-      m_translucentMesh->Update(vertices, indices);
-      
-      vertices.clear();
-      indices.clear();
-    }
-
-    auto Chunk::GetBlockAt(int x, int y, int z) -> Block & {
-      return m_data.blocks.at(CHUNK_LENGTH * CHUNK_HEIGHT * x + CHUNK_LENGTH * y + z);
-    }
-
-    auto Chunk::GetBlockAt(const glm::ivec3 &pos) -> Block & {
-      return GetBlockAt(pos.x, pos.y, pos.z);
-    }
-
-    void Chunk::SetBlockAt(int x, int y, int z, const Block &block) {
-      m_data.blocks.at(CHUNK_LENGTH * CHUNK_HEIGHT * x + CHUNK_LENGTH * y + z) = block;
-    }
-
-    void Chunk::SetBlockAt(const glm::ivec3 &pos, const Block &block) {
-      return SetBlockAt(pos.x, pos.y, pos.z, block);
     }
 
     auto Chunk::GetSurfaceHeight(int x, int z) -> int {

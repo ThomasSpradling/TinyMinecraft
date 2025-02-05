@@ -28,12 +28,18 @@ namespace TinyMinecraft {
     // }
 
     void Mesh::Update(std::vector<MeshVertex> &vertices, std::vector<GLuint> &indices) {
+      if (vertices.size() == 0)
+        return;
+
       m_vao.Bind();
       
       m_vbo.BufferData(vertices, GL_DYNAMIC_DRAW);
       m_ebo.BufferData(indices, GL_DYNAMIC_DRAW);
 
       m_vertexCount = indices.size();
+
+      vertices.clear();
+      indices.clear();
     }
 
   }

@@ -118,6 +118,8 @@ namespace TinyMinecraft {
 
     void WorldGeneration::GenerateTerrainChunk(Chunk *chunk) {
       PROFILE_FUNCTION(Chunk)
+
+      chunk->ReserveBlocks();
       
       const glm::ivec2 &chunkPos = chunk->GetChunkPos();
 
@@ -130,12 +132,12 @@ namespace TinyMinecraft {
       m_baseTerrain->GenUniformGrid2D(erosionMap.data(), chunkPos.x * 16.0f, chunkPos.y * 16.0f, 16.0f, 16.0f, 0.1f / 16.0f, 1336);
 
       std::vector<float> terrain(16 * 16 * 256);
-      // std::vector<float> spaghettiCaves(16 * 16 * 256);
-      // std::vector<float> cheeseCaves(16 * 16 * 256);
+      std::vector<float> spaghettiCaves(16 * 16 * 256);
+      std::vector<float> cheeseCaves(16 * 16 * 256);
 
       m_baseTerrain->GenUniformGrid3D(terrain.data(), 0, chunkPos.x * 16, chunkPos.y * 16, 256, 16, 16, 0.2f/16.0f, 1337);
-      // m_caves->GenUniformGrid3D(spaghettiCaves.data(), 0, chunkPos.x * 16, chunkPos.y * 16, 256, 16, 16, 0.8f/16.0f, 1339);
-      // m_caves->GenUniformGrid3D(cheeseCaves.data(), 0, chunkPos.x * 16, chunkPos.y * 16, 256, 16, 16, 0.8f/16.0f, 1340);
+      m_caves->GenUniformGrid3D(spaghettiCaves.data(), 0, chunkPos.x * 16, chunkPos.y * 16, 256, 16, 16, 0.8f/16.0f, 1339);
+      m_caves->GenUniformGrid3D(cheeseCaves.data(), 0, chunkPos.x * 16, chunkPos.y * 16, 256, 16, 16, 0.8f/16.0f, 1340);
 
       int index2D = 0;
       int index = 0;
@@ -173,20 +175,18 @@ namespace TinyMinecraft {
             // double ridgeNoise = std::fabs(ridges[index]);
 
             double density = terrainNoise - (y - baseHeight) / 32.0f;
-            // double spaghettiNoise = spaghettiCaves[index];
-            // double cheeseNoise = cheeseCaves[index];
+            double spaghettiNoise = spaghettiCaves[index];
+            double cheeseNoise = cheeseCaves[index];
 
-            // if (cheeseNoise > 1 - cavesSize && y < 62.0f || spaghettiNoise > -caveThickness && spaghettiNoise < caveThickness && y < 62.0f) {
-            //   density = 0;
-            // }
-
+            if (cheeseNoise > 1 - cavesSize && y < 62.0f || spaghettiNoise > -caveThickness && spaghettiNoise < caveThickness && y < 62.0f) {
+              density = 0;
+            }
+          
             if (density > 0.0f) {
               chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::GRASS);
             } else {
               if (y <= 62 && y >= baseHeight - 10) {
-                // if (cheeseNoise < cavesSize + 0.05f && std::fabs(spaghettiNoise) > caveThickness) {
-                  chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::WATER);
-                // }
+                chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::WATER);
               }
             }
 

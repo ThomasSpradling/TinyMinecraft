@@ -6,7 +6,6 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <thread>
 #include <vector>
 #include "World/World.h"
 #include "Geometry/geometry.h"
@@ -25,21 +24,24 @@ namespace TinyMinecraft {
     World::World()
       : m_worldGen(*this)
     {
-      constexpr int NUM_THREADS = 10;
+      const int NUM_THREADS = 1;
 
       for (int i = 0; i < NUM_THREADS; ++i) {
         m_workers.emplace_back(&World::DoTasks, this, i);
       }
-      Utils::g_logger.Debug("All threads made...");
+
+      Utils::g_logger.Message("All {} threads set up.", NUM_THREADS);
     }
 
     World::~World() {
       m_shouldTerminate.store(true, std::memory_order_release);
+      m_nonempty.notify_all();
 
       for (int i = 0; i < m_workers.size(); ++i) {
         if (m_workers[i].joinable())
           m_workers[i].join();
       }
+      Utils::g_logger.Message("All threads joined.");
 
       m_workers.clear();
     }
@@ -102,6 +104,9 @@ namespace TinyMinecraft {
 
     void World::Update(const glm::vec3 &playerPos) {
       PROFILE_FUNCTION(Chunk)
+
+      m_playerPosition = playerPos;
+
       constexpr std::array<glm::ivec2, 5> neighborOffsets = {
         glm::ivec2(0, 0), glm::ivec2(1, 0), glm::ivec2(-1, 0), glm::ivec2(0, 1), glm::ivec2(0, -1)
       };
@@ -113,17 +118,27 @@ namespace TinyMinecraft {
       std::vector<glm::ivec2> nearbyChunks;
       std::vector<glm::ivec2> chunksToDelete;
 
+      // std::function<bool(const glm::ivec2 &, int)> IsNearby = [&playerChunkPos](const glm::ivec2 &chunkPos, int radius) {
+      //   float distance = std::max(std::abs(chunkPos.x - playerChunkPos.x), std::abs(chunkPos.y - playerChunkPos.y));
+      //   return distance <= radius;
+      // };
+
       std::function<bool(const glm::ivec2 &, int)> IsNearby = [&playerChunkPos](const glm::ivec2 &chunkPos, int radius) {
-        float distance = std::max(std::abs(chunkPos.x - playerChunkPos.x), std::abs(chunkPos.y - playerChunkPos.y));
-        return distance <= radius;
+        int dx = playerChunkPos.x - chunkPos.x;
+        int dz = playerChunkPos.y - chunkPos.y;
+        // float distance = std::max(std::abs(dx), std::abs(dz));
+        float distance = dx * dx + dz * dz;
+        return distance <= radius * radius;
       };
 
-      for (int z = -loadRadius; z <= loadRadius; ++z) {
-        for (int x = -loadRadius; x <= loadRadius; ++x) {
-          int dx = playerChunkPos.x + x;
-          int dz = playerChunkPos.y + z;
+      for (int dz = -loadRadius; dz <= loadRadius; ++dz) {
+        for (int dx = -loadRadius; dx <= loadRadius; ++dx) {
+          int x = playerChunkPos.x + dx;
+          int z = playerChunkPos.y + dz;
 
-          nearbyChunks.push_back(glm::ivec2(dx, dz));
+          if (IsNearby(glm::ivec2(x, z), loadRadius)) {
+            nearbyChunks.push_back(glm::ivec2(x, z));
+          }
         }
       }
 
@@ -142,7 +157,6 @@ namespace TinyMinecraft {
 
         if (withinLoadRadius) {
           if (state == ChunkState::Empty && chunk->SetState(ChunkState::Empty, ChunkState::Generating)) {
-            Utils::g_logger.Debug("Scheduling generate task: {}", chunkPos);
             ScheduleGenerateTask(chunk);
             continue;
           }
@@ -159,7 +173,6 @@ namespace TinyMinecraft {
           });
 
           if (neighborsGenerated && chunk->SetState(ChunkState::Generated, ChunkState::Meshing)) {
-            Utils::g_logger.Debug("Scheduling meshing task: {}", chunkPos);
             ScheduleMeshTask(chunk);
           }
           
@@ -169,112 +182,25 @@ namespace TinyMinecraft {
         bool shouldErase = false;
 
         if (!IsNearby(chunkPos, viewRadius)) {
-          // Utils::g_logger.Debug("Chunk out of range: {}. It has state {}", chunkPos, static_cast<int>(state));
+          if ((!withinLoadRadius && state == ChunkState::Generated) || state == ChunkState::Loaded) {
+            // check that deleting this chunk won't prevent proper working of Meshing chunks
+            bool hasNearbyIntermediateChunk = false;
+            std::ranges::for_each(neighborOffsets, [&](glm::ivec2 offset) {
+              glm::ivec2 pos = glm::ivec2(chunkPos.x + offset.x, chunkPos.y + offset.y);
+              if (HasChunk(pos) && GetChunkAt(pos)->GetState() == ChunkState::Meshing) {
+                hasNearbyIntermediateChunk = true;
+              }
+            });
 
-          // if ((!withinLoadRadius && state == ChunkState::Generated) || state == ChunkState::Loaded) {
-          //   // check that deleting this chunk won't prevent proper working of Meshing chunks
-            
-          //   std::unique_lock lk(m_chunkMutex);
-          //   {
-          //     bool hasNearbyIntermediateChunk = false;
-          //     std::ranges::for_each(neighborOffsets, [&](glm::ivec2 offset) {
-          //       glm::ivec2 pos = glm::ivec2(chunkPos.x + offset.x, chunkPos.y + offset.y);
-          //       if (HasChunk(pos) && GetChunkAt(pos)->GetState() == ChunkState::Meshing) {
-          //         hasNearbyIntermediateChunk = true;
-          //       }
-          //     });
-
-          //     if (!hasNearbyIntermediateChunk) {
-          //       // if (chunk->SetState(ChunkState::Generated, ChunkState::Unloading)) {
-          //       //   Utils::g_logger.Debug("Scheduling unloading task: {}", chunkPos);
-          //       //   ScheduleUnloadTask(chunk);
-          //       // }
-          //       // continue;
-          //     }
-          //   }
-          // }
+            if (!hasNearbyIntermediateChunk) {
+              if (chunk->SetState(state, ChunkState::Unloading)) {
+                ScheduleUnloadTask(chunk);
+              }
+              continue;
+            }
+          }
         }
       }
-
-      // compute which chunks are nearby right now
-      // for each 
-
-      // const glm::ivec2 playerChunkPos = GetChunkPosFromCoords(playerPos);
-      // constexpr int viewRadius = GFX_RENDER_DISTANCE;
-      // constexpr int loadRadius = viewRadius + 1;
-      // std::vector<glm::ivec2> chunksToUnload;
-
-      // // unload all nearby chunks
-
-      // for (auto &[chunkPos, chunk] : m_loadedChunks) {
-      //   // if not nearby
-
-      //   int dx = chunkPos.x - playerChunkPos.x;
-      //   int dz = chunkPos.y - playerChunkPos.y;
-
-      //   int distanceSquared = dx * dx + dz * dz;
-
-      //   if (distanceSquared > loadRadius * loadRadius) {
-      //     chunksToUnload.push_back(chunkPos);
-      //   }
-      // }
-
-      // for (const auto &chunkPos : chunksToUnload) {
-      //   UnloadChunk(m_loadedChunks.at(chunkPos));
-      // }
-
-      // for (int dz = -loadRadius; dz <= loadRadius; ++dz) {
-      //   for (int dx = -loadRadius; dx <= loadRadius; ++dx) {
-      //     int distanceSquared = dx * dx + dz * dz;
-
-      //     if (distanceSquared <= loadRadius * loadRadius) {
-      //       glm::ivec2 chunkPos { playerChunkPos.x + dx, playerChunkPos.y + dz };
-
-      //       if (!m_loadedChunks.contains(chunkPos)) {
-      //         LoadChunk(chunkPos.x, chunkPos.y);
-      //       }
-      //     }
-      //   }
-      // }
-
-      // for (int dz = -loadRadius; dz <= loadRadius; ++dz) {
-      //   for (int dx = -loadRadius; dx <= loadRadius; ++dx) {
-      //     int distanceSquared = dx * dx + dz * dz;
-
-      //     if (distanceSquared <= loadRadius * loadRadius) {
-      //       glm::ivec2 chunkPos { playerChunkPos.x + dx, playerChunkPos.y + dz };
-
-      //       m_worldGen.LoadUnloadedBlocks(GetChunkAt(chunkPos));
-      //     }
-      //   }
-      // }
-
-      // // Figure out closet dirty chunk in range
-
-      // int shortestDistance = std::numeric_limits<int>::max();
-      // Chunk *closestDirtyChunk = nullptr;
-
-      // for (auto &[chunkPos, chunk] : m_loadedChunks) {
-      //   int dx = chunkPos.x - playerChunkPos.x;
-      //   int dz = chunkPos.y - playerChunkPos.y;
-
-      //   int distanceSquared = dx * dx + dz * dz;
-
-      //   if (distanceSquared <= viewRadius * viewRadius && chunk.IsDirty()) {
-      //     if (distanceSquared < shortestDistance) {
-      //       closestDirtyChunk = &chunk;
-      //       shortestDistance = distanceSquared;
-      //     }
-      //   }
-      // }
-
-      // // if there is a closet dirty chunk in range, update its mesh
-
-      // if (closestDirtyChunk) {
-      //   closestDirtyChunk->UpdateMesh();
-      //   closestDirtyChunk->UpdateTranslucentMesh(playerPos);
-      //   closestDirtyChunk->SetDirty(false);
-      // }
     }
 
     void World::SetBlockAt(const glm::vec3 &pos, BlockType type) {
@@ -327,14 +253,17 @@ namespace TinyMinecraft {
       };
 
       // if moving within same chunk, always re-sort that chunk
+      const auto chunk = GetChunkAt(playerChunkPosBefore);
       if (playerChunkPosBefore == playerChunkPosAfter) {
         if (IsChunkLoaded(playerChunkPosBefore)) {
-          GetChunkAt(playerChunkPosBefore)->SortTranslucentBlocks(after);
+          chunk->SortTranslucentBlocks(after);
+          chunk->BufferTranslucentVertices();
         }
       } else {
         for (const auto &offset : directions) {
           if (IsChunkLoaded(playerChunkPosBefore + offset)) {
-            GetChunkAt(playerChunkPosBefore + offset)->SortTranslucentBlocks(after);
+            chunk->SortTranslucentBlocks(after);
+            chunk->BufferTranslucentVertices();
           }
         }
       }
@@ -378,7 +307,12 @@ namespace TinyMinecraft {
     }
 
     void World::SubmitTask(std::function<void()> task) {
-      m_tasks.enqueue(std::move(task));
+      {
+        std::unique_lock lk(m_taskMutex);
+        m_tasks.push(std::move(task));
+      }
+
+      m_nonempty.notify_one();
     }
 
     void World::ScheduleGenerateTask(Chunk *chunk) {
@@ -394,8 +328,6 @@ namespace TinyMinecraft {
           Utils::g_logger.Warning("Chunk {} had incorrect state while generating!", chunk->GetChunkPos());
           return;
         }
-
-        Utils::g_logger.Debug("Doing generating task. {}", chunk->GetChunkPos());
 
         m_worldGen.GenerateTerrainChunk(chunk);
 
@@ -417,10 +349,10 @@ namespace TinyMinecraft {
           return;
         }
 
-        Utils::g_logger.Debug("Doing meshing task. {}", chunk->GetChunkPos());
-
         chunk->UpdateMesh();
+        chunk->UpdateTranslucentMesh(m_playerPosition);
         chunk->SetDirty(true);
+        chunk->SetTranslucentDirty(true);
 
         chunk->SetState(ChunkState::Meshing, ChunkState::Loaded);
       });
@@ -440,16 +372,8 @@ namespace TinyMinecraft {
           return;
         }
 
-        Utils::g_logger.Debug("Doing unloading task. {}", chunk->GetChunkPos());
-
-
+        // chunk->ClearBlocks();
         chunk->SetState(ChunkState::Unloading, ChunkState::Empty);
-
-        // std::lock_guard<std::mutex> lk(m_chunkMutex);
-        // glm::ivec2 chunkPos = chunk->GetChunkPos();
-        // if (HasChunk(chunkPos)) {
-        //   m_chunks.erase(chunkPos);
-        // }
       });
     }
 
@@ -457,13 +381,24 @@ namespace TinyMinecraft {
     void World::DoTasks(int i) {
       Utils::SetThreadName("chunk_worker " + std::to_string(i));
 
-      std::function<void()> task;
-      while(!m_shouldTerminate.load(std::memory_order_acquire)) {
-        if (m_tasks.try_dequeue(task)) {
-          task();
-        } else {
-          std::this_thread::yield();
+      while(true) {
+        std::function<void()> task;
+        {
+          std::unique_lock lk(m_taskMutex);
+          m_nonempty.wait(lk, [&]() { return !m_tasks.empty() || m_shouldTerminate; });
+
+          if (m_shouldTerminate) {
+#ifdef __DEBUG__
+            Utils::g_logger.Debug("Terminating.");
+#endif
+            return;
+          }
+
+          task = std::move(m_tasks.front());
+          m_tasks.pop();
         }
+
+        task();
       }
     }
 

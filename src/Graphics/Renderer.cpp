@@ -1,5 +1,6 @@
 #include "Graphics/Renderer.h"
 #include "Graphics/Renderer2D.h"
+#include "Utils/Logger.h"
 #include "Utils/Profiler.h"
 #include "World/Chunk.h"
 #include "Graphics/gfx.h"
@@ -46,9 +47,6 @@ namespace TinyMinecraft {
       glm::vec3 playerPos = m_currentCamera->GetPosition();
       
       std::vector<World::Chunk *> translucentChunks;
-
-      // mutex
-      // std::unique_lock lk(world.GetChunkMutex());
       
       for (auto &[chunkPos, chunk] : world.GetChunks()) {
         if (!world.IsChunkLoaded(chunkPos)) {
@@ -82,22 +80,19 @@ namespace TinyMinecraft {
 
       for (auto chunk : translucentChunks) {
 
-        // if (chunk->IsDirty()) {
-        //   chunk->BufferVertices();
+        //TODO: abstract to mesh
+        if (chunk->IsTranslucentDirty()) {
+          chunk->BufferTranslucentVertices();
+          chunk->SetTranslucentDirty(false);
+        }
 
-        //   chunk->SetDirty(false);
-        // }
         const glm::ivec2 chunkPos = chunk->GetChunkPos();
 
         glm::mat4 model { 1.0f };
         model = glm::translate(model, glm::vec3(chunkPos.x * CHUNK_WIDTH, 0.0f, chunkPos.y * CHUNK_LENGTH));
 
-        // glDisable(GL_CULL_FACE);
         glDepthMask(GL_FALSE);
-
         RenderMesh(chunk->GetTranslucentMesh(), m_blockShader, model);
-
-        // glEnable(GL_CULL_FACE);
         glDepthMask(GL_TRUE);
       }
     }

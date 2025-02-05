@@ -71,8 +71,10 @@ namespace TinyMinecraft {
   #define PROFILE_FUNCTION(category) TinyMinecraft::Utils::Profiler VARNAME(timer) {__FUNCTION__, Utils::ProfileCategory::category};
   #define PROFILE_SCOPE(category, name) TinyMinecraft::Utils::Profiler VARNAME(timer) {name, Utils::ProfileCategory::category};
 #else
-  #define PROFILE_FUNCTION() do {} while (0);
-  #define PROFILE_SCOPE(name) do {} while (0);
+  #define PROFILE_FUNCTION_Misc() do{} while(0);
+  #define PROFILE_SCOPE_Misc(name) do{} while(0);
+  #define PROFILE_FUNCTION(category) do{} while(0);
+  #define PROFILE_SCOPE(category, name) do{} while(0);
 #endif
 
 #endif // SCOPED_TIMER_

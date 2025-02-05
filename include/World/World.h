@@ -6,8 +6,8 @@
 #include "Utils/mathgl.h"
 #include "World/Chunk.h"
 #include "World/WorldGeneration.h"
-#include "concurrentqueue.h"
 #include <functional>
+#include <queue>
 #include <tbb/concurrent_unordered_map.h>
 #include <memory>
 #include <thread>
@@ -68,8 +68,13 @@ namespace TinyMinecraft {
       const unsigned int seed = 3782;
 
       std::atomic<bool> m_shouldTerminate;
-      moodycamel::ConcurrentQueue<std::function<void()>> m_tasks;
+      std::condition_variable m_nonempty;
+      std::mutex m_taskMutex;
+
+      std::queue<std::function<void()>> m_tasks;
       std::vector<std::thread> m_workers;
+
+      glm::vec3 m_playerPosition;
 
       ChunkMap m_chunks;
       WorldGeneration m_worldGen;
