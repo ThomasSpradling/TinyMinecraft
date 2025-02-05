@@ -15,6 +15,7 @@
 namespace TinyMinecraft {
 
   namespace World {
+      using ChunkMap = std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>, Utils::IVec2Hash>;
 
     class World {
     public:
@@ -37,18 +38,20 @@ namespace TinyMinecraft {
         if (!HasChunk(chunkPos)) return false;
         return m_chunks.at(chunkPos)->GetState() == ChunkState::Loaded;
       }
-      inline auto GetChunks() const -> const std::unordered_map<glm::ivec2, std::unique_ptr<Chunk>, Utils::IVec2Hash> & {
+      inline auto GetChunks() const -> const ChunkMap & {
         return m_chunks;
       }
-      inline auto GetChunkAt(int x, int z) const -> const std::unique_ptr<Chunk> & {
+      inline auto GetChunkAt(int x, int z) const -> const std::shared_ptr<Chunk> & {
         return GetChunkAt(glm::ivec2(x, z));
       }
-      inline auto GetChunkAt(const glm::ivec2 &chunkPos)  const -> const std::unique_ptr<Chunk> & {
+      inline auto GetChunkAt(const glm::ivec2 &chunkPos) const -> const std::shared_ptr<Chunk> & {
         if (!HasChunk(chunkPos)) {
           Utils::g_logger.Error("Cannot get chunk at {}", chunkPos);
         }
         return m_chunks.at(chunkPos);
       }
+
+      [[nodiscard]] inline auto GetChunkMutex() -> std::mutex & { return m_chunkMutex; }
 
       void BreakBlock(const glm::vec3 &pos);
       void SetBlockAt(const glm::vec3 &pos, BlockType type);
@@ -72,7 +75,9 @@ namespace TinyMinecraft {
       std::vector<std::thread> m_workers;
 
       std::mutex m_chunkMutex;
-      std::unordered_map<glm::ivec2, std::unique_ptr<Chunk>, Utils::IVec2Hash> m_chunks;
+
+      ChunkMap m_chunks;
+      std::atomic<const ChunkMap *> m_chunksSnapshot;
       WorldGeneration m_worldGen;
 
       void SubmitTask(std::function<void()> task);

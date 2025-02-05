@@ -9,6 +9,7 @@ namespace TinyMinecraft {
   namespace Utils {
     
     std::unordered_map<ProfileCategory, std::unordered_map<std::string, std::vector<long long>>> Profiler::timings;
+    std::mutex Profiler::timingMutex;
 
     Profiler::Profiler(std::string_view section, ProfileCategory category)
       : m_category(category)
@@ -23,7 +24,8 @@ namespace TinyMinecraft {
       Profiler::LogDuration(m_category, m_name, duration);
     }
 
-    void Profiler::LogSummary() {
+    void Profiler::LogSummary() { 
+      std::lock_guard<std::mutex> lock(timingMutex);
       std::ostringstream oss;
 
       oss << "\n\n------ Profiling Summary ------\n";
@@ -69,6 +71,7 @@ namespace TinyMinecraft {
     }
 
     void Profiler::LogDuration(ProfileCategory cat, const std::string &section, long long duration) {
+      std::lock_guard<std::mutex> lock(timingMutex);
       timings[cat][section].push_back(duration);
 
     #ifdef UTILS_ProfileVerbose

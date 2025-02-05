@@ -3,6 +3,9 @@ project(MinecraftClone)
 
 set(CMAKE_CXX_STANDARD 23)
 
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O2")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+
 add_compile_options(
   # -pedantic-errors
   # -fno-gnu-keywords
@@ -51,11 +54,6 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_link_libraries(${PROJECT_NAME} glfw GLAD_LIB FastNoise ${FRAMEWORKS})
-
-target_compile_options(${PROJECT_NAME} PRIVATE 
-    $<$<CONFIG:DEBUG>:-g>
-    $<$<CONFIG:RELEASE>:-DNDEBUG -O2>
-)
 
 target_compile_options(GLAD_LIB PRIVATE -w)
 target_compile_options(FastNoise PRIVATE -w)

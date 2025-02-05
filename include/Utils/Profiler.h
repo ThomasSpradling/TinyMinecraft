@@ -2,6 +2,7 @@
 #define SCOPED_TIMER_
 
 #include <chrono>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -42,6 +43,7 @@ namespace TinyMinecraft {
       std::chrono::time_point<std::chrono::high_resolution_clock> m_start;
 
       static std::unordered_map<ProfileCategory, std::unordered_map<std::string, std::vector<long long>>> timings;
+      static std::mutex timingMutex;
 
       static auto CategoryToString(ProfileCategory category) -> std::string;
 

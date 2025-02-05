@@ -108,13 +108,12 @@ namespace TinyMinecraft {
         glm::ivec2(0, 0), glm::ivec2(1, 0), glm::ivec2(-1, 0), glm::ivec2(0, 1), glm::ivec2(0, -1)
       };
 
-      std::unique_lock lk(m_chunkMutex);
-
       constexpr int viewRadius = GFX_RENDER_DISTANCE;
       constexpr int loadRadius = viewRadius + 1;
 
       const glm::ivec2 playerChunkPos = GetChunkPosFromCoords(playerPos);
       std::vector<glm::ivec2> nearbyChunks;
+      std::vector<glm::ivec2> chunksToDelete;
 
       std::function<bool(const glm::ivec2 &, int)> IsNearby = [&playerChunkPos](const glm::ivec2 &chunkPos, int radius) {
         float distance = std::max(std::abs(chunkPos.x - playerChunkPos.x), std::abs(chunkPos.y - playerChunkPos.y));
@@ -136,16 +135,18 @@ namespace TinyMinecraft {
         }
       }
 
-      for (const auto &[chunkPos, chunk] : m_chunks) {
-        Chunk *c = chunk.get();
-        const ChunkState state = c->GetState();
+      for (auto it = m_chunks.begin(); it != m_chunks.end();) {
+        Chunk *chunk = it->second.get();
+        const glm::ivec2 chunkPos = it->first;
+        const ChunkState state = chunk->GetState();
 
         const int withinLoadRadius = IsNearby(chunkPos, loadRadius);
 
         if (withinLoadRadius) {
-          if (state == ChunkState::Empty && c->SetState(ChunkState::Empty, ChunkState::Generating)) {
+          if (state == ChunkState::Empty && chunk->SetState(ChunkState::Empty, ChunkState::Generating)) {
             Utils::g_logger.Debug("Scheduling generate task: {}", chunkPos);
-            ScheduleGenerateTask(c);
+            ScheduleGenerateTask(chunk);
+            ++it;
             continue;
           }
 
@@ -160,37 +161,45 @@ namespace TinyMinecraft {
             }
           });
 
-          if (neighborsGenerated && c->SetState(ChunkState::Generated, ChunkState::Meshing)) {
+          if (neighborsGenerated && chunk->SetState(ChunkState::Generated, ChunkState::Meshing)) {
             Utils::g_logger.Debug("Scheduling meshing task: {}", chunkPos);
-            ScheduleMeshTask(c);
+            ScheduleMeshTask(chunk);
           }
-
+          
+          ++it;
           continue;
         }
+
+        bool shouldErase = false;
 
         if (!IsNearby(chunkPos, viewRadius)) {
           Utils::g_logger.Debug("Chunk out of range: {}. It has state {}", chunkPos, static_cast<int>(state));
 
           if (!withinLoadRadius && state == ChunkState::Empty) {
-            m_chunks.erase(chunkPos);
+            it = m_chunks.erase(it);
             continue;
-          }
-
-          if ((!withinLoadRadius && state == ChunkState::Generated) || state == ChunkState::Loaded) {
+          } else if ((!withinLoadRadius && state == ChunkState::Generated) || state == ChunkState::Loaded) {
             // check that deleting this chunk won't prevent proper working of Meshing chunks
-            bool hasNearbyIntermateChunk = false;
-            std::ranges::for_each(neighborOffsets, [&](glm::ivec2 offset) {
-              glm::ivec2 pos = glm::ivec2(chunkPos.x + offset.x, chunkPos.y + offset.y);
-              if (HasChunk(pos) && GetChunkAt(pos)->GetState() == ChunkState::Meshing) {
-                hasNearbyIntermateChunk = true;
-              }
-            });
+            
+            std::unique_lock lk(m_chunkMutex);
+            {
+              bool hasNearbyIntermediateChunk = false;
+              std::ranges::for_each(neighborOffsets, [&](glm::ivec2 offset) {
+                glm::ivec2 pos = glm::ivec2(chunkPos.x + offset.x, chunkPos.y + offset.y);
+                if (HasChunk(pos) && GetChunkAt(pos)->GetState() == ChunkState::Meshing) {
+                  hasNearbyIntermediateChunk = true;
+                }
+              });
 
-            if (!hasNearbyIntermateChunk) {
-              m_chunks.erase(chunkPos);
+              if (!hasNearbyIntermediateChunk) {
+                it = m_chunks.erase(it);
+                continue;
+              }
             }
           }
         }
+
+        ++it;
       }
 
       // compute which chunks are nearby right now
@@ -348,25 +357,26 @@ namespace TinyMinecraft {
         return true;
       }
 
-      if (GetChunkAt(neighborChunkPos)->GetState() < ChunkState::Generated) {
+      std::shared_ptr<Chunk> neighborChunk = GetChunkAt(neighborChunkPos);
+      if (!neighborChunk || neighborChunk->GetState() < ChunkState::Generated) {
         return true;
       }
-
+      
       glm::vec3 neightborLocalPos = GetLocalBlockCoords(neighborPos);
 
-      Block neightboringBlock = GetChunkAt(neighborChunkPos)->GetBlockAt(neightborLocalPos);
+      Block neighboringBlock = neighborChunk->GetBlockAt(neightborLocalPos);
 
-      if (neightboringBlock.GetType() == BlockType::AIR) {
+      if (neighboringBlock.GetType() == BlockType::AIR) {
         return true;
       }
 
       if (!block.IsTransparent()) {
-        return neightboringBlock.IsTransparent();
+        return neighboringBlock.IsTransparent();
       }
 
       if (block.IsTransparent()) {
-        if (neightboringBlock.IsTransparent()) {
-          return neightboringBlock.GetType() != block.GetType();
+        if (neighboringBlock.IsTransparent()) {
+          return neighboringBlock.GetType() != block.GetType();
         }
       }
 
@@ -445,11 +455,11 @@ namespace TinyMinecraft {
 
         chunk->SetState(ChunkState::Unloading, ChunkState::Empty);
 
-        std::lock_guard<std::mutex> lk(m_chunkMutex);
-        glm::ivec2 chunkPos = chunk->GetChunkPos();
-        if (HasChunk(chunkPos)) {
-          m_chunks.erase(chunkPos);
-        }
+        // std::lock_guard<std::mutex> lk(m_chunkMutex);
+        // glm::ivec2 chunkPos = chunk->GetChunkPos();
+        // if (HasChunk(chunkPos)) {
+        //   m_chunks.erase(chunkPos);
+        // }
       });
     }
 
@@ -460,7 +470,7 @@ namespace TinyMinecraft {
       while(true) {
         std::function<void()> task;
         {
-          std::unique_lock lk(m_chunkMutex);
+          std::unique_lock lk(m_taskMutex);
           m_nonempty.wait(lk, [&]() { return !m_tasks.empty() || m_shouldTerminate; });
 
           if (m_shouldTerminate) {

@@ -48,6 +48,7 @@ namespace TinyMinecraft {
       std::vector<World::Chunk *> translucentChunks;
 
       // mutex
+      // std::unique_lock lk(world.GetChunkMutex());
       
       for (auto &[chunkPos, chunk] : world.GetChunks()) {
         if (!world.IsChunkLoaded(chunkPos)) {
