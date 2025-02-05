@@ -5,8 +5,8 @@
 #include <cstdlib>
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <string>
+#include <thread>
 #include <vector>
 #include "World/World.h"
 #include "Geometry/geometry.h"
@@ -34,8 +34,7 @@ namespace TinyMinecraft {
     }
 
     World::~World() {
-      m_shouldTerminate = true;
-      m_nonempty.notify_all();
+      m_shouldTerminate.store(true, std::memory_order_release);
 
       for (int i = 0; i < m_workers.size(); ++i) {
         if (m_workers[i].joinable())
@@ -103,7 +102,6 @@ namespace TinyMinecraft {
 
     void World::Update(const glm::vec3 &playerPos) {
       PROFILE_FUNCTION(Chunk)
-
       constexpr std::array<glm::ivec2, 5> neighborOffsets = {
         glm::ivec2(0, 0), glm::ivec2(1, 0), glm::ivec2(-1, 0), glm::ivec2(0, 1), glm::ivec2(0, -1)
       };
@@ -135,7 +133,7 @@ namespace TinyMinecraft {
         }
       }
 
-      for (auto it = m_chunks.begin(); it != m_chunks.end();) {
+      for (auto it = m_chunks.begin(); it != m_chunks.end(); ++it) {
         Chunk *chunk = it->second.get();
         const glm::ivec2 chunkPos = it->first;
         const ChunkState state = chunk->GetState();
@@ -146,7 +144,6 @@ namespace TinyMinecraft {
           if (state == ChunkState::Empty && chunk->SetState(ChunkState::Empty, ChunkState::Generating)) {
             Utils::g_logger.Debug("Scheduling generate task: {}", chunkPos);
             ScheduleGenerateTask(chunk);
-            ++it;
             continue;
           }
 
@@ -166,40 +163,37 @@ namespace TinyMinecraft {
             ScheduleMeshTask(chunk);
           }
           
-          ++it;
           continue;
         }
 
         bool shouldErase = false;
 
         if (!IsNearby(chunkPos, viewRadius)) {
-          Utils::g_logger.Debug("Chunk out of range: {}. It has state {}", chunkPos, static_cast<int>(state));
+          // Utils::g_logger.Debug("Chunk out of range: {}. It has state {}", chunkPos, static_cast<int>(state));
 
-          if (!withinLoadRadius && state == ChunkState::Empty) {
-            it = m_chunks.erase(it);
-            continue;
-          } else if ((!withinLoadRadius && state == ChunkState::Generated) || state == ChunkState::Loaded) {
-            // check that deleting this chunk won't prevent proper working of Meshing chunks
+          // if ((!withinLoadRadius && state == ChunkState::Generated) || state == ChunkState::Loaded) {
+          //   // check that deleting this chunk won't prevent proper working of Meshing chunks
             
-            std::unique_lock lk(m_chunkMutex);
-            {
-              bool hasNearbyIntermediateChunk = false;
-              std::ranges::for_each(neighborOffsets, [&](glm::ivec2 offset) {
-                glm::ivec2 pos = glm::ivec2(chunkPos.x + offset.x, chunkPos.y + offset.y);
-                if (HasChunk(pos) && GetChunkAt(pos)->GetState() == ChunkState::Meshing) {
-                  hasNearbyIntermediateChunk = true;
-                }
-              });
+          //   std::unique_lock lk(m_chunkMutex);
+          //   {
+          //     bool hasNearbyIntermediateChunk = false;
+          //     std::ranges::for_each(neighborOffsets, [&](glm::ivec2 offset) {
+          //       glm::ivec2 pos = glm::ivec2(chunkPos.x + offset.x, chunkPos.y + offset.y);
+          //       if (HasChunk(pos) && GetChunkAt(pos)->GetState() == ChunkState::Meshing) {
+          //         hasNearbyIntermediateChunk = true;
+          //       }
+          //     });
 
-              if (!hasNearbyIntermediateChunk) {
-                it = m_chunks.erase(it);
-                continue;
-              }
-            }
-          }
+          //     if (!hasNearbyIntermediateChunk) {
+          //       // if (chunk->SetState(ChunkState::Generated, ChunkState::Unloading)) {
+          //       //   Utils::g_logger.Debug("Scheduling unloading task: {}", chunkPos);
+          //       //   ScheduleUnloadTask(chunk);
+          //       // }
+          //       // continue;
+          //     }
+          //   }
+          // }
         }
-
-        ++it;
       }
 
       // compute which chunks are nearby right now
@@ -384,12 +378,7 @@ namespace TinyMinecraft {
     }
 
     void World::SubmitTask(std::function<void()> task) {
-      {
-        std::unique_lock lk(m_taskMutex);
-        m_tasks.push(std::move(task));
-      }
-
-      m_nonempty.notify_one();
+      m_tasks.enqueue(std::move(task));
     }
 
     void World::ScheduleGenerateTask(Chunk *chunk) {
@@ -453,6 +442,7 @@ namespace TinyMinecraft {
 
         Utils::g_logger.Debug("Doing unloading task. {}", chunk->GetChunkPos());
 
+
         chunk->SetState(ChunkState::Unloading, ChunkState::Empty);
 
         // std::lock_guard<std::mutex> lk(m_chunkMutex);
@@ -467,22 +457,13 @@ namespace TinyMinecraft {
     void World::DoTasks(int i) {
       Utils::SetThreadName("chunk_worker " + std::to_string(i));
 
-      while(true) {
-        std::function<void()> task;
-        {
-          std::unique_lock lk(m_taskMutex);
-          m_nonempty.wait(lk, [&]() { return !m_tasks.empty() || m_shouldTerminate; });
-
-          if (m_shouldTerminate) {
-            Utils::g_logger.Debug("Terminating.");
-            return;
-          }
-
-          task = std::move(m_tasks.front());
-          m_tasks.pop();
+      std::function<void()> task;
+      while(!m_shouldTerminate.load(std::memory_order_acquire)) {
+        if (m_tasks.try_dequeue(task)) {
+          task();
+        } else {
+          std::this_thread::yield();
         }
-
-        task();
       }
     }
 

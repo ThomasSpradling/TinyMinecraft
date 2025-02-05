@@ -6,16 +6,16 @@
 #include "Utils/mathgl.h"
 #include "World/Chunk.h"
 #include "World/WorldGeneration.h"
-#include <condition_variable>
+#include "concurrentqueue.h"
 #include <functional>
+#include <tbb/concurrent_unordered_map.h>
 #include <memory>
-#include <queue>
 #include <thread>
 
 namespace TinyMinecraft {
 
   namespace World {
-      using ChunkMap = std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>, Utils::IVec2Hash>;
+      using ChunkMap = tbb::concurrent_unordered_map<glm::ivec2, std::shared_ptr<Chunk>, Utils::IVec2Hash>;
 
     class World {
     public:
@@ -51,7 +51,7 @@ namespace TinyMinecraft {
         return m_chunks.at(chunkPos);
       }
 
-      [[nodiscard]] inline auto GetChunkMutex() -> std::mutex & { return m_chunkMutex; }
+      // [[nodiscard]] inline auto GetChunkMutex() -> std::mutex & { return m_chunkMutex; }
 
       void BreakBlock(const glm::vec3 &pos);
       void SetBlockAt(const glm::vec3 &pos, BlockType type);
@@ -68,16 +68,10 @@ namespace TinyMinecraft {
       const unsigned int seed = 3782;
 
       std::atomic<bool> m_shouldTerminate;
-      std::condition_variable m_nonempty;
-      std::mutex m_taskMutex;
-
-      std::queue<std::function<void()>> m_tasks;
+      moodycamel::ConcurrentQueue<std::function<void()>> m_tasks;
       std::vector<std::thread> m_workers;
 
-      std::mutex m_chunkMutex;
-
       ChunkMap m_chunks;
-      std::atomic<const ChunkMap *> m_chunksSnapshot;
       WorldGeneration m_worldGen;
 
       void SubmitTask(std::function<void()> task);

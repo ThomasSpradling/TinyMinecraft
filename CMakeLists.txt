@@ -15,6 +15,8 @@ add_compile_options(
 
 ### Configure Dependencies
 
+set(BUILD_SHARED_LIBS ON CACHE BOOL "Make all libs dynamic" FORCE)
+
 # GLFW
 option(GLFW_BUILD_DOCS OFF)
 option(GLFW_BUILD_EXAMPLES OFF)
@@ -34,6 +36,15 @@ add_subdirectory("third_party/json")
 set(FASTNOISE2_NOISETOOL OFF CACHE BOOL "Build Noise Tool" FORCE)
 add_subdirectory("third_party/FastNoise2")
 
+# OneTBB
+set(TBBMALLOC_BUILD OFF CACHE BOOL "Malloc build" FORCE)
+set(TBB_TEST OFF CACHE BOOL "Test build" FORCE)
+
+add_subdirectory("third_party/TBB")
+
+# Concurrent Queue
+add_subdirectory("third_party/concurrentqueue")
+
 include_directories(
   "include"
   third_party/glad/include
@@ -41,7 +52,9 @@ include_directories(
   third_party/glm
   third_party/json/include
   third_party/FastNoise2/include
+  third_party/TBB/include
   third_party
+  third_party/concurrentqueue
   third_party/stb
   third_party/noise
 )
@@ -53,7 +66,7 @@ endif()
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_link_libraries(${PROJECT_NAME} glfw GLAD_LIB FastNoise ${FRAMEWORKS})
+target_link_libraries(${PROJECT_NAME} glfw GLAD_LIB FastNoise TBB::tbb ${FRAMEWORKS})
 
 target_compile_options(GLAD_LIB PRIVATE -w)
 target_compile_options(FastNoise PRIVATE -w)
