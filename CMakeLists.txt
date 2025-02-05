@@ -3,7 +3,7 @@ project(MinecraftClone)
 
 set(CMAKE_CXX_STANDARD 23)
 
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O2")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O1 -fsanitize=address")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 
 add_compile_options(
@@ -42,9 +42,6 @@ set(TBB_TEST OFF CACHE BOOL "Test build" FORCE)
 
 add_subdirectory("third_party/TBB")
 
-# Concurrent Queue
-add_subdirectory("third_party/concurrentqueue")
-
 include_directories(
   "include"
   third_party/glad/include
@@ -54,7 +51,6 @@ include_directories(
   third_party/FastNoise2/include
   third_party/TBB/include
   third_party
-  third_party/concurrentqueue
   third_party/stb
   third_party/noise
 )

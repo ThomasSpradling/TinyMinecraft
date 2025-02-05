@@ -9,18 +9,18 @@ namespace TinyMinecraft {
 
   namespace Application {
 
-    using ButtonState = struct Button {
+    struct Button {
       bool pressed = false;
       bool down = false;
     };
 
-    using Keyboard = struct Keyboard {
+    struct Keyboard {
       std::array<Button, GLFW_KEY_LAST> keys;
     };
 
-    using Mouse = struct Mouse {
+    struct Mouse {
       std::array<Button, GLFW_MOUSE_BUTTON_LAST> buttons;
-      glm::vec2 delta, position;
+      glm::vec2 delta { 0.0f }, position { 0.0f };
       bool grabbed = false;
       float offsetY = 0.0f;
     };

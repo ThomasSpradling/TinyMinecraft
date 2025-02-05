@@ -120,6 +120,8 @@ namespace TinyMinecraft {
       PROFILE_FUNCTION(Chunk)
 
       chunk->ReserveBlocks();
+
+      constexpr int groundHeight = 64;
       
       const glm::ivec2 &chunkPos = chunk->GetChunkPos();
 
@@ -132,20 +134,25 @@ namespace TinyMinecraft {
       m_baseTerrain->GenUniformGrid2D(erosionMap.data(), chunkPos.x * 16.0f, chunkPos.y * 16.0f, 16.0f, 16.0f, 0.1f / 16.0f, 1336);
 
       std::vector<float> terrain(16 * 16 * 256);
-      std::vector<float> spaghettiCaves(16 * 16 * 256);
-      std::vector<float> cheeseCaves(16 * 16 * 256);
+      std::vector<float> spaghettiCaves(groundHeight * 16 * 16);
+      std::vector<float> cheeseCaves(groundHeight * 16 * 16);
 
-      m_baseTerrain->GenUniformGrid3D(terrain.data(), 0, chunkPos.x * 16, chunkPos.y * 16, 256, 16, 16, 0.2f/16.0f, 1337);
-      m_caves->GenUniformGrid3D(spaghettiCaves.data(), 0, chunkPos.x * 16, chunkPos.y * 16, 256, 16, 16, 0.8f/16.0f, 1339);
-      m_caves->GenUniformGrid3D(cheeseCaves.data(), 0, chunkPos.x * 16, chunkPos.y * 16, 256, 16, 16, 0.8f/16.0f, 1340);
+      m_baseTerrain->GenUniformGrid3D(terrain.data(), chunkPos.x * 16, 0, chunkPos.y * 16, 16, 256, 16, 0.2f/16.0f, 1337);
+      m_caves->GenUniformGrid3D(spaghettiCaves.data(), chunkPos.x * 16, 0, chunkPos.y * 16, 16, groundHeight, 16, 0.8f/16.0f, 1339);
+      m_caves->GenUniformGrid3D(cheeseCaves.data(), chunkPos.x * 16, 0, chunkPos.y * 16, 16, groundHeight, 16, 0.8f/16.0f, 1340);
+
+      constexpr auto GetIndex3D = [](int x, int y, int z, int w, int h, int l) {
+        return x + w * y + h * l * z; // this indexing order was stated nowhere in documentation btw :(
+      };
 
       int index2D = 0;
       int index = 0;
       double caveThickness = 0.1;
       double cavesSize = 0.6f;
-
+      
       for (int z = 0; z < CHUNK_LENGTH; ++z) {
         for (int x = 0; x < CHUNK_WIDTH; ++x) {
+
           int nx = chunkPos.x * static_cast<int>(CHUNK_WIDTH) + x;
           int nz = chunkPos.y * static_cast<int>(CHUNK_LENGTH) + z;
 
@@ -165,28 +172,30 @@ namespace TinyMinecraft {
           double peaksHeight = RidgesPart(peaks);
           peaksHeight = Utils::ScaleValue(0.0, 1.0, -1.0, 1.0, peaksHeight);
 
-          int baseHeight = 64.f + (erosionHeight + 0.75f * continentalnessHeight + 0.5f * peaksHeight) * 50.0f;
+          int baseHeight = groundHeight + (erosionHeight + 0.75f * continentalnessHeight + 0.5f * peaksHeight) * 50.0f;
 
           for (int y = 0; y < CHUNK_HEIGHT; ++y) {
             caveThickness = Utils::ScaleValue(0.0f, 62.0f, 0.4f, 0.0f, static_cast<float>(y));
             cavesSize = Utils::ScaleValue(0.0f, 62.0f, 0.6f, 0.3f, static_cast<float>(y));
 
-            double terrainNoise = terrain[index];
+            double terrainNoise = terrain[GetIndex3D(x, y, z, CHUNK_LENGTH, CHUNK_HEIGHT, CHUNK_WIDTH)];
             // double ridgeNoise = std::fabs(ridges[index]);
 
             double density = terrainNoise - (y - baseHeight) / 32.0f;
-            double spaghettiNoise = spaghettiCaves[index];
-            double cheeseNoise = cheeseCaves[index];
+            double spaghettiNoise = y < groundHeight ? spaghettiCaves[GetIndex3D(x, y, z, CHUNK_LENGTH, groundHeight, CHUNK_WIDTH)] : 0;
+            double cheeseNoise = y < groundHeight ? cheeseCaves[GetIndex3D(x, y, z, CHUNK_LENGTH, groundHeight, CHUNK_WIDTH)] : 0;
 
             if (cheeseNoise > 1 - cavesSize && y < 62.0f || spaghettiNoise > -caveThickness && spaghettiNoise < caveThickness && y < 62.0f) {
               density = 0;
             }
-          
-            if (density > 0.0f) {
-              chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::GRASS);
-            } else {
-              if (y <= 62 && y >= baseHeight - 10) {
-                chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::WATER);
+
+            if (nz > 0) {
+              if (density > 0.0f) {
+                chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::STONE);
+              } else {
+                if (y <= 62 && y >= baseHeight - 10) {
+                  chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::WATER);
+                }
               }
             }
 

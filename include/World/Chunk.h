@@ -1,13 +1,14 @@
 #ifndef CHUNK_H_
 #define CHUNK_H_
 
+#include <algorithm>
 #include <array>
 #include <vector>
 #include <memory>
 #include <atomic>
-#include <algorithm>
 
 #include "Geometry/Mesh.h"
+#include "Utils/Profiler.h"
 #include "Utils/defs.h"
 #include "World/Block.h"
 #include "Graphics/gfx.h"

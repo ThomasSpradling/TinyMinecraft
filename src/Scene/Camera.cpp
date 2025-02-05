@@ -1,4 +1,5 @@
 #include "Scene/Camera.h"
+#include "Utils/Logger.h"
 #include "Utils/defs.h"
 #include "glm/geometric.hpp"
 

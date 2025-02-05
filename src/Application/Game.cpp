@@ -121,11 +121,12 @@ namespace TinyMinecraft {
     void Game::Update() {
       PROFILE_FUNCTION(Game)
 
+
       glm::ivec3 before = m_camera->GetPosition();
       m_camera->Move();
       glm::ivec3 after = m_camera->GetPosition();
       m_world.HandlePlayerMovement(before, after);
-
+      
       glm::ivec3 pos = m_camera->GetPosition();
 
       m_ui.SetPlayerPosition(pos);

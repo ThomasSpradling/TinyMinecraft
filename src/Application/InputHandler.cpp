@@ -1,4 +1,6 @@
 #include "Application/InputHandler.h"
+#include "Utils/Logger.h"
+#include "glm/fwd.hpp"
 
 namespace TinyMinecraft {
 

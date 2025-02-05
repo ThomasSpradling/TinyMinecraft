@@ -14,6 +14,7 @@
 #include "Utils/defs.h"
 #include "Utils/utils.h"
 #include "World/Biome.h"
+#include "World/Biome.h"
 #include "World/Block.h"
 #include "World/Chunk.h"
 
@@ -24,7 +25,8 @@ namespace TinyMinecraft {
     World::World()
       : m_worldGen(*this)
     {
-      const int NUM_THREADS = 1;
+      // const int NUM_THREADS = 1;
+      const int NUM_THREADS = std::thread::hardware_concurrency();
 
       for (int i = 0; i < NUM_THREADS; ++i) {
         m_workers.emplace_back(&World::DoTasks, this, i);
@@ -372,7 +374,7 @@ namespace TinyMinecraft {
           return;
         }
 
-        // chunk->ClearBlocks();
+        chunk->ClearBlocks();
         chunk->SetState(ChunkState::Unloading, ChunkState::Empty);
       });
     }

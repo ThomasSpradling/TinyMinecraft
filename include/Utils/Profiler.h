@@ -1,5 +1,5 @@
-#ifndef SCOPED_TIMER_
-#define SCOPED_TIMER_
+#ifndef PROFILER
+#define PROFILER
 
 #include <chrono>
 #include <mutex>
@@ -7,6 +7,12 @@
 #include <unordered_map>
 #include <vector>
 #include "defs.h"
+
+#ifdef __APPLE__
+  #include <mach/mach.h>
+#elif defined(__linux__)
+  #include <sys/resource.h>
+#endif
 
 namespace TinyMinecraft {
 
@@ -22,6 +28,11 @@ namespace TinyMinecraft {
       Game,
     };
 
+    struct ProfileData {
+      long long duration;    // nanoseconds
+      long long memoryDiff;  // bytes
+    };
+
     class Profiler {
     public:
       Profiler(std::string_view section, ProfileCategory category = ProfileCategory::Miscellaneous);
@@ -32,25 +43,25 @@ namespace TinyMinecraft {
       Profiler(Profiler &&) = delete;
       auto operator=(Profiler &&) -> Profiler & = delete;
 
-      static void Start(const std::string &section, ProfileCategory cat = ProfileCategory::Miscellaneous);
-      static void End();
-
       static void LogSummary();
 
     private:
       ProfileCategory m_category;
       std::string m_name;
       std::chrono::time_point<std::chrono::high_resolution_clock> m_start;
+      long long m_memoryStart;
 
-      static std::unordered_map<ProfileCategory, std::unordered_map<std::string, std::vector<long long>>> timings;
-      static std::mutex timingMutex;
+      static std::unordered_map<ProfileCategory, std::unordered_map<std::string, std::vector<ProfileData>>> records;
+      static std::mutex recordMutex;
+
+      static auto GetCurrentMemoryUsage() -> size_t;
+
+      void LogRecord(ProfileCategory cat, const std::string &section, long long duration, long long memDiff);
 
       static auto CategoryToString(ProfileCategory category) -> std::string;
 
       static auto FormatDuration(long long nanoseconds) -> std::string;
-
-      void LogDuration(ProfileCategory cat, const std::string &section, long long duration);
-
+      static auto FormatMemory(long long bytes) -> std::string;
 
     };
 
@@ -77,4 +88,4 @@ namespace TinyMinecraft {
   #define PROFILE_SCOPE(category, name) do{} while(0);
 #endif
 
-#endif // SCOPED_TIMER_
+#endif // PROFILER

@@ -2,6 +2,7 @@
 #include "Geometry/Mesh.h"
 #include "Geometry/geometry.h"
 #include "Graphics/gfx.h"
+#include "Utils/Logger.h"
 #include "Utils/Profiler.h"
 #include "Utils/defs.h"
 #include "Utils/utils.h"
@@ -47,8 +48,6 @@ namespace TinyMinecraft {
         Geometry::Face::West, Geometry::Face::North, Geometry::Face::South
       };
 
-      // std::vector<Geometry::MeshVertex> vertices;
-      // std::vector<GLuint> indices;
       GLuint indexOffset = 0;
 
       m_hasTranslucentBlocks = false;
