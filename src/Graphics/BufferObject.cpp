@@ -33,6 +33,10 @@ namespace TinyMinecraft {
       glBindBuffer(m_target, m_handle);
     }
 
+    void BufferObject::Unbind() const {
+      glBindBuffer(m_target, 0);
+    }
+
   }
 
 }

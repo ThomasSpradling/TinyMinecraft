@@ -39,7 +39,9 @@ namespace TinyMinecraft {
       m_vertexCount = indices.size();
 
       vertices.clear();
+      vertices.shrink_to_fit();
       indices.clear();
+      indices.shrink_to_fit();
     }
 
   }

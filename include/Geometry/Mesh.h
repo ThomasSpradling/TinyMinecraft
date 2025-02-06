@@ -26,6 +26,15 @@ namespace TinyMinecraft {
       // Mesh(Mesh &&other) noexcept;
       // auto operator=(Mesh &&other) noexcept -> Mesh &;
 
+      void ClearBuffers() {
+        if (m_vertexCount > 0) {
+          m_vao.Bind();
+          m_vbo.CleanBuffers();
+          m_ebo.CleanBuffers();
+          m_vertexCount = 0;
+        }
+      }
+
       void Update(std::vector<MeshVertex> &vertices, std::vector<GLuint> &indices);
       [[nodiscard]] auto GetVertexCount() const -> size_t { return m_vertexCount; }
       void BindVertexArray() { m_vao.Bind(); }

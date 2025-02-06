@@ -54,6 +54,9 @@ namespace TinyMinecraft {
     void VertexArray::Bind() {
       glBindVertexArray(m_handle);
     }
+    void VertexArray::Unbind() {
+      glBindVertexArray(0);
+    }
 
   }
 

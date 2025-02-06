@@ -49,6 +49,11 @@ namespace TinyMinecraft {
       std::vector<World::Chunk *> translucentChunks;
       
       for (auto &[chunkPos, chunk] : world.GetChunks()) {
+        if (world.IsChunkEmpty(chunkPos)) {
+          chunk->ClearBuffers();
+          continue;
+        }
+
         if (!world.IsChunkLoaded(chunkPos)) {
           continue;
         }
@@ -98,6 +103,9 @@ namespace TinyMinecraft {
     }
 
     void Renderer::RenderMesh(Geometry::Mesh &mesh, Shader &shader, glm::mat4 &model) {
+      if (mesh.GetVertexCount() == 0)
+        return;
+
       shader.Use();
       shader.Uniform("uModel", model);
 

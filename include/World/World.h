@@ -38,6 +38,10 @@ namespace TinyMinecraft {
         if (!HasChunk(chunkPos)) return false;
         return m_chunks.at(chunkPos)->GetState() == ChunkState::Loaded;
       }
+      inline auto IsChunkEmpty(const glm::ivec2 &chunkPos) const -> bool {
+        if (!HasChunk(chunkPos)) return false;
+        return m_chunks.at(chunkPos)->GetState() == ChunkState::Empty;
+      }
       inline auto GetChunks() const -> const ChunkMap & {
         return m_chunks;
       }

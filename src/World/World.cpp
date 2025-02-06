@@ -282,6 +282,7 @@ namespace TinyMinecraft {
         return true;
       }
 
+      // std::shared_ptr<Chunk> neighborChunk = GetChunkAt(neighborChunkPos);
       std::shared_ptr<Chunk> neighborChunk = GetChunkAt(neighborChunkPos);
       if (!neighborChunk || neighborChunk->GetState() < ChunkState::Generated) {
         return true;
@@ -373,7 +374,8 @@ namespace TinyMinecraft {
           Utils::g_logger.Warning("Chunk {} had incorrect state while unloading!", chunk->GetChunkPos());
           return;
         }
-
+        
+        chunk->SetShouldClear(true);
         chunk->ClearBlocks();
         chunk->SetState(ChunkState::Unloading, ChunkState::Empty);
       });

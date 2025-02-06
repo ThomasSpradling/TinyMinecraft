@@ -20,7 +20,13 @@ namespace TinyMinecraft {
       auto operator=(BufferObject &&other) noexcept -> BufferObject & ;
 
       void Bind() const;
+      void Unbind() const;
       
+      void CleanBuffers() {
+        Bind();
+        glBufferData(m_target, 0, nullptr, GL_DYNAMIC_DRAW);
+      }
+
       template <typename T> void BufferData(const std::vector<T> &data, GLenum usage) const {
         Bind();
         glBufferData(m_target, static_cast<GLsizeiptr>(sizeof(T) * data.size()), data.data(), usage);

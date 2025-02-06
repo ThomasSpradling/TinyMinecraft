@@ -189,13 +189,11 @@ namespace TinyMinecraft {
               density = 0;
             }
 
-            if (nz > 0) {
-              if (density > 0.0f) {
-                chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::STONE);
-              } else {
-                if (y <= 62 && y >= baseHeight - 10) {
-                  chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::WATER);
-                }
+            if (density > 0.0f) {
+              chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::STONE);
+            } else {
+              if (y <= 62 && y >= baseHeight - 10) {
+                chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::WATER);
               }
             }
 

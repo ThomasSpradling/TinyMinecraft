@@ -101,11 +101,6 @@ namespace TinyMinecraft {
           }
         }
       }
-
-      // cleanup
-
-      // vertices.clear();
-      // indices.clear();
     }
 
     void Chunk::BufferVertices() {

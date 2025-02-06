@@ -8,6 +8,7 @@
 #include <atomic>
 
 #include "Geometry/Mesh.h"
+#include "Utils/Logger.h"
 #include "Utils/Profiler.h"
 #include "Utils/defs.h"
 #include "World/Block.h"
@@ -51,10 +52,21 @@ namespace TinyMinecraft {
       void UpdateTranslucentMesh(const glm::vec3 &playerPos);
       void SortTranslucentBlocks(const glm::vec3 &playerPos);
 
+      void SetShouldClear(bool value) { m_shouldClear.store(value, std::memory_order_release); };
+      auto ShouldClear() -> bool { return m_shouldClear.load(std::memory_order_acquire); };
+
+      void ClearBuffers() {
+        if (ShouldClear()) {
+          m_opaqueMesh->ClearBuffers();
+          m_translucentMesh->ClearBuffers();
+          SetShouldClear(false);
+        }
+      }
+
       void ReserveBlocks() {
         m_data.blocks.resize(m_data.BLOCK_COUNT, BlockType::AIR);
       }
-      void ClearBlocks() { m_data.blocks.clear(); }
+      void ClearBlocks() { m_data.blocks.clear(); m_data.blocks.shrink_to_fit(); }
 
       inline auto GetBlockAt(int x, int y, int z) -> Block & {
         return m_data.blocks.at(CHUNK_LENGTH * CHUNK_HEIGHT * x + CHUNK_LENGTH * y + z);
@@ -113,6 +125,7 @@ namespace TinyMinecraft {
       bool m_hidden = true;
       std::atomic<ChunkState> m_state { ChunkState::Empty };
       std::atomic<bool> m_dirty = false;
+      std::atomic<bool> m_shouldClear = false;
       std::atomic<bool> m_translucentDirty = false;
 
       bool m_hasTranslucentBlocks = false;

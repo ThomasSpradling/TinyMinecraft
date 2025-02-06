@@ -29,7 +29,7 @@
 
 // Perf
   #define UTILS_ShowFPS
-  #define UTILS_RunProfile
+  // #define UTILS_RunProfile
   // #define UTILS_ProfileVerbose    // Will print profile data on every run
 
 #define GAMEPLAY_MaxBlockInteractDistance (5.0f)

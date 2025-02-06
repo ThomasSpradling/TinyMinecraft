@@ -19,6 +19,7 @@ namespace TinyMinecraft {
 
       void AddAttribute(GLuint id, int attributeSize, GLenum attributeType, int stride, int offset);
       void Bind();
+      void Unbind();
     private:
       GLuint m_handle;
     };
