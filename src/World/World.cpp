@@ -206,11 +206,11 @@ namespace TinyMinecraft {
     }
 
     void World::SetBlockAt(const glm::vec3 &pos, BlockType type) {
-      Block &block = GetBlockAt(pos);
+      Block block = GetBlockAt(pos);
       block.SetType(type);
     }
 
-    auto World::GetBlockAt(const glm::vec3 &pos) -> Block & {
+    auto World::GetBlockAt(const glm::vec3 &pos) -> Block {
       glm::ivec2 chunkPos = GetChunkPosFromCoords(pos);
       glm::vec3 offsetPos = GetLocalBlockCoords(pos);
 
@@ -269,44 +269,6 @@ namespace TinyMinecraft {
           }
         }
       }
-    }
-
-
-    // thread-safe since all updates are atomic, making this read-only section OK
-    auto World::IsFaceVisible(const Block &block, Geometry::Face face, const glm::vec3 &pos) -> bool {
-      glm::vec3 neighborPos = pos + Geometry::GetNormal(face);
-      glm::ivec2 neighborChunkPos = GetChunkPosFromCoords(neighborPos);
-
-      // if not in a chunk
-      if (neighborPos.y >= CHUNK_HEIGHT || neighborPos.y < 0 || !HasChunk(neighborChunkPos)) {
-        return true;
-      }
-
-      // std::shared_ptr<Chunk> neighborChunk = GetChunkAt(neighborChunkPos);
-      std::shared_ptr<Chunk> neighborChunk = GetChunkAt(neighborChunkPos);
-      if (!neighborChunk || neighborChunk->GetState() < ChunkState::Generated) {
-        return true;
-      }
-      
-      glm::vec3 neightborLocalPos = GetLocalBlockCoords(neighborPos);
-
-      Block neighboringBlock = neighborChunk->GetBlockAt(neightborLocalPos);
-
-      if (neighboringBlock.GetType() == BlockType::AIR) {
-        return true;
-      }
-
-      if (!block.IsTransparent()) {
-        return neighboringBlock.IsTransparent();
-      }
-
-      if (block.IsTransparent()) {
-        if (neighboringBlock.IsTransparent()) {
-          return neighboringBlock.GetType() != block.GetType();
-        }
-      }
-
-      return false;
     }
 
     void World::SubmitTask(std::function<void()> task) {

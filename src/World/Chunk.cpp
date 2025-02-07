@@ -67,7 +67,7 @@ namespace TinyMinecraft {
 
             for (Geometry::Face face : faces) {
 
-              if (!m_world.IsFaceVisible(block, face, GetGlobalCoords(pos))) continue;
+              if (!IsFaceVisible(block, face, pos)) continue;
 
               const std::array<glm::vec3, 4> faceVertices = Geometry::GetVertices(face);
               const glm::vec2 topLeftTexCoord = BlockAtlas::GetNormalizedTextureCoords(block.GetType(), face);
@@ -202,7 +202,7 @@ namespace TinyMinecraft {
 
             for (Geometry::Face face : faces) {
 
-              if (!m_world.IsFaceVisible(block, face, glm::vec3(m_chunkPos.x * CHUNK_WIDTH + x, y, m_chunkPos.y * CHUNK_LENGTH + z))) {
+              if (!IsFaceVisible(block, face, pos)) {
                 continue;
               }
 
@@ -285,6 +285,51 @@ namespace TinyMinecraft {
       }
 
       return 0;
+    }
+
+    Block Chunk::GetBlockUnbounded(const glm::ivec3 &pos) {
+      constexpr auto WrapIndex = [](int x, int size) {
+        int offset = x / size;
+        int local  = x % size;
+        if (local < 0) {
+          local += size;
+          --offset;
+        }
+        return std::pair<int,int>(offset, local);
+      };
+
+      if (pos.y < 0 || pos.y >= CHUNK_HEIGHT)
+        return Block(BlockType::AIR);
+
+      if (pos.x >= 0 && pos.x < CHUNK_WIDTH && pos.z >= 0 && pos.z < CHUNK_LENGTH)
+        return GetBlockAt(pos);
+
+      auto [offsetX, localX] = WrapIndex(pos.x, CHUNK_WIDTH);
+      auto [offsetZ, localZ] = WrapIndex(pos.z, CHUNK_LENGTH);
+
+      glm::ivec2 neighborChunkPos = m_chunkPos + glm::ivec2(offsetX, offsetZ);
+      return m_world.GetChunkAt(neighborChunkPos)->GetBlockAt(localX, pos.y, localZ);
+    }
+
+    auto Chunk::IsFaceVisible(const Block &block, Geometry::Face face, const glm::vec3 &pos) -> bool {
+      glm::ivec3 neighboringPos = pos + Geometry::GetNormal(face);
+      Block neighboringBlock = GetBlockUnbounded(neighboringPos);
+
+      if (neighboringBlock.GetType() == BlockType::AIR) {
+        return true;
+      }
+
+      if (!block.IsTransparent()) {
+        return neighboringBlock.IsTransparent();
+      }
+
+      if (block.IsTransparent()) {
+        if (neighboringBlock.IsTransparent()) {
+          return neighboringBlock.GetType() != block.GetType();
+        }
+      }
+
+      return false;
     }
 
   }

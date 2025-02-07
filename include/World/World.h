@@ -31,8 +31,7 @@ namespace TinyMinecraft {
       auto GetBiome(int x, int z) -> BiomeType;
 
       void Update(const glm::vec3 &playerPos);
-      auto IsFaceVisible(const Block &block, Geometry::Face face, const glm::vec3 &pos) -> bool;
-
+      
       inline auto HasChunk(const glm::ivec2 &chunkPos) const -> bool { return m_chunks.contains(chunkPos); }
       inline auto IsChunkLoaded(const glm::ivec2 &chunkPos) const -> bool {
         if (!HasChunk(chunkPos)) return false;
@@ -60,7 +59,7 @@ namespace TinyMinecraft {
       void BreakBlock(const glm::vec3 &pos);
       void SetBlockAt(const glm::vec3 &pos, BlockType type);
       
-      auto GetBlockAt(const glm::vec3 &pos) -> Block &;
+      auto GetBlockAt(const glm::vec3 &pos) -> Block;
       auto HasBlock(const glm::vec3 &pos) -> bool;
       
       auto GetChunkPosFromCoords(const glm::vec3 &pos) -> glm::ivec2;

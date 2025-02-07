@@ -9,7 +9,7 @@
   // #define GFX_ShadowMapping
 
 // Values
-  #define GFX_RENDER_DISTANCE 12
+  #define GFX_RENDER_DISTANCE 40
 
 // text
 #define TEXT_CHAR_WIDTH 12

@@ -8,11 +8,14 @@
 #include <atomic>
 
 #include "Geometry/Mesh.h"
+#include "Geometry/geometry.h"
 #include "Utils/Logger.h"
 #include "Utils/Profiler.h"
 #include "Utils/defs.h"
 #include "World/Block.h"
 #include "Graphics/gfx.h"
+
+#define CHUNK_INDEX_AT(x, y, z) (CHUNK_LENGTH * CHUNK_HEIGHT * x + CHUNK_LENGTH * y + z)
 
 namespace TinyMinecraft {
 
@@ -68,13 +71,16 @@ namespace TinyMinecraft {
       }
       void ClearBlocks() { m_data.blocks.clear(); m_data.blocks.shrink_to_fit(); }
 
-      inline auto GetBlockAt(int x, int y, int z) -> Block & {
-        return m_data.blocks.at(CHUNK_LENGTH * CHUNK_HEIGHT * x + CHUNK_LENGTH * y + z);
+      inline auto GetBlockAt(int x, int y, int z) -> Block {
+        if (m_data.blocks.size() <= CHUNK_INDEX_AT(x, y, z)) {
+          return Block(BlockType::AIR);
+        }
+        return m_data.blocks.at(CHUNK_INDEX_AT(x, y, z));
       }
-      auto GetBlockAt(const glm::ivec3 &pos) -> Block & { return GetBlockAt(pos.x, pos.y, pos.z); }
+      auto GetBlockAt(const glm::ivec3 &pos) -> Block { return GetBlockAt(pos.x, pos.y, pos.z); }
 
       inline void SetBlockAt(int x, int y, int z, const Block &block) {
-        m_data.blocks.at(CHUNK_LENGTH * CHUNK_HEIGHT * x + CHUNK_LENGTH * y + z) = block;
+        m_data.blocks.at(CHUNK_INDEX_AT(x, y, z)) = block;
       }
       void SetBlockAt(const glm::ivec3 &pos, const Block &block) { SetBlockAt(pos.x, pos.y, pos.z, block); }
 
@@ -129,6 +135,11 @@ namespace TinyMinecraft {
       std::atomic<bool> m_translucentDirty = false;
 
       bool m_hasTranslucentBlocks = false;
+
+      std::array<std::shared_ptr<Chunk>, 4> neighborRefs; // east, west, north, south
+
+      auto GetBlockUnbounded(const glm::ivec3 &pos) -> Block;
+      auto IsFaceVisible(const Block &block, Geometry::Face face, const glm::vec3 &pos) -> bool;
     };
 
   }
