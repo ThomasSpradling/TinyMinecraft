@@ -43,19 +43,12 @@ namespace TinyMinecraft {
           glVertexAttribIPointer(id, attributeSize, attributeType, stride, reinterpret_cast<void *>(offset));
           break;
         default:
-          Utils::g_logger.Fatal("Graphics: VAO {} was assigned an invalid attribute.", m_handle);
+          Utils::Logger::Fatal("Graphics: VAO {} was assigned an invalid attribute.", m_handle);
           exit(1);
           break;
       }
 
       glEnableVertexAttribArray(id);
-    }
-
-    void VertexArray::Bind() {
-      glBindVertexArray(m_handle);
-    }
-    void VertexArray::Unbind() {
-      glBindVertexArray(0);
     }
 
   }

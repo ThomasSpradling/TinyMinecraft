@@ -277,6 +277,14 @@ namespace TinyMinecraft {
       }
     }
 
+    void Chunk::ClearBuffers() {
+      if (ShouldClear()) {
+        m_opaqueMesh->ClearBuffers();
+        m_translucentMesh->ClearBuffers();
+        SetShouldClear(false);
+      }
+    }
+
     auto Chunk::GetSurfaceHeight(int x, int z) -> int {
       for (int y = CHUNK_HEIGHT - 1; y >= 0; --y) {
         if (GetBlockAt(x, y, z).GetType() != BlockType::AIR) {

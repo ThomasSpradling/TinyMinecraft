@@ -1,5 +1,6 @@
 #include "Graphics/Renderer.h"
 #include "Graphics/Renderer2D.h"
+#include "Scene/PlayerCameras.h"
 #include "Utils/Logger.h"
 #include "Utils/Profiler.h"
 #include "World/Chunk.h"
@@ -42,9 +43,9 @@ namespace TinyMinecraft {
     void Renderer::RenderWorld(World::World &world) {
       m_blockShader.Use();
       m_blockShader.Uniform("uBlockAtlas", static_cast<int>(m_blockAtlasTexture.GetId()));
-      m_blockShader.Uniform("uCameraPos", m_currentCamera->GetPosition());
+      m_blockShader.Uniform("uCameraPos", m_playerPosition);
 
-      glm::vec3 playerPos = m_currentCamera->GetPosition();
+      glm::vec3 playerPos = m_playerPosition;
       
       std::vector<World::Chunk *> translucentChunks;
       
@@ -117,7 +118,7 @@ namespace TinyMinecraft {
       ui.Draw();
     }
 
-    void Renderer::Begin3D(const std::shared_ptr<Scene::Camera> &camera3D) {
+    void Renderer::Begin3D(const std::shared_ptr<Scene::PlayerCamera> &camera3D) {
       glEnable(GL_CULL_FACE);
       glCullFace(GL_BACK);
       glFrontFace(GL_CCW);

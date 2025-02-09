@@ -23,7 +23,7 @@ namespace TinyMinecraft {
           break;
       }
 
-      Utils::g_logger.Warning("Invalid face normal.");
+      Utils::Logger::Warning("Invalid face normal.");
       return { 0, 0, 0 };
     }
 

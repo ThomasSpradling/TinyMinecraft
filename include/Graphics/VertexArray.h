@@ -2,24 +2,23 @@
 #define VERTEX_ARRAY_H_
 
 #include "Graphics/gfx.h"
+#include "Utils/NonMovable.h"
 
 namespace TinyMinecraft {
 
   namespace Graphics {
 
-    class VertexArray {
+    class VertexArray : Utils::NonMoveable {
     public:
       VertexArray();
-
       ~VertexArray();
-      VertexArray(const VertexArray &) = delete;
-      auto operator=(const VertexArray &) -> VertexArray & = delete;
+      
       VertexArray(VertexArray &&other) noexcept;
       auto operator=(VertexArray &&other) noexcept -> VertexArray &;
 
       void AddAttribute(GLuint id, int attributeSize, GLenum attributeType, int stride, int offset);
-      void Bind();
-      void Unbind();
+      inline void Bind() const { glBindVertexArray(m_handle); }
+      inline void Unbind() const { glBindVertexArray(0); };
     private:
       GLuint m_handle;
     };

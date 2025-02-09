@@ -1,13 +1,13 @@
 #include "Application/Game.h"
 #include "Utils/Logger.h"
-#include "Utils/Profiler.h"
 #include "Utils/utils.h"
+#include <iostream>
 #include <unistd.h>
 
 using namespace TinyMinecraft;
 
 auto main() -> int {
-  Utils::g_logger.Message("Press anything to start. PID: {}", getpid());
+  Utils::Logger::Message("Press anything to start. PID: {}", getpid());
   std::cin.get();
 
   Utils::SetThreadName("main");

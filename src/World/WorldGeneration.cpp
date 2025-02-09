@@ -48,7 +48,7 @@ namespace TinyMinecraft {
       // load splines
       std::ifstream file("../data/world_gen.json");
       if (!file.is_open()) {
-        Utils::g_logger.Error("Conig: file cannot open");
+        Utils::Logger::Error("Conig: file cannot open");
         exit(1);
       }
     
@@ -82,20 +82,20 @@ namespace TinyMinecraft {
       for (auto &xy : erosionSplines)
         ridgesSplinePoints.emplace_back(xy[0], xy[1]);
 
-      static std::vector<glm::vec4> continentalnessCoeffs = Math::ComputeMonotonicCubicSplines(continentalnessSplinePoints);
-      static std::vector<glm::vec4> erosionCoeffs = Math::ComputeMonotonicCubicSplines(erosionSplinePoints);
-      static std::vector<glm::vec4> ridgesCoeffs = Math::ComputeCubicSplines(erosionSplinePoints);
+      static std::vector<glm::vec4> continentalnessCoeffs = ComputeMonotonicCubicSplines(continentalnessSplinePoints);
+      static std::vector<glm::vec4> erosionCoeffs = ComputeMonotonicCubicSplines(erosionSplinePoints);
+      static std::vector<glm::vec4> ridgesCoeffs = ComputeCubicSplines(erosionSplinePoints);
 
       ContinentalnessPart = [&](float continentalness) {
-        return Math::EvaluateCubicSpline(continentalnessSplinePoints, continentalnessCoeffs, continentalness);
+        return EvaluateCubicSpline(continentalnessSplinePoints, continentalnessCoeffs, continentalness);
       };
 
       ErosionPart = [&](float erosion) {
-        return Math::EvaluateCubicSpline(erosionSplinePoints, erosionCoeffs, erosion);
+        return EvaluateCubicSpline(erosionSplinePoints, erosionCoeffs, erosion);
       };
 
       RidgesPart = [&](float erosion) {
-        return Math::EvaluateCubicSpline(erosionSplinePoints, erosionCoeffs, erosion);
+        return EvaluateCubicSpline(erosionSplinePoints, erosionCoeffs, erosion);
       };
 
       m_biomes.emplace(BiomeType::Tundra, Biome(BiomeType::Tundra,
@@ -134,12 +134,12 @@ namespace TinyMinecraft {
       m_baseTerrain->GenUniformGrid2D(erosionMap.data(), chunkPos.x * 16.0f, chunkPos.y * 16.0f, 16.0f, 16.0f, 0.1f / 16.0f, 1336);
 
       std::vector<float> terrain(16 * 16 * 256);
-      std::vector<float> spaghettiCaves(groundHeight * 16 * 16);
-      std::vector<float> cheeseCaves(groundHeight * 16 * 16);
+      // std::vector<float> spaghettiCaves(groundHeight * 16 * 16);
+      // std::vector<float> cheeseCaves(groundHeight * 16 * 16);
 
       m_baseTerrain->GenUniformGrid3D(terrain.data(), chunkPos.x * 16, 0, chunkPos.y * 16, 16, 256, 16, 0.2f/16.0f, 1337);
-      m_caves->GenUniformGrid3D(spaghettiCaves.data(), chunkPos.x * 16, 0, chunkPos.y * 16, 16, groundHeight, 16, 0.8f/16.0f, 1339);
-      m_caves->GenUniformGrid3D(cheeseCaves.data(), chunkPos.x * 16, 0, chunkPos.y * 16, 16, groundHeight, 16, 0.8f/16.0f, 1340);
+      // m_caves->GenUniformGrid3D(spaghettiCaves.data(), chunkPos.x * 16, 0, chunkPos.y * 16, 16, groundHeight, 16, 0.8f/16.0f, 1339);
+      // m_caves->GenUniformGrid3D(cheeseCaves.data(), chunkPos.x * 16, 0, chunkPos.y * 16, 16, groundHeight, 16, 0.8f/16.0f, 1340);
 
       constexpr auto GetIndex3D = [](int x, int y, int z, int w, int h, int l) {
         return x + w * y + h * l * z; // this indexing order was stated nowhere in documentation btw :(
@@ -182,12 +182,12 @@ namespace TinyMinecraft {
             // double ridgeNoise = std::fabs(ridges[index]);
 
             double density = terrainNoise - (y - baseHeight) / 32.0f;
-            double spaghettiNoise = y < groundHeight ? spaghettiCaves[GetIndex3D(x, y, z, CHUNK_LENGTH, groundHeight, CHUNK_WIDTH)] : 0;
-            double cheeseNoise = y < groundHeight ? cheeseCaves[GetIndex3D(x, y, z, CHUNK_LENGTH, groundHeight, CHUNK_WIDTH)] : 0;
+            // double spaghettiNoise = y < groundHeight ? spaghettiCaves[GetIndex3D(x, y, z, CHUNK_LENGTH, groundHeight, CHUNK_WIDTH)] : 0;
+            // double cheeseNoise = y < groundHeight ? cheeseCaves[GetIndex3D(x, y, z, CHUNK_LENGTH, groundHeight, CHUNK_WIDTH)] : 0;
 
-            if (cheeseNoise > 1 - cavesSize && y < 62.0f || spaghettiNoise > -caveThickness && spaghettiNoise < caveThickness && y < 62.0f) {
-              density = 0;
-            }
+            // if (cheeseNoise > 1 - cavesSize && y < 62.0f || spaghettiNoise > -caveThickness && spaghettiNoise < caveThickness && y < 62.0f) {
+            //   density = 0;
+            // }
 
             if (density > 0.0f) {
               chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::STONE);

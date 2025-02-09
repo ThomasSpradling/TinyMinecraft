@@ -1,7 +1,6 @@
 #ifndef WORLD_H_
 #define WORLD_H_
 
-#include "Geometry/geometry.h"
 #include "Utils/Logger.h"
 #include "Utils/mathgl.h"
 #include "World/Chunk.h"
@@ -32,38 +31,36 @@ namespace TinyMinecraft {
 
       void Update(const glm::vec3 &playerPos);
       
-      inline auto HasChunk(const glm::ivec2 &chunkPos) const -> bool { return m_chunks.contains(chunkPos); }
-      inline auto IsChunkLoaded(const glm::ivec2 &chunkPos) const -> bool {
+      [[nodiscard]] inline auto HasChunk(const glm::ivec2 &chunkPos) const -> bool { return m_chunks.contains(chunkPos); }
+      [[nodiscard]] inline auto IsChunkLoaded(const glm::ivec2 &chunkPos) const -> bool {
         if (!HasChunk(chunkPos)) return false;
         return m_chunks.at(chunkPos)->GetState() == ChunkState::Loaded;
       }
-      inline auto IsChunkEmpty(const glm::ivec2 &chunkPos) const -> bool {
+      [[nodiscard]] inline auto IsChunkEmpty(const glm::ivec2 &chunkPos) const -> bool {
         if (!HasChunk(chunkPos)) return false;
         return m_chunks.at(chunkPos)->GetState() == ChunkState::Empty;
       }
-      inline auto GetChunks() const -> const ChunkMap & {
+      [[nodiscard]] inline auto GetChunks() const -> const ChunkMap & {
         return m_chunks;
       }
-      inline auto GetChunkAt(int x, int z) const -> const std::shared_ptr<Chunk> & {
+      [[nodiscard]] inline auto GetChunkAt(int x, int z) const -> const std::shared_ptr<Chunk> & {
         return GetChunkAt(glm::ivec2(x, z));
       }
-      inline auto GetChunkAt(const glm::ivec2 &chunkPos) const -> const std::shared_ptr<Chunk> & {
+      [[nodiscard]] inline auto GetChunkAt(const glm::ivec2 &chunkPos) const -> const std::shared_ptr<Chunk> & {
         if (!HasChunk(chunkPos)) {
-          Utils::g_logger.Error("Cannot get chunk at {}", chunkPos);
+          Utils::Logger::Error("Cannot get chunk at {}", chunkPos);
         }
         return m_chunks.at(chunkPos);
       }
 
-      // [[nodiscard]] inline auto GetChunkMutex() -> std::mutex & { return m_chunkMutex; }
-
       void BreakBlock(const glm::vec3 &pos);
       void SetBlockAt(const glm::vec3 &pos, BlockType type);
       
-      auto GetBlockAt(const glm::vec3 &pos) -> Block;
-      auto HasBlock(const glm::vec3 &pos) -> bool;
+      [[nodiscard]] auto GetBlockAt(const glm::vec3 &pos) -> Block;
+      [[nodiscard]] auto HasBlock(const glm::vec3 &pos) -> bool;
       
-      auto GetChunkPosFromCoords(const glm::vec3 &pos) -> glm::ivec2;
-      auto GetLocalBlockCoords(const glm::vec3 &pos) -> glm::vec3;
+      [[nodiscard]] auto GetChunkPosFromCoords(const glm::vec3 &pos) -> glm::ivec2;
+      [[nodiscard]] auto GetLocalBlockCoords(const glm::vec3 &pos) -> glm::vec3;
 
       void HandlePlayerMovement(const glm::vec3 &before, const glm::vec3 &after);
 

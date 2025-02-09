@@ -3,6 +3,7 @@
 
 #include "Graphics/BufferObject.h"
 #include "Graphics/VertexArray.h"
+#include "Utils/NonCopyable.h"
 #include "Utils/mathgl.h"
 
 namespace TinyMinecraft {
@@ -16,15 +17,9 @@ namespace TinyMinecraft {
       glm::vec3 normal;
     };
 
-    class Mesh {
+    class Mesh : private Utils::NonCopyable {
     public:
       Mesh();
-
-      // ~Mesh() = default;
-      // Mesh(const Mesh &) = delete;
-      // auto operator=(const Mesh &) -> Mesh & = delete;
-      // Mesh(Mesh &&other) noexcept;
-      // auto operator=(Mesh &&other) noexcept -> Mesh &;
 
       void ClearBuffers() {
         if (m_vertexCount > 0) {
@@ -36,8 +31,8 @@ namespace TinyMinecraft {
       }
 
       void Update(std::vector<MeshVertex> &vertices, std::vector<GLuint> &indices);
-      [[nodiscard]] auto GetVertexCount() const -> size_t { return m_vertexCount; }
-      void BindVertexArray() { m_vao.Bind(); }
+      [[nodiscard]] inline auto GetVertexCount() const -> size_t { return m_vertexCount; }
+      inline void BindVertexArray() { m_vao.Bind(); }
 
     private:
       Graphics::VertexArray m_vao;

@@ -28,10 +28,6 @@ namespace TinyMinecraft {
       glDeleteProgram(m_programHandle);
     }
 
-    auto Shader::Use() -> void {
-      glUseProgram(m_programHandle);
-    }
-
     auto Shader::ReadFile(const std::string &path) const -> std::string {
       std::string code;
       std::ifstream file;
@@ -47,7 +43,7 @@ namespace TinyMinecraft {
 
         code = stream.str();
       } catch (std::ifstream::failure e) {
-        Utils::g_logger.Error("Shader: Failed to read file {}.", path);
+        Utils::Logger::Error("Shader: Failed to read file {}.", path);
         exit(1);
       }
       return code;
@@ -62,13 +58,12 @@ namespace TinyMinecraft {
       glShaderSource(shader, 1, &source, nullptr);
       glCompileShader(shader);
 
-
       std::array<char, LOG_READ_SIZE> infoLog {};
       int success = false;
       glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
       if (!success) {
         glGetShaderInfoLog(shader, LOG_READ_SIZE, nullptr, infoLog.data());
-        // Utils::g_logger.Error("Shader: Failed to compile shader at {}. Error Message:\n{}", filename, infoLog.data());
+        // Utils::Logger::Error("Shader: Failed to compile shader at {}. Error Message:\n{}", filename, infoLog.data());
       }
 
       return shader;
@@ -85,7 +80,7 @@ namespace TinyMinecraft {
       glGetProgramiv(m_programHandle, GL_LINK_STATUS, &success);
       if (!success) {
         glGetShaderInfoLog(m_programHandle, LOG_READ_SIZE, nullptr, infoLog.data());
-        // Utils::g_logger.Error("Shader: Failed to link shaders. Error Message:\n{}", infoLog, infoLog.data());
+        // Utils::Logger::Error("Shader: Failed to link shaders. Error Message:\n{}", infoLog, infoLog.data());
       }
 
       glDeleteShader(m_vertexHandle);

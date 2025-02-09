@@ -1,12 +1,14 @@
 #ifndef PROFILER
 #define PROFILER
 
+#include "Utils/NonCopyable.h"
+#include "Utils/NonMovable.h"
+#include "Utils/Singleton.h"
 #include <chrono>
 #include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "defs.h"
 
 #ifdef __APPLE__
   #include <mach/mach.h>
@@ -33,15 +35,10 @@ namespace TinyMinecraft {
       long long memoryDiff;  // bytes
     };
 
-    class Profiler {
+    class Profiler : private NonCopyable, private NonMoveable {
     public:
       Profiler(std::string_view section, ProfileCategory category = ProfileCategory::Miscellaneous);
-      
       ~Profiler();
-      Profiler(const Profiler &) = delete;
-      auto operator=(const Profiler &) -> Profiler & = delete;
-      Profiler(Profiler &&) = delete;
-      auto operator=(Profiler &&) -> Profiler & = delete;
 
       static void LogSummary();
 

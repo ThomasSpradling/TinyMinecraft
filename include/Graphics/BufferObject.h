@@ -2,6 +2,7 @@
 #define BUFFER_OBJECT_H_
 
 #include "Graphics/gfx.h"
+#include "Utils/NonCopyable.h"
 #include <array>
 #include <vector>
 
@@ -9,20 +10,18 @@ namespace TinyMinecraft {
 
   namespace Graphics {
 
-    class BufferObject {
+    class BufferObject : private Utils::NonCopyable {
     public:
       BufferObject(GLenum target);
-
       ~BufferObject();
-      BufferObject(const BufferObject &) = delete;
-      auto operator=(const BufferObject &) -> BufferObject & = delete;
-      BufferObject(BufferObject &&other) noexcept ;
-      auto operator=(BufferObject &&other) noexcept -> BufferObject & ;
 
-      void Bind() const;
-      void Unbind() const;
+      BufferObject(BufferObject &&other) noexcept;
+      auto operator=(BufferObject &&other) noexcept -> BufferObject &;
+
+      inline void Bind() const { glBindBuffer(m_target, m_handle); }
+      inline void Unbind() const { glBindBuffer(m_target, 0); }
       
-      void CleanBuffers() {
+      inline void CleanBuffers() {
         Bind();
         glBufferData(m_target, 0, nullptr, GL_DYNAMIC_DRAW);
       }

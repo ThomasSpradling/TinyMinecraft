@@ -1,12 +1,16 @@
 #include "Application/Game.h"
 #include "Application/InputHandler.h"
+#include "Entity/Player.h"
+#include "Entity/PlayerController.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Renderer2D.h"
+#include "Scene/PlayerCameras.h"
 #include "Utils/defs.h"
 #include "Utils/Profiler.h"
 #include "World/Biome.h"
 #include <chrono>
 #include <algorithm>
+#include <memory>
 #include <ratio>
 
 namespace TinyMinecraft {
@@ -14,19 +18,24 @@ namespace TinyMinecraft {
   namespace Application {
     
     Game::Game()
-      : m_window(viewportWidth, viewportHeight, "Look mum! I made some chunks!", m_inputHandler)
+      : m_window(viewportWidth, viewportHeight, "Look mum! I made some chunks!")
       , m_renderer(viewportWidth, viewportHeight)
       , m_ortho(0, viewportWidth, viewportHeight, 0)
+      , m_player(std::make_shared<Entity::PlayerController>())
     {
       PROFILE_FUNCTION(Game)
 
       const float fov = 45.f;
-        
+
       // TODO: Replace with player orientations
-      m_camera = std::make_shared<Scene::Camera>();
-      m_camera->SetPosition(glm::vec3(0.f, 100.f, 0.f));
-      m_camera->SetFOV(fov);
-      m_camera->SetAspectRatio(static_cast<float>(m_window.GetWidth()) / static_cast<float>(m_window.GetHeight()));
+      m_camera = std::make_unique<Scene::FirstPersonPlayerCamera>(
+        fov,
+        static_cast<float>(m_window.GetWidth()) / static_cast<float>(m_window.GetHeight()),
+        0.1f,
+        2048.0f
+      );
+
+      InputHandler::Initialize();
     }
 
     void Game::Run() {
@@ -45,7 +54,7 @@ namespace TinyMinecraft {
     #endif
 
       while (!m_window.ShouldClose()) {
-        ProcessInput();
+        m_window.PollEvents();
 
         auto currentTime = clock::now();
 
@@ -78,56 +87,14 @@ namespace TinyMinecraft {
       }
     }
 
-    void Game::ProcessInput() {
-      const float maxPitch = 89.f;
-
-      m_window.PollEvents();
-
-      if (m_inputHandler.IsKeyPressed(GLFW_KEY_ESCAPE)) {
-        m_window.Close();
-      }
-
-      // Camera keyboard
-      glm::vec3 cameraDirection { 0.f };
-      if (m_inputHandler.IsKeyDown(GLFW_KEY_W))
-        cameraDirection += m_camera->GetFront();
-      if (m_inputHandler.IsKeyDown(GLFW_KEY_S))
-        cameraDirection -= m_camera->GetFront();
-      if (m_inputHandler.IsKeyDown(GLFW_KEY_D))
-        cameraDirection += m_camera->GetRight();
-      if (m_inputHandler.IsKeyDown(GLFW_KEY_A))
-        cameraDirection -= m_camera->GetRight();
-
-      if (m_inputHandler.IsKeyDown(GLFW_KEY_LEFT_SHIFT))
-        cameraDirection -= glm::vec3(0.0f, 1.0f, 0.0f);
-      
-      if (m_inputHandler.IsKeyDown(GLFW_KEY_SPACE))
-        cameraDirection += glm::vec3(0.0f, 1.0f, 0.0f);
-
-      m_camera->SetMoveDirection(cameraDirection);
-
-      // Camera mouse
-
-      float yaw = m_camera->GetYaw();
-      yaw += m_inputHandler.GetMouseDeltaX();
-      
-      float pitch = m_camera->GetPitch();
-      pitch -= m_inputHandler.GetMouseDeltaY();
-      pitch = std::clamp(pitch, -maxPitch, maxPitch);
-
-      m_camera->UpdateViewDirection(yaw, pitch);
-    }
-
     void Game::Update() {
       PROFILE_FUNCTION(Game)
 
 
-      glm::ivec3 before = m_camera->GetPosition();
-      m_camera->Move();
-      glm::ivec3 after = m_camera->GetPosition();
-      m_world.HandlePlayerMovement(before, after);
+      m_player.Update();
+      // m_world.HandlePlayerMovement(before, after);
       
-      glm::ivec3 pos = m_camera->GetPosition();
+      glm::ivec3 pos = m_player.GetPosition();
 
       m_ui.SetPlayerPosition(pos);
       m_ui.SetChunkPosition(m_world.GetChunkPosFromCoords(pos));
@@ -140,12 +107,12 @@ namespace TinyMinecraft {
         World::BiomeType::Desert
         // m_world.GetBiome(pos.x, pos.z)
       );
+
+      m_world.Update(m_player.GetPosition());
     }
 
     void Game::Render(double) {
       PROFILE_FUNCTION(Game)
-
-      m_world.Update(m_camera->GetPosition());
 
       // m_ui.Arrange();
       m_renderer.ClearBackground(glm::vec3(0.0f));
@@ -153,9 +120,9 @@ namespace TinyMinecraft {
 
       m_renderer.Begin3D(m_camera);
 
-        if (m_inputHandler.IsKeyPressed(GLFW_KEY_TAB)) {
-          m_renderer.ToggleWireframeMode();
-        }
+        // if (m_inputHandler.IsKeyPressed(GLFW_KEY_TAB)) {
+        //   m_renderer.ToggleWireframeMode();
+        // }
 
     #ifdef GFX_ShadowMapping
         m_renderer.RenderShadows(m_world);

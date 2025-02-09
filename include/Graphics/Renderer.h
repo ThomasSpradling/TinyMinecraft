@@ -3,8 +3,8 @@
 
 #include "Geometry/Mesh.h"
 #include "Graphics/Texture.h"
-#include "Scene/Camera.h"
 #include "Graphics/Shader.h"
+#include "Scene/PlayerCameras.h"
 #include "UI/UserInterface.h"
 #include "World/World.h"
 #include <memory>
@@ -17,22 +17,24 @@ namespace TinyMinecraft {
     public:
       Renderer(float viewportWidth, float viewportHeight);
       
-      // void RenderShadows(World::World &world);
       void RenderWorld(World::World &world);
       void RenderUI(UI::UserInterface &ui);
       void RenderMesh(Geometry::Mesh &mesh, Shader &shader, glm::mat4 &model);
 
-      void Begin3D(const std::shared_ptr<Scene::Camera> &camera3D);
+      void Begin3D(const std::shared_ptr<Scene::PlayerCamera> &camera3D);
       void End3D();
       [[nodiscard]] auto HasCamera() const -> bool;
 
       void ClearBackground(const glm::vec3 &color) const;
       void ToggleWireframeMode();
 
+      inline void SetPlayerPosition(glm::vec3 &value) { m_playerPosition = value; }
+
     private:
       Shader m_blockShader, m_waterShader;
       Texture m_blockAtlasTexture;
-      std::shared_ptr<Scene::Camera> m_currentCamera = nullptr;
+      glm::vec3 m_playerPosition { 0.0f };
+      std::shared_ptr<Scene::PlayerCamera> m_currentCamera = nullptr;
 
       float m_viewportWidth, m_viewportHeight;
 

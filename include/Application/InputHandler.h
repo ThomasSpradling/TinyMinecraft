@@ -1,7 +1,9 @@
 #ifndef INPUT_HANDLER_H_
 #define INPUT_HANDLER_H_
 
+#include "Application/MouseButton.h"
 #include "Graphics/gfx.h"
+#include "Utils/Singleton.h"
 #include "Utils/mathgl.h"
 #include <array>
 
@@ -18,55 +20,42 @@ namespace TinyMinecraft {
       std::array<Button, GLFW_KEY_LAST> keys;
     };
 
+
     struct Mouse {
-      std::array<Button, GLFW_MOUSE_BUTTON_LAST> buttons;
+      std::array<Button, MouseButton::ButtonLast> buttons;
       glm::vec2 delta { 0.0f }, position { 0.0f };
       bool grabbed = false;
-      float offsetY = 0.0f;
+
+      struct Wheel {
+        float offsetY = 0.0f;
+      } wheel;
     };
 
-    class InputHandler {
+    class InputHandler : public Utils::Singleton {
     public:
-      Keyboard m_keyboard;
-      Mouse m_mouse;
+      static void Initialize();
 
-      InputHandler() = default;
+      [[nodiscard]] inline static auto IsKeyPressed(int key) -> bool;
+      [[nodiscard]] inline static auto IsKeyUp(int key) -> bool { return !IsKeyDown(key); };
+      [[nodiscard]] inline static auto IsKeyDown(int key) -> bool { return s_keyboard.keys.at(key).down; };
 
-      void static KeyCallback(GLFWwindow *handle, int key, int, int action, int);
-      void static CursorCallback(GLFWwindow *handle, double x, double y);
-      void static MouseCallback(GLFWwindow *handle, int button, int action, int);
-      void static ScrollCallback(GLFWwindow *handle, double, double offsetY);
+      [[nodiscard]] static auto IsMouseButtonPressed(int button) -> bool;
+      [[nodiscard]] inline static auto IsMouseButtonUp(int button) -> bool { return !IsMouseButtonDown(button); }
+      [[nodiscard]] inline static auto IsMouseButtonDown(int button) -> bool { return s_mouse.buttons[button].down; }
 
-      //// Keyboard input
+      [[nodiscard]] inline static auto GetMousePosition() -> glm::vec2 { return s_mouse.position; }
+      [[nodiscard]] inline static auto GetMousePositionX() -> float { return s_mouse.position.x; }
+      [[nodiscard]] inline static auto GetMousePositionY() -> float { return s_mouse.position.y; };
 
-      // Checks if key was presssed one time.
-      auto IsKeyPressed(int key) -> bool;
+      [[nodiscard]] auto static GetMouseDeltaX() -> float;
+      [[nodiscard]] auto static GetMouseDeltaY() -> float;
 
-      // Checks if key is currently held down.
-      [[nodiscard]] auto IsKeyUp(int key) const -> bool;
-
-      // Checks if key is currently up.
-      [[nodiscard]] auto IsKeyDown(int key) const -> bool;
-
-      //// Mouse input
-
-      auto IsMouseButtonPressed(int button) -> bool;
-
-      [[nodiscard]] auto IsMouseButtonUp(int button) const -> bool;
-
-      [[nodiscard]] auto IsMouseButtonDown(int button) const -> bool;
-
-      [[nodiscard]] auto GetMousePosition() const -> glm::vec2;
-      [[nodiscard]] auto GetMousePositionX() const -> float;
-      [[nodiscard]] auto GetMousePositionY() const -> float;
-
-      auto GetMouseDeltaX() -> float;
-      auto GetMouseDeltaY() -> float;
-
-      [[nodiscard]] auto GetMouseWheelMove() const -> float;
+      [[nodiscard]] inline auto GetMouseWheelOffsetY() -> float { return s_mouse.wheel.offsetY; }
 
     private:
-      // const float mouseSensitivity = 0.3f;
+      static constexpr float mouseSensitivity = 0.1f;
+      static Keyboard s_keyboard;
+      static Mouse s_mouse;
     };
 
   }

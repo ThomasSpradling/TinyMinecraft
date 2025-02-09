@@ -45,14 +45,14 @@ namespace TinyMinecraft {
 
     // Linearly scales a value from starting range to end range
     template <typename T>
-    auto ScaleValue(T min1, T max1, T min2, T max2, T value) -> T {
+    [[nodiscard]] auto ScaleValue(T min1, T max1, T min2, T max2, T value) -> T {
       T slope = (max2 - min2) / (max1 - min1);
       T intercept = min2 - slope * min1;
       return slope * value + intercept;
     }
 
     template <int VertCount>
-    auto CalculateConvexCenter(const std::array<glm::vec3, VertCount> &vertices) -> glm::vec3 {
+    [[nodiscard]] auto CalculateConvexCenter(const std::array<glm::vec3, VertCount> &vertices) -> glm::vec3 {
       glm::vec3 res { 0.0f };
       float weights = 0.0;
 

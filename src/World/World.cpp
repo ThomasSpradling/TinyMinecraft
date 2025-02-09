@@ -32,7 +32,7 @@ namespace TinyMinecraft {
         m_workers.emplace_back(&World::DoTasks, this, i);
       }
 
-      Utils::g_logger.Message("All {} threads set up.", NUM_THREADS);
+      Utils::Logger::Message("All {} threads set up.", NUM_THREADS);
     }
 
     World::~World() {
@@ -43,7 +43,7 @@ namespace TinyMinecraft {
         if (m_workers[i].joinable())
           m_workers[i].join();
       }
-      Utils::g_logger.Message("All threads joined.");
+      Utils::Logger::Message("All threads joined.");
 
       m_workers.clear();
     }
@@ -283,14 +283,14 @@ namespace TinyMinecraft {
     void World::ScheduleGenerateTask(Chunk *chunk) {
 
       if (!chunk) {
-        Utils::g_logger.Error("Cannot generate task for null chunks");
+        Utils::Logger::Error("Cannot generate task for null chunks");
         exit(1);
       }
 
       SubmitTask([this, chunk]() {    
         const ChunkState state = chunk->GetState();
         if (state != ChunkState::Generating) {
-          Utils::g_logger.Warning("Chunk {} had incorrect state while generating!", chunk->GetChunkPos());
+          Utils::Logger::Warning("Chunk {} had incorrect state while generating!", chunk->GetChunkPos());
           return;
         }
 
@@ -302,7 +302,7 @@ namespace TinyMinecraft {
 
     void World::ScheduleMeshTask(Chunk *chunk) {
       if (!chunk) {
-        Utils::g_logger.Error("Cannot mesh task for null chunks");
+        Utils::Logger::Error("Cannot mesh task for null chunks");
         exit(1);
       }
 
@@ -310,7 +310,7 @@ namespace TinyMinecraft {
         const ChunkState state = chunk->GetState();
 
         if (state != ChunkState::Meshing) {
-          Utils::g_logger.Warning("Chunk {} had incorrect state while meshing!", chunk->GetChunkPos());
+          Utils::Logger::Warning("Chunk {} had incorrect state while meshing!", chunk->GetChunkPos());
           return;
         }
 
@@ -325,7 +325,7 @@ namespace TinyMinecraft {
 
     void World::ScheduleUnloadTask(Chunk *chunk) {
       if (!chunk) {
-        Utils::g_logger.Error("Cannot unload task for null chunks");
+        Utils::Logger::Error("Cannot unload task for null chunks");
         exit(1);
       }
 
@@ -333,7 +333,7 @@ namespace TinyMinecraft {
         const ChunkState state = chunk->GetState();
 
         if (state != ChunkState::Unloading) {
-          Utils::g_logger.Warning("Chunk {} had incorrect state while unloading!", chunk->GetChunkPos());
+          Utils::Logger::Warning("Chunk {} had incorrect state while unloading!", chunk->GetChunkPos());
           return;
         }
         
@@ -355,7 +355,7 @@ namespace TinyMinecraft {
 
           if (m_shouldTerminate) {
 #ifdef __DEBUG__
-            Utils::g_logger.Debug("Terminating.");
+            Utils::Logger::Debug("Terminating.");
 #endif
             return;
           }

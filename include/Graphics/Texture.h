@@ -2,24 +2,22 @@
 #define TEXTURE_H_
 
 #include "Graphics/gfx.h"
+#include "Utils/NonCopyable.h"
+#include "Utils/NonMovable.h"
 #include <string>
 
 namespace TinyMinecraft {
 
   namespace Graphics {
 
-    class Texture {
+    class Texture : private Utils::NonCopyable, private Utils::NonMoveable {
     public:
       Texture(const std::string &filePath);
 
       ~Texture();
-      Texture(const Texture &) = delete;
-      auto operator=(const Texture &) -> Texture & = delete;
-      Texture(const Texture &&) = delete;
-      auto operator=(const Texture &&) -> Texture & = delete;
 
       void Bind() const;
-      [[nodiscard]] auto GetId() const -> GLuint;
+      [[nodiscard]] inline auto GetId() const -> GLuint { return m_id; };
 
     private:
       static int currentTextureId;

@@ -1,10 +1,11 @@
 #ifndef GAME_H_
 #define GAME_H_
 
+#include "Entity/Player.h"
 #include "Graphics/OrthographicCamera.h"
-#include "Scene/Camera.h"
 #include "Graphics/Renderer.h"
 #include "Application/Window.h"
+#include "Scene/PlayerCameras.h"
 #include "World/World.h"
 
 namespace TinyMinecraft {
@@ -23,16 +24,14 @@ namespace TinyMinecraft {
       static constexpr int viewportHeight = 1080;
 
       Window m_window;
-      InputHandler m_inputHandler;
       Graphics::Renderer m_renderer;
       World::World m_world;
       UI::UserInterface m_ui;
       
-      std::shared_ptr<Scene::Camera> m_camera;
+      std::shared_ptr<Scene::PlayerCamera> m_camera;
       Graphics::OrthographicCamera m_ortho;
 
-      /* Handles all game inputs. */
-      void ProcessInput();
+      Entity::Player m_player;
 
       /* Game updating logic. */
       void Update();

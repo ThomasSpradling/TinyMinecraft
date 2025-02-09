@@ -10,9 +10,9 @@ namespace TinyMinecraft {
     class OrthographicCamera {
     public:
       OrthographicCamera(float left, float right, float bottom, float top);
-      auto GetViewProjectionMatrix() const -> const glm::mat4 & { return m_viewProjection; }
-      auto GetViewMatrix() const -> const glm::mat4 & { return m_view; }
-      auto GetProjectionMatrix() const -> const glm::mat4 & { return m_projection; }
+      [[nodiscard]] inline auto GetViewProjectionMatrix() const -> const glm::mat4 & { return m_viewProjection; }
+      [[nodiscard]] inline auto GetViewMatrix() const -> const glm::mat4 & { return m_view; }
+      [[nodiscard]] inline auto GetProjectionMatrix() const -> const glm::mat4 & { return m_projection; }
 
     private:
       glm::mat4 m_viewProjection { 1.0f };

@@ -32,21 +32,21 @@ namespace TinyMinecraft {
 
       void LoadUnloadedBlocks(Chunk *chunk);
 
-      std::pair <const Biome*, const Biome*> SelectBiomes(double temperature, double humidity) const;
+      auto SelectBiomes(double temperature, double humidity) const -> std::pair<const Biome*, const Biome*>;
     private:
       World &m_world;
       std::unordered_map<BiomeType, Biome> m_biomes;
       std::unordered_map<glm::ivec2, std::vector<std::pair<glm::vec3, BlockType>>, Utils::IVec2Hash> m_unloadedBlocks;
 
-      bool CanTreeSpawn(Chunk *chunk, int x, int surfaceY, int z, int radius);
+      auto CanTreeSpawn(Chunk *chunk, int x, int surfaceY, int z, int radius) -> bool;
       void SpawnTree(Chunk *chunk, int x, int surfaceY, int z);
-      auto StringToSplineMethod(const std::string &method) -> SplineMethod {
+      [[nodiscard]] auto StringToSplineMethod(const std::string &method) -> SplineMethod {
         if (method == "monotonic_natural")
           return SplineMethod::MonotonicNatural;
         if (method == "natural")
           return SplineMethod::Natural;
 
-        Utils::g_logger.Error("Splines: invalid spline generation method \"{}\".", method);
+        Utils::Logger::Error("Splines: invalid spline generation method \"{}\".", method);
         exit(1);
       }
 
@@ -59,10 +59,6 @@ namespace TinyMinecraft {
       FastNoise::SmartNode<FastNoise::Perlin> m_ridges;
       FastNoise::SmartNode<FastNoise::OpenSimplex2S> m_caves;
       FastNoise::SmartNode<FastNoise::Simplex> m_featureNoise;
-
-      // FastNoise::SmartNode<FastNoise::Simplex> m_simplex;
-      // FastNoise::SmartNode<FastNoise::FractalFBm> m_fractal;
-      // FastNoise::SmartNode<FastNoise::DomainScale> m_domainScale;
     };
 
   }

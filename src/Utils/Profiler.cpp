@@ -68,7 +68,7 @@ namespace TinyMinecraft {
               << "\n";
         }
       }
-      g_logger.Log(Logger::Level::Profile, oss.str());
+      Logger::Log(Logger::Level::Profile, oss.str());
     }
 
     auto Profiler::FormatDuration(long long nanoseconds) -> std::string {
@@ -105,7 +105,7 @@ namespace TinyMinecraft {
       records[cat][section].push_back({ duration, memDiff });
 
 #ifdef UTILS_ProfileVerbose
-      g_logger.Log(Logger::Level::Profile, "({}) Time: {} -- Memory: {}", section, FormatDuration(duration), FormatMemory(memDiff));
+      Logger::Log(Logger::Level::Profile, "({}) Time: {} -- Memory: {}", section, FormatDuration(duration), FormatMemory(memDiff));
 #endif
     }
 

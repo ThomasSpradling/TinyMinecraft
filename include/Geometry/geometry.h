@@ -38,10 +38,10 @@ namespace TinyMinecraft {
       {}
     };
 
-    auto GetNormal(Face face) -> glm::vec3;
+    [[nodiscard]] auto GetNormal(Face face) -> glm::vec3;
 
-    auto GetVertices(Face face, float width = 1, float height = 1) -> std::array<glm::vec3, 4>;
-    auto GetFluidVertices(Face face, int depth = 0, int maxDepth = 7, Face direction = Face::None, bool floating = false) -> std::array<glm::vec3, 4>;
+    [[nodiscard]] auto GetVertices(Face face, float width = 1, float height = 1) -> std::array<glm::vec3, 4>;
+    [[nodiscard]] auto GetFluidVertices(Face face, int depth = 0, int maxDepth = 7, Face direction = Face::None, bool floating = false) -> std::array<glm::vec3, 4>;
 
   }
 

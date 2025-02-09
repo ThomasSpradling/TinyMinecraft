@@ -2,6 +2,8 @@
 #define WINDOW_H_
 
 #include <string>
+#include "Graphics/gfx.h"
+#include "Utils/mathgl.h"
 #include "Application/InputHandler.h"
 
 namespace TinyMinecraft {
@@ -10,7 +12,7 @@ namespace TinyMinecraft {
 
     class Window {
     public:
-      Window(int width, int height, const std::string &name, InputHandler &inputHandler);
+      Window(int width, int height, const std::string &name);
       
       ~Window();
       Window(const Window &) = delete;
@@ -18,26 +20,27 @@ namespace TinyMinecraft {
       Window(Window &&) = delete;
       auto operator=(Window &&) -> Window & = delete;
 
-      // Sets up GLFW and attaches the inputHandler to it
-      // void Initialize(int width, int height, const std::string &name, InputHandler &inputHandler);
+      [[nodiscard]] inline auto ShouldClose() const -> bool { return glfwWindowShouldClose(m_handle); }
+      inline void PollEvents() const { glfwPollEvents(); }
+      inline void Close() const { glfwSetWindowShouldClose(m_handle, GLFW_TRUE); }
 
-      auto ShouldClose() -> bool;
-
-      void PollEvents() const;
-
-      void Close();
-
-      [[nodiscard]] auto GetWidth() const -> int;
-      [[nodiscard]] auto GetHeight() const -> int;
-
-      [[nodiscard]] auto GetHandle() const -> GLFWwindow *;
-
-      void SwapBuffers();
+      [[nodiscard]] inline auto GetWidth() const -> int { return m_width; }
+      [[nodiscard]] inline auto GetHeight() const -> int { return m_height; }
+      inline void SwapBuffers() const { glfwSwapBuffers(m_handle); }
 
     private:
       int m_width, m_height;
       GLFWwindow *m_handle;
 
+      struct Mouse {
+        bool grabbed = false;
+        glm::vec2 delta { 0.0f }, position { 0.0f };
+      } m_mouse;
+
+      void static KeyCallback(GLFWwindow *handle, int key, int, int action, int);
+      void static CursorCallback(GLFWwindow *handle, double x, double y);
+      void static MouseButtonCallback(GLFWwindow *handle, int button, int action, int);
+      void static ScrollCallback(GLFWwindow *handle, double, double offsetY);
       void static ErrorCallback(int code, const char *description);
     };
 

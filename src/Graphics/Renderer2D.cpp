@@ -129,7 +129,7 @@ namespace TinyMinecraft {
       
     #if DEBUG and not SILENT
       if (s_data.stats.quadCount > Renderer2DData::MAX_QUADS) {
-        Utils::g_logger.Warning("You are drawing too many quads! Some quads may not get rendered. Current quad count: {} / {}.", s_data.stats.quadCount, Renderer2DData::MAX_QUADS);
+        Utils::Logger::Warning("You are drawing too many quads! Some quads may not get rendered. Current quad count: {} / {}.", s_data.stats.quadCount, Renderer2DData::MAX_QUADS);
       }
     #endif
 

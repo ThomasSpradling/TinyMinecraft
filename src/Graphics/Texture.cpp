@@ -28,7 +28,7 @@ namespace TinyMinecraft {
 
       unsigned char *data = stbi_load(filePath.c_str(), &m_width, &m_height, &m_channelCount, 0);
       if (data == nullptr) {
-        Utils::g_logger.Error("Texture {}: Error loading image at {}.", m_id, filePath);
+        Utils::Logger::Error("Texture {}: Error loading image at {}.", m_id, filePath);
         exit(1);
       }
 
@@ -40,7 +40,7 @@ namespace TinyMinecraft {
       else if (m_channelCount == 4)
         format = GL_RGBA;
       else {
-        Utils::g_logger.Error("Texture {}: Invalid number of channels!", m_id);
+        Utils::Logger::Error("Texture {}: Invalid number of channels!", m_id);
         exit(1);
       }
 
@@ -80,10 +80,6 @@ namespace TinyMinecraft {
       if (m_id == 9) SET_ACTIVE(9)
 
       glBindTexture(GL_TEXTURE_2D, m_handle);
-    }
-
-    auto Texture::GetId() const -> GLuint {
-      return m_id;
     }
 
   }

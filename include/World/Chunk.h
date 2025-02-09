@@ -55,38 +55,27 @@ namespace TinyMinecraft {
       void UpdateTranslucentMesh(const glm::vec3 &playerPos);
       void SortTranslucentBlocks(const glm::vec3 &playerPos);
 
-      void SetShouldClear(bool value) { m_shouldClear.store(value, std::memory_order_release); };
-      auto ShouldClear() -> bool { return m_shouldClear.load(std::memory_order_acquire); };
+      inline void SetShouldClear(bool value) { m_shouldClear.store(value, std::memory_order_release); };
+      [[nodiscard]] inline auto ShouldClear() -> bool { return m_shouldClear.load(std::memory_order_acquire); };
 
-      void ClearBuffers() {
-        if (ShouldClear()) {
-          m_opaqueMesh->ClearBuffers();
-          m_translucentMesh->ClearBuffers();
-          SetShouldClear(false);
-        }
-      }
-
-      void ReserveBlocks() {
-        m_data.blocks.resize(m_data.BLOCK_COUNT, BlockType::AIR);
-      }
-      void ClearBlocks() { m_data.blocks.clear(); m_data.blocks.shrink_to_fit(); }
-
-      inline auto GetBlockAt(int x, int y, int z) -> Block {
+      void ClearBuffers();
+      inline void ReserveBlocks() { m_data.blocks.resize(m_data.BLOCK_COUNT, BlockType::AIR);}
+      inline void ClearBlocks() { m_data.blocks.clear(); m_data.blocks.shrink_to_fit(); }
+      [[nodiscard]] inline auto GetBlockAt(int x, int y, int z) -> Block {
         if (m_data.blocks.size() <= CHUNK_INDEX_AT(x, y, z)) {
           return Block(BlockType::AIR);
         }
         return m_data.blocks.at(CHUNK_INDEX_AT(x, y, z));
       }
-      auto GetBlockAt(const glm::ivec3 &pos) -> Block { return GetBlockAt(pos.x, pos.y, pos.z); }
-
+      [[nodiscard]] inline auto GetBlockAt(const glm::ivec3 &pos) -> Block { return GetBlockAt(pos.x, pos.y, pos.z); }
       inline void SetBlockAt(int x, int y, int z, const Block &block) {
         m_data.blocks.at(CHUNK_INDEX_AT(x, y, z)) = block;
       }
-      void SetBlockAt(const glm::ivec3 &pos, const Block &block) { SetBlockAt(pos.x, pos.y, pos.z, block); }
+      inline void SetBlockAt(const glm::ivec3 &pos, const Block &block) { SetBlockAt(pos.x, pos.y, pos.z, block); }
+      
+      [[nodiscard]] auto GetSurfaceHeight(int x, int z) -> int;
 
-      auto GetSurfaceHeight(int x, int z) -> int;
-
-      inline auto GetGlobalCoords(const glm::vec3 &pos) const -> glm::vec3 {
+      [[nodiscard]] inline auto GetGlobalCoords(const glm::vec3 &pos) const -> glm::vec3 {
         return glm::vec3(m_chunkPos.x * CHUNK_WIDTH + pos.x, pos.y, m_chunkPos.y * CHUNK_LENGTH + pos.z);
       }
 
@@ -107,11 +96,11 @@ namespace TinyMinecraft {
         return m_state.load(std::memory_order_acquire);
       }
 
-      auto SetState(ChunkState expected, ChunkState desired) -> bool {
+      auto inline SetState(ChunkState expected, ChunkState desired) -> bool {
         return m_state.compare_exchange_strong(expected, desired);
       }
 
-      [[nodiscard]] auto GetChunkPos() const -> glm::ivec2 { return m_chunkPos; }
+      [[nodiscard]] inline auto GetChunkPos() const -> glm::ivec2 { return m_chunkPos; }
       
     private:
       World &m_world;

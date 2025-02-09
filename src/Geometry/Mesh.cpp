@@ -1,4 +1,5 @@
 #include "Geometry/Mesh.h"
+#include "Utils/Logger.h"
 
 namespace TinyMinecraft {
 

@@ -29,14 +29,6 @@ namespace TinyMinecraft {
       return *this;
     }
 
-    void BufferObject::Bind() const {
-      glBindBuffer(m_target, m_handle);
-    }
-
-    void BufferObject::Unbind() const {
-      glBindBuffer(m_target, 0);
-    }
-
   }
 
 }

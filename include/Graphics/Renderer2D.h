@@ -28,8 +28,8 @@ namespace TinyMinecraft {
         int drawCalls = 0;
         int quadCount = 0;
 
-        auto GetTotalVertexCount() -> int { return quadCount * 4; }
-        auto GetTotalIndexCount() -> int { return quadCount * 6; }
+        [[nodiscard]] inline auto GetTotalVertexCount() -> int { return quadCount * 4; }
+        [[nodiscard]] inline auto GetTotalIndexCount() -> int { return quadCount * 6; }
       };
       
     private:
