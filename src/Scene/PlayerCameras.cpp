@@ -39,7 +39,7 @@ namespace TinyMinecraft {
     }
 
     void FirstPersonPlayerCamera::OnPlayerMove(const Event::PlayerMovedEvent &event) {
-      constexpr float playerHeight = 1.5f;
+      constexpr float playerHeight = 0.0f;
 
       const glm::mat4 projection = glm::perspective(
         glm::radians(m_fov),
@@ -49,7 +49,6 @@ namespace TinyMinecraft {
       );
 
       m_position = event.GetNewPos() + glm::vec3(0.0f, playerHeight, 0.0f);
-
       const glm::mat4 view = glm::lookAt(m_position, m_position + m_front, m_up);
       m_viewProjection = projection * view;
     }

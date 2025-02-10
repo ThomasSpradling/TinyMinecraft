@@ -20,12 +20,12 @@ namespace TinyMinecraft {
       void Run();
 
     private:
-      static constexpr int viewportWidth = 1920;
-      static constexpr int viewportHeight = 1080;
+      static constexpr int viewportWidth = 600;
+      static constexpr int viewportHeight = 400;
 
       Window m_window;
       Graphics::Renderer m_renderer;
-      World::World m_world;
+      std::shared_ptr<World::World> m_world;
       UI::UserInterface m_ui;
       
       std::shared_ptr<Scene::PlayerCamera> m_camera;

@@ -14,7 +14,7 @@ namespace TinyMinecraft {
     Renderer::Renderer(float viewportWidth, float viewportHeight)
       : m_blockShader("../resources/shaders/block_solid.vs", "../resources/shaders/block_solid.fs")
       , m_waterShader("../resources/shaders/block_translucent.vs", "../resources/shaders/block_translucent.fs")
-      , m_blockAtlasTexture("../resources/textures/block_atlas.png")
+      , m_blockAtlasTexture("../resources/textures/debug_block_atlas.png")
       , m_viewportWidth(viewportWidth)
       , m_viewportHeight(viewportHeight)
     {

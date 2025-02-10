@@ -9,6 +9,7 @@
 #include <vector>
 #include "World/World.h"
 #include "Geometry/geometry.h"
+#include "Math/misc.h"
 #include "Utils/Logger.h"
 #include "Utils/Profiler.h"
 #include "Utils/defs.h"
@@ -102,6 +103,38 @@ namespace TinyMinecraft {
 
     auto World::GetBiome(int x, int z) -> BiomeType {
       return m_worldGen.SelectBiomes(GetTemperature(x, z), GetHumidity(x, z)).first->GetType();
+    }
+
+    auto World::ComputeBlockRayInteresection(const Geometry::Ray &ray) -> BlockLocation {
+      PROFILE_FUNCTION_Misc()
+
+      float distanceTraveled = 0.0f;
+      glm::vec3 currentOrigin = ray.origin;
+      glm::vec3 lastBlockpos = glm::floor(ray.origin);
+
+      if (GetBlockAt(lastBlockpos).IsSolid()) {
+        return std::make_pair(lastBlockpos, Geometry::Face::None);
+      }
+
+      constexpr float epsilon = 1e-4f;
+
+      while (distanceTraveled <= ray.maxRayDistance) {
+        auto [location, blockPos, face, stepDistance] = GetRayGridInteresction({ currentOrigin, ray.direction });
+
+        distanceTraveled += stepDistance;
+        if (distanceTraveled > ray.maxRayDistance)
+          break;
+
+        Block block = GetBlockAt(blockPos);
+        if (block.IsSolid()) {
+          return std::make_pair(blockPos, face);
+        }
+
+        lastBlockpos = blockPos;
+        currentOrigin = location + ray.direction * epsilon;
+      }
+
+      return std::make_pair(lastBlockpos, Geometry::Face::None);
     }
 
     void World::Update(const glm::vec3 &playerPos) {
@@ -211,8 +244,13 @@ namespace TinyMinecraft {
     }
 
     auto World::GetBlockAt(const glm::vec3 &pos) -> Block {
+      
       glm::ivec2 chunkPos = GetChunkPosFromCoords(pos);
       glm::vec3 offsetPos = GetLocalBlockCoords(pos);
+
+      if (!HasChunk(chunkPos)) {
+        return BlockType::AIR;
+      }
 
       return GetChunkAt(chunkPos)->GetBlockAt(offsetPos);
     }

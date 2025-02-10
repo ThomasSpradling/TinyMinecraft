@@ -7,8 +7,8 @@
 using namespace TinyMinecraft;
 
 auto main() -> int {
-  Utils::Logger::Message("Press anything to start. PID: {}", getpid());
-  std::cin.get();
+  // Utils::Logger::Message("Press anything to start. PID: {}", getpid());
+  // std::cin.get();
 
   Utils::SetThreadName("main");
 

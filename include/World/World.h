@@ -1,6 +1,7 @@
 #ifndef WORLD_H_
 #define WORLD_H_
 
+#include "Geometry/geometry.h"
 #include "Utils/Logger.h"
 #include "Utils/mathgl.h"
 #include "World/Chunk.h"
@@ -14,7 +15,8 @@
 namespace TinyMinecraft {
 
   namespace World {
-      using ChunkMap = tbb::concurrent_unordered_map<glm::ivec2, std::shared_ptr<Chunk>, Utils::IVec2Hash>;
+    using ChunkMap = tbb::concurrent_unordered_map<glm::ivec2, std::shared_ptr<Chunk>, Utils::IVec2Hash>;
+    using BlockLocation = std::pair<glm::vec3, Geometry::Face>;
 
     class World {
     public:
@@ -26,6 +28,8 @@ namespace TinyMinecraft {
       auto GetContinentalness(int x, int z) -> double;
       auto GetErosion(int x, int z) -> double;
       auto GetRidges(int x, int z) -> double;
+
+      auto ComputeBlockRayInteresection(const Geometry::Ray &ray) -> BlockLocation;
 
       auto GetBiome(int x, int z) -> BiomeType;
 

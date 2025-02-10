@@ -12,6 +12,7 @@ namespace TinyMinecraft {
       void Update();
 
       [[nodiscard]] inline auto GetPosition() -> glm::vec3 { return m_position; }
+      [[nodiscard]] inline auto GetFront() -> glm::vec3 { return m_front; }
       [[nodiscard]] inline auto GetYaw() -> float { return m_yaw; }
       [[nodiscard]] inline auto GetPitch() -> float { return m_pitch; }
 

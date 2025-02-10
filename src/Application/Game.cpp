@@ -8,6 +8,7 @@
 #include "Utils/defs.h"
 #include "Utils/Profiler.h"
 #include "World/Biome.h"
+#include "World/World.h"
 #include <chrono>
 #include <algorithm>
 #include <memory>
@@ -27,6 +28,8 @@ namespace TinyMinecraft {
 
       const float fov = 45.f;
 
+      m_world = std::make_shared<World::World>();
+
       // TODO: Replace with player orientations
       m_camera = std::make_unique<Scene::FirstPersonPlayerCamera>(
         fov,
@@ -34,6 +37,7 @@ namespace TinyMinecraft {
         0.1f,
         2048.0f
       );
+      m_player.SetWorld(m_world);
 
       InputHandler::Initialize();
     }
@@ -90,25 +94,25 @@ namespace TinyMinecraft {
     void Game::Update() {
       PROFILE_FUNCTION(Game)
 
-
       m_player.Update();
-      // m_world.HandlePlayerMovement(before, after);
+      // m_world->HandlePlayerMovement(before, after);
       
-      glm::ivec3 pos = m_player.GetPosition();
+      glm::vec3 pos = m_player.GetPosition();
 
       m_ui.SetPlayerPosition(pos);
-      m_ui.SetChunkPosition(m_world.GetChunkPosFromCoords(pos));
+      m_ui.SetChunkPosition(m_world->GetChunkPosFromCoords(pos));
       m_ui.SetDebugValues(
-        m_world.GetTemperature(pos.x, pos.z),
-        m_world.GetHumidity(pos.x, pos.z),
-        m_world.GetContinentalness(pos.x, pos.z),
-        m_world.GetErosion(pos.x, pos.z),
-        m_world.GetRidges(pos.x, pos.z),
-        World::BiomeType::Desert
-        // m_world.GetBiome(pos.x, pos.z)
+        m_world->GetTemperature(pos.x, pos.z),
+        m_world->GetHumidity(pos.x, pos.z),
+        m_world->GetContinentalness(pos.x, pos.z),
+        m_world->GetErosion(pos.x, pos.z),
+        m_world->GetRidges(pos.x, pos.z),
+        World::BiomeType::Desert,
+        m_player.GetTargetingBlock()
+        // m_world->GetBiome(pos.x, pos.z)
       );
 
-      m_world.Update(m_player.GetPosition());
+      m_world->Update(m_player.GetPosition());
     }
 
     void Game::Render(double) {
@@ -128,7 +132,7 @@ namespace TinyMinecraft {
         m_renderer.RenderShadows(m_world);
     #endif
 
-        m_renderer.RenderWorld(m_world);
+        m_renderer.RenderWorld(*m_world);
 
       m_renderer.End3D();
       

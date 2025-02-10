@@ -38,6 +38,16 @@ namespace TinyMinecraft {
       }
     }
 
+    auto Block::IsSolid() const -> bool {
+      switch(m_type) {
+        case World::BlockType::WATER:
+        case World::BlockType::AIR:
+          return false;
+        default:
+          return true;
+      }
+    }
+
     BlockType Block::GetType() const {
       return m_type;
     }

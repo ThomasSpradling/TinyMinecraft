@@ -2,7 +2,6 @@
 #include "Geometry/Mesh.h"
 #include "Geometry/geometry.h"
 #include "Graphics/gfx.h"
-#include "Utils/Logger.h"
 #include "Utils/Profiler.h"
 #include "Utils/defs.h"
 #include "Utils/utils.h"

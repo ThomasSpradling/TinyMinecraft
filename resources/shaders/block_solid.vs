@@ -21,7 +21,7 @@ void main()
   vec4 pos = uModel * vec4(aPos, 1.0f);
   position = vec3(pos);
 
-  gl_Position  = uViewProjection * pos;
+  gl_Position = uViewProjection * pos;
   texCoord = aTexCoord;
   normal = aNormal;
 

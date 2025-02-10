@@ -1,6 +1,7 @@
 #include "Entity/Player.h"
 #include "Events/Entity/PlayerEvents.h"
 #include "Events/EventHandler.h"
+#include "Geometry/geometry.h"
 #include "Utils/Logger.h"
 
 namespace TinyMinecraft {
@@ -32,7 +33,7 @@ namespace TinyMinecraft {
       m_yaw = m_controller->GetYaw();
       m_pitch = m_controller->GetPitch();
       
-      if (oldPosition != m_position) {            
+      if (oldPosition != m_position) {        
         Event::PlayerMovedEvent event(oldPosition, m_position);
         Event::EventHandler::Trigger(event);
       }
@@ -41,8 +42,13 @@ namespace TinyMinecraft {
         Event::PlayerLookedEvent event(oldYaw, oldPitch, m_yaw, m_pitch);
         Event::EventHandler::Trigger(event);
       }
-    }
+      
+      // update block looking at
+      constexpr float playerHeight = 0.0f;
+      glm::vec3 lookPosition = m_position + glm::vec3(0.0f, playerHeight, 0.0f);
 
+      m_targetingBlock = m_world->ComputeBlockRayInteresection(Geometry::Ray{ lookPosition, m_controller->GetFront(), blockBreakDistance });
+    }
   }
 
 }

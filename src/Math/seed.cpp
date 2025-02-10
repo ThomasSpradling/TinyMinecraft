@@ -1,4 +1,4 @@
-#include "MAth/seed.h"
+#include "Math/seed.h"
 
 namespace TinyMinecraft {
 

@@ -30,21 +30,40 @@ namespace TinyMinecraft {
     auto GetVertices(Face face, float width, float height) -> std::array<glm::vec3, 4> {
       switch (face) {
         case Face::Up:
-          return { glm::vec3(0, 1, 0), glm::vec3(0, 1, width), glm::vec3(height, 1, width), glm::vec3(height, 1, 0) };
+          return { glm::vec3(0, 1, 0),
+                  glm::vec3(0, 1, width),
+                  glm::vec3(height, 1, width),
+                  glm::vec3(height, 1, 0) };
         case Face::Down:
-          return { glm::vec3(0, 0, width), glm::vec3(0, 0, 0), glm::vec3(height, 0, 0), glm::vec3(height, 0, width) };
+          return { glm::vec3(0, 0, width),
+                  glm::vec3(0, 0, 0),
+                  glm::vec3(height, 0, 0),
+                  glm::vec3(height, 0, width) };
         case Face::North:
-          return { glm::vec3(0, height, 1), glm::vec3(0, 0, 1), glm::vec3(width, 0, 1), glm::vec3(width, height, 1) };
+          return { glm::vec3(0, height, 1),
+                  glm::vec3(0, 0, 1),
+                  glm::vec3(width, 0, 1),
+                  glm::vec3(width, height, 1) };
         case Face::South:
-          return { glm::vec3(width, height, 0), glm::vec3(width, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0, height, 0) };
+          return { glm::vec3(width, height, 0),
+                  glm::vec3(width, 0, 0),
+                  glm::vec3(0, 0, 0),
+                  glm::vec3(0, height, 0) };
         case Face::East:
-          return { glm::vec3(1, height, width), glm::vec3(1, 0, width), glm::vec3(1, 0, 0), glm::vec3(1, height, 0) };
+          return { glm::vec3(1, height, width),
+                  glm::vec3(1, 0, width),
+                  glm::vec3(1, 0, 0),
+                  glm::vec3(1, height, 0) };
         case Face::West:
-          return { glm::vec3(0, height, 0), glm::vec3(0, 0, 0), glm::vec3(0, 0, width), glm::vec3(0, height, width) };
+          return { glm::vec3(0, height, 0),
+                  glm::vec3(0, 0, 0),
+                  glm::vec3(0, 0, width),
+                  glm::vec3(0, height, width) };
         default:
           throw std::invalid_argument("Invalid face direction.");
       }
     }
+
 
     auto GetFluidVertices(Face face, int depth, int maxDepth, Face direction, bool floating) -> std::array<glm::vec3, 4> {
       const float maxHeight = 0.8f;
@@ -122,6 +141,26 @@ namespace TinyMinecraft {
       }
     }
 
+  }
+
+  auto operator<<(std::ostream &os, Geometry::Face face) noexcept -> std::ostream & {
+    switch (face) {
+      case Geometry::Face::Up:
+        os << "Up"; break;
+      case Geometry::Face::Down:
+        os << "Down"; break;
+      case Geometry::Face::North:
+        os << "North"; break;
+      case Geometry::Face::South:
+        os << "South"; break;
+      case Geometry::Face::East:
+        os << "East"; break;
+      case Geometry::Face::West:
+        os << "West"; break;
+      case Geometry::Face::None:
+        os << "None"; break;
+    }
+    return os;
   }
 
 }
