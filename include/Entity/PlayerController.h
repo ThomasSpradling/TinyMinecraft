@@ -1,6 +1,7 @@
 #ifndef PLAYER_CONTROLLER_H_
 #define PLAYER_CONTROLLER_H_
 
+#include "Events/Input/MouseEvents.h"
 #include "Utils/mathgl.h"
 
 namespace TinyMinecraft {
@@ -16,6 +17,9 @@ namespace TinyMinecraft {
       [[nodiscard]] inline auto GetYaw() -> float { return m_yaw; }
       [[nodiscard]] inline auto GetPitch() -> float { return m_pitch; }
 
+      [[nodiscard]] inline auto IsActionPressed() -> bool { return m_isActionPressed; }
+      inline void SetActionPressed(bool value) { m_isActionPressed = value; }
+
     private:
       glm::vec3 m_position { 0.0f };
 
@@ -26,6 +30,8 @@ namespace TinyMinecraft {
 
       float m_pitch = 0.0f, m_yaw = -90.0f;
       float m_speed = 0.05f;
+
+      bool m_isActionPressed = false;
 
       [[nodiscard]] auto GetRight() const -> glm::vec3;
     };

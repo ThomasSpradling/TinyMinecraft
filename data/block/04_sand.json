@@ -1,0 +1,7 @@
+{
+  "name": "sand",
+  "id": 4,
+  "renderType": "standard",
+  "isSolid": true,
+  "isTranslucent": false
+}

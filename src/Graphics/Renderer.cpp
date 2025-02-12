@@ -1,7 +1,7 @@
 #include "Graphics/Renderer.h"
 #include "Graphics/Renderer2D.h"
+#include "Graphics/WireframeRenderer.h"
 #include "Scene/PlayerCameras.h"
-#include "Utils/Logger.h"
 #include "Utils/Profiler.h"
 #include "World/Chunk.h"
 #include "Graphics/gfx.h"
@@ -14,13 +14,14 @@ namespace TinyMinecraft {
     Renderer::Renderer(float viewportWidth, float viewportHeight)
       : m_blockShader("../resources/shaders/block_solid.vs", "../resources/shaders/block_solid.fs")
       , m_waterShader("../resources/shaders/block_translucent.vs", "../resources/shaders/block_translucent.fs")
-      , m_blockAtlasTexture("../resources/textures/debug_block_atlas.png")
+      , m_blockAtlasTexture("../resources/textures/block_atlas.png")
       , m_viewportWidth(viewportWidth)
       , m_viewportHeight(viewportHeight)
     {
-      PROFILE_SCOPE(Graphics, "Renderer::Initialize") 
+      PROFILE_SCOPE(Graphics, "Renderer::Initialize")
 
       Renderer2D::Initialize();
+      WireframeRenderer::Initialize();
 
       // Graphic settings
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -52,10 +53,6 @@ namespace TinyMinecraft {
       for (auto &[chunkPos, chunk] : world.GetChunks()) {
         if (world.IsChunkEmpty(chunkPos)) {
           chunk->ClearBuffers();
-          continue;
-        }
-
-        if (!world.IsChunkLoaded(chunkPos)) {
           continue;
         }
 

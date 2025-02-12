@@ -1,0 +1,7 @@
+{
+  "name": "grass",
+  "id": 1,
+  "renderType": "standard",
+  "isSolid": true,
+  "isTranslucent": false
+}

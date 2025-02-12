@@ -21,9 +21,20 @@ namespace TinyMinecraft {
 
     auto PlayerLookedEvent::ToString() const -> std::string {
       std::stringstream ss;
-      ss << "PlayerMoveEvent(";
-      ss << "Old: [Y: " << m_oldYaw << ", P: " << m_oldPitch << "]";
+      ss << "PlayerLookEvent(";
+      ss << "Old: [Y: " << m_oldYaw << ", P: " << m_oldPitch << "], ";
       ss << "New: [Y: " << m_newYaw << ", P: " << m_newPitch << "]";
+      ss << ")";
+      return ss.str();
+    }
+
+    //// BLOCK BREAK EVENT ////
+
+    auto BlockBreakEvent::ToString() const -> std::string {
+      std::stringstream ss;
+      ss << "BlockBreakEvent(";
+      ss << "Block: " << m_block << ", ";
+      ss << "Location: " << m_location;
       ss << ")";
       return ss.str();
     }

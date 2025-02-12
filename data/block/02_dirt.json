@@ -1,0 +1,7 @@
+{
+  "name": "dirt",
+  "id": 2,
+  "renderType": "standard",
+  "isSolid": true,
+  "isTranslucent": false
+}

@@ -1,0 +1,7 @@
+{
+  "name": "snow",
+  "id": 6,
+  "renderType": "standard",
+  "isSolid": true,
+  "isTranslucent": false
+}

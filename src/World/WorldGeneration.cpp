@@ -190,10 +190,10 @@ namespace TinyMinecraft {
             // }
 
             if (density > 0.0f) {
-              chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::STONE);
+              chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::Stone);
             } else {
               if (y <= 62 && y >= baseHeight - 10) {
-                chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::WATER);
+                chunk->SetBlockAt(glm::vec3(x, y, z), BlockType::Water);
               }
             }
 
@@ -233,8 +233,8 @@ namespace TinyMinecraft {
           if (grassNoise > GRASS_GENERATION_THRESHOLD) {
             int surfaceHeight = chunk->GetSurfaceHeight(x, z);
 
-            if (chunk->GetBlockAt(x, surfaceHeight, z).GetType() == BlockType::GRASS) {
-              chunk->SetBlockAt(x, surfaceHeight + 1, z, BlockType::TALL_GRASS);
+            if (chunk->GetBlockAt(x, surfaceHeight, z) == BlockType::Grass) {
+              chunk->SetBlockAt(x, surfaceHeight + 1, z, BlockType::TallGrass);
               reservedPositions.insert(position);
             }
           }
@@ -314,50 +314,50 @@ namespace TinyMinecraft {
         {
           {0,      0,      0,      0,    0},
           {0,      0,      0,      0,    0},
-          {0,      0,      LOG,    0,    0},
+          {0,      0,      Log,    0,    0},
           {0,      0,      0,      0,    0},
           {0,      0,      0,      0,    0},
         },
         {
           {0,      0,      0,      0,    0},
           {0,      0,      0,      0,    0},
-          {0,      0,      LOG,    0,    0},
+          {0,      0,      Log,    0,    0},
           {0,      0,      0,      0,    0},
           {0,      0,      0,      0,    0},
         },
         {
           {0,      0,      0,      0,    0},
           {0,      0,      0,      0,    0},
-          {0,      0,      LOG,    0,    0},
+          {0,      0,      Log,    0,    0},
           {0,      0,      0,      0,    0},
           {0,      0,      0,      0,    0},
         },
         {
-          {0,      LEAVES, LEAVES, LEAVES,       0},
-          {LEAVES, LEAVES, LEAVES, LEAVES,    LEAVES},
-          {LEAVES, LEAVES, LOG,    LEAVES,      LEAVES},
-          {LEAVES, LEAVES, LEAVES, LEAVES,    LEAVES},
-          {0,      LEAVES, LEAVES, LEAVES,       0},
+          {0,      Leaves, Leaves, Leaves,       0},
+          {Leaves, Leaves, Leaves, Leaves,    Leaves},
+          {Leaves, Leaves, Log,    Leaves,      Leaves},
+          {Leaves, Leaves, Leaves, Leaves,    Leaves},
+          {0,      Leaves, Leaves, Leaves,       0},
         },
         {
-          {0,       LEAVES,       LEAVES,       LEAVES,       0},
-          {LEAVES,      LEAVES,     LEAVES,     LEAVES,    LEAVES},
-          {LEAVES,      LEAVES,     LOG,      LEAVES,      LEAVES},
-          {LEAVES,      LEAVES,     LEAVES,     LEAVES,    LEAVES},
-          {0,       LEAVES,       LEAVES,       LEAVES,       0},
-        },
-        {
-          {0,       0,      0,      0,    0},
-          {0,       LEAVES,       LEAVES,       LEAVES,       0},
-          {0,       LEAVES,       LOG,      LEAVES,     0},
-          {0,       LEAVES,       LEAVES,       LEAVES,       0},
-          {0,       0,      0,      0,    0},
+          {0,       Leaves,       Leaves,       Leaves,       0},
+          {Leaves,      Leaves,     Leaves,     Leaves,    Leaves},
+          {Leaves,      Leaves,     Log,      Leaves,      Leaves},
+          {Leaves,      Leaves,     Leaves,     Leaves,    Leaves},
+          {0,       Leaves,       Leaves,       Leaves,       0},
         },
         {
           {0,       0,      0,      0,    0},
-          {0,       0,      LEAVES,     0,      0},
-          {0,       LEAVES,       LEAVES,       LEAVES,       0},
-          {0,       0,      LEAVES,     0,      0},
+          {0,       Leaves,       Leaves,       Leaves,       0},
+          {0,       Leaves,       Log,      Leaves,     0},
+          {0,       Leaves,       Leaves,       Leaves,       0},
+          {0,       0,      0,      0,    0},
+        },
+        {
+          {0,       0,      0,      0,    0},
+          {0,       0,      Leaves,     0,      0},
+          {0,       Leaves,       Leaves,       Leaves,       0},
+          {0,       0,      Leaves,     0,      0},
           {0,       0,      0,      0,    0},
         },
       };
@@ -402,7 +402,7 @@ namespace TinyMinecraft {
     }
 
     auto WorldGeneration::CanTreeSpawn(Chunk *chunk, int x, int surfaceY, int z, int radius) -> bool {
-      if (chunk->GetBlockAt(x, surfaceY, z).GetType() != BlockType::GRASS) {
+      if (chunk->GetBlockAt(x, surfaceY, z) != BlockType::Grass) {
         return false;
       }
 
@@ -414,7 +414,7 @@ namespace TinyMinecraft {
             continue;
           }
 
-          if (chunk->GetBlockAt(x, surfaceY + 1, z).GetType() != BlockType::AIR) {
+          if (chunk->GetBlockAt(x, surfaceY + 1, z) != BlockType::Air) {
             return false;
           }
         }

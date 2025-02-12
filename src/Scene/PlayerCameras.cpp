@@ -1,7 +1,6 @@
 #include "Scene/PlayerCameras.h"
 #include "Events/Entity/PlayerEvents.h"
 #include "Events/EventHandler.h"
-#include "Utils/Logger.h"
 
 namespace TinyMinecraft {
 

@@ -126,6 +126,7 @@ namespace TinyMinecraft {
     }
 
     void Renderer2D::EndScene() {
+      glDisable(GL_CULL_FACE);
       
     #if DEBUG and not SILENT
       if (s_data.stats.quadCount > Renderer2DData::MAX_QUADS) {
@@ -174,6 +175,8 @@ namespace TinyMinecraft {
       s_data.rectIndexCount = 0;
       s_data.lineVertexCount = 0;
       s_data.textIndexCount = 0;
+
+      glEnable(GL_CULL_FACE);
     }
 
     void Renderer2D::DrawRectangle(float x, float y, float width, float height, const glm::vec4 &color) {

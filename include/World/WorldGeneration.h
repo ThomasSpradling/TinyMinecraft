@@ -9,7 +9,6 @@
 #include "Utils/Logger.h"
 #include "Utils/mathgl.h"
 #include "World/Biome.h"
-#include "World/Block.h"
 #include "World/Chunk.h"
 #include <functional>
 

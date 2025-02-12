@@ -13,10 +13,7 @@ namespace TinyMinecraft {
 
     void UserInterface::Draw() {
       DrawDebug();
-
-      glm::vec2 size { 10.f };
-      glm::vec2 center = glm::vec2(viewportWidth, viewportHeight) / 2.0f - size / 2.0f;
-      Graphics::Renderer2D::DrawRectangle(Geometry::Rectangle{center.x, center.y, size.x, size.y}, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+      DrawCrosshair();
     }
 
     void UserInterface::DrawDebug() {
@@ -27,7 +24,7 @@ namespace TinyMinecraft {
 #endif
 
       debug << std::fixed << std::setprecision(3);
-      debug << "XYZ: " 
+      debug << "XYZ: "
             << m_playerPosition.x << ", " 
             << m_playerPosition.y << ", "
             << m_playerPosition.z << "\n";
@@ -40,14 +37,32 @@ namespace TinyMinecraft {
       debug << std::fixed << std::setprecision(5);
       debug << "Environment: "
             << "T " << m_temperature << ", H " << m_humidity << ", C " << m_continentalness << ", E " << m_erosion << ", R " << m_ridges << "\n";
+      debug << std::defaultfloat;
 
       debug << "Biome: "
             << World::Biome::GetBiomeName(m_biome) << "\n";
 
-      debug << "Looking At: "
-            << m_targetingBlock.second << " face of " << "Block(" << m_targetingBlock.first << ")" << "\n";
+      auto [location, face, block] = m_targetingBlock;
+      if (face != Geometry::Face::None && block) {
+        debug << "Looking At: "
+              << face << " face of " << block << "\n";
+      } else {
+        debug << "\n";
+      }
 
-      Graphics::Renderer2D::DrawString(debug.str(), 15, 15, glm::vec4(1.0f), 0.5f);
+      Graphics::Renderer2D::DrawString(debug.str(), 15, 15, glm::vec4(1.0f), 1.0f);
+    }
+
+    void UserInterface::DrawCrosshair() {
+      const auto drawPivotedRectangle = [](glm::vec2 center, glm::vec2 size, glm::vec4 color) {
+        glm::vec2 position = center - size / 2.0f;
+        Graphics::Renderer2D::DrawRectangle(Geometry::Rectangle{position.x, position.y, size.x, size.y}, color);
+      };
+
+      glm::vec4 color = glm::vec4(1.0f);
+      glm::vec2 center = glm::vec2(viewportWidth, viewportHeight) / 2.0f;
+      drawPivotedRectangle(center, glm::vec2(5.0f, 25.0f), color);
+      drawPivotedRectangle(center, glm::vec2(25.0f, 5.0f), color);
     }
 
     void UserInterface::SetDebugValues(float temperature, float humidity, float continentalness, float erosion, float ridges, World::BiomeType biome, World::BlockLocation targetBlock) {

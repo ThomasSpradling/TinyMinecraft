@@ -1,10 +1,12 @@
 #include "Entity/PlayerController.h"
 #include "Application/InputHandler.h"
-#include "Graphics/gfx.h"
-#include "Utils/Logger.h"
+#include "Application/MouseButton.h"
+#include "Events/Entity/PlayerEvents.h"
+#include "Events/Event.h"
+#include "Events/EventHandler.h"
+#include "Events/Input/MouseEvents.h"
 #include "Utils/defs.h"
 #include <algorithm>
-#include <utility>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -50,6 +52,10 @@ namespace TinyMinecraft {
       m_front.y = sin(glm::radians(m_pitch));
       m_front.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
       m_front = glm::normalize(m_front);
+    
+      if (Application::InputHandler::IsMouseButtonPressed(Application::MouseButton::ButtonLeft)) {
+        m_isActionPressed = true;
+      }
     }
 
     auto PlayerController::GetRight() const -> glm::vec3 {

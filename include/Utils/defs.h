@@ -9,7 +9,7 @@
   // #define GFX_ShadowMapping
 
 // Values
-  #define GFX_RENDER_DISTANCE 12
+  #define GFX_RENDER_DISTANCE 16
 
 // text
 #define TEXT_CHAR_WIDTH 12
@@ -29,7 +29,7 @@
 
 // Perf
   #define UTILS_ShowFPS
-  // #define UTILS_RunProfile
+  #define UTILS_RunProfile
   // #define UTILS_ProfileVerbose    // Will print profile data on every run
 
 #define GAMEPLAY_MaxBlockInteractDistance (5.0f)

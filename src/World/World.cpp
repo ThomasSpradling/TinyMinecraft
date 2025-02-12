@@ -6,6 +6,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <vector>
 #include "World/World.h"
 #include "Geometry/geometry.h"
@@ -17,7 +18,9 @@
 #include "World/Biome.h"
 #include "World/Biome.h"
 #include "World/Block.h"
+#include "World/BlockType.h"
 #include "World/Chunk.h"
+#include "glm/fwd.hpp"
 
 namespace TinyMinecraft {
 
@@ -112,8 +115,8 @@ namespace TinyMinecraft {
       glm::vec3 currentOrigin = ray.origin;
       glm::vec3 lastBlockpos = glm::floor(ray.origin);
 
-      if (GetBlockAt(lastBlockpos).IsSolid()) {
-        return std::make_pair(lastBlockpos, Geometry::Face::None);
+      if (BlockData::IsSolid(GetBlockAt(lastBlockpos))) {
+        return std::make_tuple(lastBlockpos, Geometry::Face::None, BlockType::Air);
       }
 
       constexpr float epsilon = 1e-4f;
@@ -125,16 +128,16 @@ namespace TinyMinecraft {
         if (distanceTraveled > ray.maxRayDistance)
           break;
 
-        Block block = GetBlockAt(blockPos);
-        if (block.IsSolid()) {
-          return std::make_pair(blockPos, face);
+        BlockType block = GetBlockAt(blockPos);
+        if (BlockData::IsSolid(block)) {
+          return std::make_tuple(blockPos, face, block);
         }
 
         lastBlockpos = blockPos;
         currentOrigin = location + ray.direction * epsilon;
       }
 
-      return std::make_pair(lastBlockpos, Geometry::Face::None);
+      return std::make_tuple(lastBlockpos, Geometry::Face::None, BlockType::Air);
     }
 
     void World::Update(const glm::vec3 &playerPos) {
@@ -238,25 +241,67 @@ namespace TinyMinecraft {
       }
     }
 
-    void World::SetBlockAt(const glm::vec3 &pos, BlockType type) {
-      Block block = GetBlockAt(pos);
-      block.SetType(type);
+    void World::RefreshChunkAt(const glm::vec3 &pos) {
+      // TODO: Check what happens if Loaded incorrect
+
+      const auto refreshChunk = [&](glm::ivec2 chunkPos) {
+        const std::shared_ptr<Chunk> &chunk = GetChunkAt(chunkPos);
+  
+        if (chunk->SetState(ChunkState::Loaded, ChunkState::Meshing)) {
+          ScheduleMeshTask(chunk.get());
+        }
+      };
+
+      glm::ivec2 chunkPos = GetChunkPosFromCoords(pos);
+      glm::vec3 offset = GetLocalBlockCoords(pos);
+
+      // west
+      if (offset.x == 0)
+        refreshChunk(chunkPos + glm::ivec2(-1, 0));
+
+      // east
+      if (offset.x == CHUNK_WIDTH - 1)
+        refreshChunk(chunkPos + glm::ivec2(1, 0));
+
+      // north
+      if (offset.z == 0)
+        refreshChunk(chunkPos + glm::ivec2(0, -1));
+
+      // south
+      if (offset.z == CHUNK_LENGTH - 1)
+        refreshChunk(chunkPos + glm::ivec2(0, 1));
+
+      refreshChunk(chunkPos);
     }
 
-    auto World::GetBlockAt(const glm::vec3 &pos) -> Block {
+    void World::BreakBlock(const glm::vec3 &pos) {
+      SetBlockAt(pos, BlockType::Air);
+      RefreshChunkAt(pos);
+    }
+
+    void World::SetBlockAt(const glm::vec3 &pos, BlockType type) {
+      glm::ivec2 chunkPos = GetChunkPosFromCoords(pos);
+      glm::vec3 offsetPos = GetLocalBlockCoords(pos);
+
+      if (!HasChunk(chunkPos)) return;
+
+      GetChunkAt(chunkPos)->SetBlockAt(offsetPos, type);
+    }
+
+    auto World::GetBlockAt(const glm::vec3 &pos) -> BlockType {
       
       glm::ivec2 chunkPos = GetChunkPosFromCoords(pos);
       glm::vec3 offsetPos = GetLocalBlockCoords(pos);
 
       if (!HasChunk(chunkPos)) {
-        return BlockType::AIR;
+        return BlockType::Air;
       }
 
       return GetChunkAt(chunkPos)->GetBlockAt(offsetPos);
     }
 
     auto World::HasBlock(const glm::vec3 &pos) -> bool {
-      return GetBlockAt(pos).GetType() != BlockType::AIR;
+      return GetBlockAt(pos) != BlockType::Air;
     }
 
     auto World::GetLocalBlockCoords(const glm::vec3 &pos) -> glm::vec3 {
@@ -343,6 +388,7 @@ namespace TinyMinecraft {
         Utils::Logger::Error("Cannot mesh task for null chunks");
         exit(1);
       }
+
 
       SubmitTask([this, chunk]() {
         const ChunkState state = chunk->GetState();

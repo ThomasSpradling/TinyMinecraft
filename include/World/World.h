@@ -4,6 +4,7 @@
 #include "Geometry/geometry.h"
 #include "Utils/Logger.h"
 #include "Utils/mathgl.h"
+#include "World/BlockType.h"
 #include "World/Chunk.h"
 #include "World/WorldGeneration.h"
 #include <functional>
@@ -16,7 +17,7 @@ namespace TinyMinecraft {
 
   namespace World {
     using ChunkMap = tbb::concurrent_unordered_map<glm::ivec2, std::shared_ptr<Chunk>, Utils::IVec2Hash>;
-    using BlockLocation = std::pair<glm::vec3, Geometry::Face>;
+    using BlockLocation = std::tuple<glm::vec3, Geometry::Face, BlockType>;
 
     class World {
     public:
@@ -34,6 +35,12 @@ namespace TinyMinecraft {
       auto GetBiome(int x, int z) -> BiomeType;
 
       void Update(const glm::vec3 &playerPos);
+      void RefreshChunkAt(const glm::vec3 &pos);
+
+      void BreakBlock(const glm::vec3 &pos);
+      void SetBlockAt(const glm::vec3 &pos, BlockType type);
+
+      [[nodiscard]] inline auto GetPlayerPosition() -> glm::vec3 { return m_playerPosition; }
       
       [[nodiscard]] inline auto HasChunk(const glm::ivec2 &chunkPos) const -> bool { return m_chunks.contains(chunkPos); }
       [[nodiscard]] inline auto IsChunkLoaded(const glm::ivec2 &chunkPos) const -> bool {
@@ -57,10 +64,8 @@ namespace TinyMinecraft {
         return m_chunks.at(chunkPos);
       }
 
-      void BreakBlock(const glm::vec3 &pos);
-      void SetBlockAt(const glm::vec3 &pos, BlockType type);
       
-      [[nodiscard]] auto GetBlockAt(const glm::vec3 &pos) -> Block;
+      [[nodiscard]] auto GetBlockAt(const glm::vec3 &pos) -> BlockType;
       [[nodiscard]] auto HasBlock(const glm::vec3 &pos) -> bool;
       
       [[nodiscard]] auto GetChunkPosFromCoords(const glm::vec3 &pos) -> glm::ivec2;

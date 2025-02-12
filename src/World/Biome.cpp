@@ -1,9 +1,4 @@
 #include "World/Biome.h"
-#include "Utils/defs.h"
-#include "Utils/utils.h"
-#include "World/Block.h"
-#include "Utils/mathgl.h"
-#include <algorithm>
 
 namespace TinyMinecraft {
 
@@ -26,71 +21,71 @@ namespace TinyMinecraft {
             humidity >= m_minHumidity && humidity <= m_maxHumidity;
     }
 
-    auto Biome::GenerateBlock(int x, int y, int z, int height, double stoneNoise) const -> Block {
+    auto Biome::GenerateBlock(int x, int y, int z, int height, double stoneNoise) const -> BlockType {
       const int seaLevel = 62;
       const float stoneThreshold = 0.75;
-      if (height < seaLevel && y > height && y <= seaLevel) return BlockType::WATER;
+      if (height < seaLevel && y > height && y <= seaLevel) return BlockType::Water;
 
       switch(m_type) {
         
         case BiomeType::Desert:
-          if (y >= height - 2 && y <= height) return BlockType::SAND;
-          if (y < height - 2) return BlockType::STONE;
+          if (y >= height - 2 && y <= height) return BlockType::Sand;
+          if (y < height - 2) return BlockType::Stone;
         case BiomeType::Grassland:
-          if (stoneNoise > stoneThreshold && y <= height) return BlockType::STONE;
+          if (stoneNoise > stoneThreshold && y <= height) return BlockType::Stone;
 
-          if (height <= seaLevel && y == height) return BlockType::SAND;
+          if (height <= seaLevel && y == height) return BlockType::Sand;
 
-          if (y == height) return BlockType::GRASS;
-          if (y >= height - 4 && y < height) return BlockType::DIRT;
-          if (y < height - 2) return BlockType::STONE;
+          if (y == height) return BlockType::Grass;
+          if (y >= height - 4 && y < height) return BlockType::Dirt;
+          if (y < height - 2) return BlockType::Stone;
 
           break;
         case BiomeType::Savanna:
-          if (stoneNoise > stoneThreshold && y <= height) return BlockType::STONE;
+          if (stoneNoise > stoneThreshold && y <= height) return BlockType::Stone;
 
-          if (height <= seaLevel && y == height) return BlockType::SAND;
+          if (height <= seaLevel && y == height) return BlockType::Sand;
 
-          if (y == height) return BlockType::GRASS;
-          if (y >= height - 4 && y < height) return BlockType::DIRT;
-          if (y < height - 2) return BlockType::STONE;
+          if (y == height) return BlockType::Grass;
+          if (y >= height - 4 && y < height) return BlockType::Dirt;
+          if (y < height - 2) return BlockType::Stone;
 
           break;
         case BiomeType::Swamp:
           // if (height < seaLevel && y < height) return BlockType::WATER;
-          if (height <= seaLevel && y == height) return BlockType::SAND;
+          if (height <= seaLevel && y == height) return BlockType::Sand;
 
-          if (y == height) return BlockType::GRASS;
-          if (y >= height - 2 && y < height) return BlockType::DIRT;
-          if (y < height - 2) return BlockType::STONE;
+          if (y == height) return BlockType::Grass;
+          if (y >= height - 2 && y < height) return BlockType::Dirt;
+          if (y < height - 2) return BlockType::Stone;
 
           break;
         case BiomeType::Tundra:
-          if (y >= height - 2 && y <= height) return BlockType::SNOW;
-          if (y >= height - 5 && y < height - 2) return BlockType::DIRT;
-          if (y < height - 2) return BlockType::STONE;
+          if (y >= height - 2 && y <= height) return BlockType::Snow;
+          if (y >= height - 5 && y < height - 2) return BlockType::Dirt;
+          if (y < height - 2) return BlockType::Stone;
           break;
 
         case BiomeType::Taiga:
-          if (y >= height - 2 && y <= height) return BlockType::LOG;
-          if (y >= height - 5 && y < height - 2) return BlockType::DIRT;
-          if (y < height - 2) return BlockType::STONE;
+          if (y >= height - 2 && y <= height) return BlockType::Log;
+          if (y >= height - 5 && y < height - 2) return BlockType::Dirt;
+          if (y < height - 2) return BlockType::Stone;
           break;
         case BiomeType::Shrubland:
-          if (y >= height - 2 && y <= height) return BlockType::GRASS;
-          if (y >= height - 5 && y < height - 2) return BlockType::DIRT;
-          if (y < height - 2) return BlockType::STONE;
+          if (y >= height - 2 && y <= height) return BlockType::Grass;
+          if (y >= height - 5 && y < height - 2) return BlockType::Dirt;
+          if (y < height - 2) return BlockType::Stone;
           break;
         case BiomeType::Forest:
-          if (y >= height - 2 && y <= height) return BlockType::LOG;
-          if (y >= height - 5 && y < height - 2) return BlockType::DIRT;
-          if (y < height - 2) return BlockType::STONE;
+          if (y >= height - 2 && y <= height) return BlockType::Log;
+          if (y >= height - 5 && y < height - 2) return BlockType::Dirt;
+          if (y < height - 2) return BlockType::Stone;
           break;
         default:
           break;
       }
 
-      return BlockType::AIR;
+      return BlockType::Air;
     }
 
     auto Biome::GetType() const -> BiomeType {

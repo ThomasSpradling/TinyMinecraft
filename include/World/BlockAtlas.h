@@ -5,6 +5,7 @@
 #include "Utils/Singleton.h"
 #include "Utils/defs.h"
 #include "World/Block.h"
+#include "World/BlockType.h"
 
 namespace TinyMinecraft {
 
@@ -19,7 +20,6 @@ namespace TinyMinecraft {
       );
 
       static auto GetNormalizedTextureCoords(BlockType type, Geometry::Face face) -> glm::vec2;
-
 
     private:
       static auto GetTextureCoords(BlockType type, Geometry::Face face) -> glm::ivec2;

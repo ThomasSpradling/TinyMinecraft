@@ -21,43 +21,43 @@ namespace TinyMinecraft {
       glm::ivec2 coords;
 
       switch(type) {
-        case BlockType::GRASS:
-          if (face == Geometry::Face::Up)
+        case BlockType::Grass:
+          if (face == Geometry::Face::Top)
             coords = { 0, 0 };
-          else if (face == Geometry::Face::Down)
+          else if (face == Geometry::Face::Bottom)
             coords = { 2, 0 };
           else coords = { 1, 0 };
           break;
-        case BlockType::DIRT:
+        case BlockType::Dirt:
           coords = { 2, 0 };
           break;
-        case BlockType::STONE:
+        case BlockType::Stone:
           coords = { 3, 0 };
           break;
-        case BlockType::SAND:
+        case BlockType::Sand:
           coords = { 4, 0 };
           break;
-        case BlockType::LOG:
-          if (face == Geometry::Face::Up || face == Geometry::Face::Down)
+        case BlockType::Log:
+          if (face == Geometry::Face::Top || face == Geometry::Face::Bottom)
             coords = { 0, 1 };
           else coords = { 1, 1 };
           break;
-        case BlockType::SNOW:
+        case BlockType::Snow:
           coords = { 2, 1 };
           break;
-        case BlockType::WATER:
+        case BlockType::Water:
           coords = { 3, 1 };
           break;
-        case BlockType::GLASS:
+        case BlockType::Glass:
           coords = { 4, 1 };
           break;
-        case BlockType::LEAVES:
+        case BlockType::Leaves:
           coords = { 0, 2 };
           break;
-        case BlockType::TALL_GRASS:
+        case BlockType::TallGrass:
           coords = { 1, 2 };
           break;
-        case BlockType::AIR:
+        case BlockType::Air:
         default:
           return glm::ivec2(0);
       }

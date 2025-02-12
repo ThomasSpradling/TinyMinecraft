@@ -2,12 +2,16 @@
 #include "Application/InputHandler.h"
 #include "Entity/Player.h"
 #include "Entity/PlayerController.h"
+#include "Geometry/geometry.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Renderer2D.h"
+#include "Graphics/WireframeRenderer.h"
 #include "Scene/PlayerCameras.h"
 #include "Utils/defs.h"
 #include "Utils/Profiler.h"
 #include "World/Biome.h"
+#include "World/Block.h"
+#include "World/BlockType.h"
 #include "World/World.h"
 #include <chrono>
 #include <algorithm>
@@ -27,6 +31,7 @@ namespace TinyMinecraft {
       PROFILE_FUNCTION(Game)
 
       const float fov = 45.f;
+      World::BlockData::Initialize();
 
       m_world = std::make_shared<World::World>();
 
@@ -124,9 +129,9 @@ namespace TinyMinecraft {
 
       m_renderer.Begin3D(m_camera);
 
-        // if (m_inputHandler.IsKeyPressed(GLFW_KEY_TAB)) {
-        //   m_renderer.ToggleWireframeMode();
-        // }
+      if (InputHandler::IsKeyPressed(GLFW_KEY_TAB)) {
+        m_renderer.ToggleWireframeMode();
+      }
 
     #ifdef GFX_ShadowMapping
         m_renderer.RenderShadows(m_world);
@@ -135,9 +140,20 @@ namespace TinyMinecraft {
         m_renderer.RenderWorld(*m_world);
 
       m_renderer.End3D();
+
+      auto [location, face, block] = m_player.GetTargetingBlock();
+      if (face != Geometry::Face::None && block != BlockType::Air) {
+        Graphics::WireframeRenderer::DrawBlock(location, glm::vec4(1.0f, 1.0f, 1.0f, 0.8f));
+      }
+
+      // TODO: Move to debug tools class
+      // glm::vec3 pos = m_player.GetPosition();
+      // Graphics::WireframeRenderer::DrawChunk(m_world->GetChunkPosFromCoords(pos), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+
+      Graphics::WireframeRenderer::Render(m_camera);
       
       Graphics::Renderer2D::BeginScene(m_ortho);
-      m_renderer.RenderUI(m_ui);
+        m_renderer.RenderUI(m_ui);
       Graphics::Renderer2D::EndScene();
 
       m_window.SwapBuffers();

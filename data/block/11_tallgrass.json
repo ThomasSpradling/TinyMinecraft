@@ -1,0 +1,7 @@
+{
+  "name": "tallgrass",
+  "id": 11,
+  "renderType": "foliage",
+  "isSolid": true,
+  "isTranslucent": false
+}

@@ -1,0 +1,7 @@
+{
+  "name": "leaves",
+  "id": 10,
+  "renderType": "standard",
+  "isSolid": true,
+  "isTranslucent": true
+}

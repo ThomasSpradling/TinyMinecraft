@@ -20,6 +20,7 @@ namespace TinyMinecraft {
       void RenderWorld(World::World &world);
       void RenderUI(UI::UserInterface &ui);
       void RenderMesh(Geometry::Mesh &mesh, Shader &shader, glm::mat4 &model);
+      void RenderWireframeCube();
 
       void Begin3D(const std::shared_ptr<Scene::PlayerCamera> &camera3D);
       void End3D();

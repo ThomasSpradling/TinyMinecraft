@@ -15,7 +15,7 @@ namespace TinyMinecraft {
       virtual void OnPlayerLook(const Event::PlayerLookedEvent &event) = 0;
       virtual void OnPlayerMove(const Event::PlayerMovedEvent &event) = 0;
 
-      [[nodiscard]] inline auto GetViewProjection() -> glm::mat4 { return m_viewProjection; }
+      [[nodiscard]] inline auto GetViewProjection() const -> glm::mat4 { return m_viewProjection; }
     protected:
       glm::mat4 m_viewProjection;
     };

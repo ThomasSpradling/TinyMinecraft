@@ -1,0 +1,7 @@
+{
+  "name": "glass",
+  "id": 9,
+  "renderType": "standard",
+  "isSolid": true,
+  "isTranslucent": true
+}

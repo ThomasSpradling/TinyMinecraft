@@ -1,7 +1,6 @@
 #ifndef CHUNK_H_
 #define CHUNK_H_
 
-#include <algorithm>
 #include <array>
 #include <vector>
 #include <memory>
@@ -9,8 +8,7 @@
 
 #include "Geometry/Mesh.h"
 #include "Geometry/geometry.h"
-#include "Utils/Logger.h"
-#include "Utils/Profiler.h"
+#include "Utils/NonCopyable.h"
 #include "Utils/defs.h"
 #include "World/Block.h"
 #include "Graphics/gfx.h"
@@ -32,6 +30,7 @@ namespace TinyMinecraft {
       Loaded,
     };
 
+    // used for sorting purposes
     struct FaceGeometry {
       glm::vec3 pos;
       std::vector<Geometry::MeshVertex> vertices;
@@ -39,13 +38,11 @@ namespace TinyMinecraft {
       float distanceToPlayer;
     };
 
-    class Chunk {
+    class Chunk : public Utils::NonCopyable {
     public:
       Chunk(World &world, const glm::ivec2 &chunkPos);
-
       ~Chunk() = default;
-      Chunk(const Chunk &other) = delete;
-      auto operator=(const Chunk &other) -> Chunk & = delete;
+
       Chunk(Chunk &&other) noexcept;
       auto operator=(Chunk &&other) noexcept -> Chunk &;
 
@@ -59,19 +56,19 @@ namespace TinyMinecraft {
       [[nodiscard]] inline auto ShouldClear() -> bool { return m_shouldClear.load(std::memory_order_acquire); };
 
       void ClearBuffers();
-      inline void ReserveBlocks() { m_data.blocks.resize(m_data.BLOCK_COUNT, BlockType::AIR);}
+      inline void ReserveBlocks() { m_data.blocks.resize(m_data.BLOCK_COUNT, BlockType::Air); }
       inline void ClearBlocks() { m_data.blocks.clear(); m_data.blocks.shrink_to_fit(); }
-      [[nodiscard]] inline auto GetBlockAt(int x, int y, int z) -> Block {
+      [[nodiscard]] inline auto GetBlockAt(int x, int y, int z) -> BlockType {
         if (m_data.blocks.size() <= CHUNK_INDEX_AT(x, y, z)) {
-          return Block(BlockType::AIR);
+          return BlockType::Air;
         }
         return m_data.blocks.at(CHUNK_INDEX_AT(x, y, z));
       }
-      [[nodiscard]] inline auto GetBlockAt(const glm::ivec3 &pos) -> Block { return GetBlockAt(pos.x, pos.y, pos.z); }
-      inline void SetBlockAt(int x, int y, int z, const Block &block) {
+      [[nodiscard]] inline auto GetBlockAt(const glm::ivec3 &pos) -> BlockType { return GetBlockAt(pos.x, pos.y, pos.z); }
+      inline void SetBlockAt(int x, int y, int z, BlockType block) {
         m_data.blocks.at(CHUNK_INDEX_AT(x, y, z)) = block;
       }
-      inline void SetBlockAt(const glm::ivec3 &pos, const Block &block) { SetBlockAt(pos.x, pos.y, pos.z, block); }
+      inline void SetBlockAt(const glm::ivec3 &pos, BlockType block) { SetBlockAt(pos.x, pos.y, pos.z, block); }
       
       [[nodiscard]] auto GetSurfaceHeight(int x, int z) -> int;
 
@@ -109,7 +106,7 @@ namespace TinyMinecraft {
       struct ChunkData {
         static constexpr int BLOCK_COUNT = CHUNK_WIDTH * CHUNK_LENGTH * CHUNK_HEIGHT;
 
-        std::vector<Block> blocks;
+        std::vector<BlockType> blocks;
         std::vector<FaceGeometry> translucentFaces;
       } m_data;
 
@@ -127,8 +124,16 @@ namespace TinyMinecraft {
 
       std::array<std::shared_ptr<Chunk>, 4> neighborRefs; // east, west, north, south
 
-      auto GetBlockUnbounded(const glm::ivec3 &pos) -> Block;
-      auto IsFaceVisible(const Block &block, Geometry::Face face, const glm::vec3 &pos) -> bool;
+      auto GetBlockUnbounded(const glm::ivec3 &pos) -> BlockType;
+      auto IsFaceVisible(BlockType block, Geometry::Face face, const glm::vec3 &pos) -> bool;
+
+      void AppendOpaqueBlockGeometry(BlockType block, glm::vec3 pos, GLuint &indexOffset, std::vector<Geometry::MeshVertex> &vertices, std::vector<GLuint> &indices);
+      void AppendTranslucentBlockGeometry(BlockType block, glm::vec3 pos, std::vector<FaceGeometry> &translucentFaces);
+      
+      void AppendOpaqueFluidGeometry(BlockType block, glm::vec3 pos, GLuint &indexOffset, std::vector<Geometry::MeshVertex> &vertices, std::vector<GLuint> &indices);
+      void AppendTranslucentFluidGeometry(BlockType block, glm::vec3 pos, std::vector<FaceGeometry> &translucentFaces);
+      
+      void AppendFoliageGeometry(BlockType block, glm::vec3 pos, GLuint &indexOffset, std::vector<Geometry::MeshVertex> &vertices, std::vector<GLuint> &indices);
     };
 
   }

@@ -20,9 +20,9 @@ namespace TinyMinecraft {
       //// ENTITY EVENTS ////
 
       // player
-      PlayerMove
+      PlayerMove, BlockBreak
     };
-    
+
     class Event : public Utils::Printable {
     public:
       virtual ~Event() = default;

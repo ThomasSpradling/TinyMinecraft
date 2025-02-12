@@ -1,7 +1,7 @@
 #include "Application/Game.h"
 #include "Utils/Logger.h"
+#include "Utils/Profiler.h"
 #include "Utils/utils.h"
-#include <iostream>
 #include <unistd.h>
 
 using namespace TinyMinecraft;

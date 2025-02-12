@@ -1,0 +1,7 @@
+{
+  "name": "stone",
+  "id": 3,
+  "renderType": "standard",
+  "isSolid": true,
+  "isTranslucent": false
+}

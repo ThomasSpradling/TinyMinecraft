@@ -35,7 +35,7 @@ namespace TinyMinecraft {
     public:
       static void Initialize();
 
-      [[nodiscard]] inline static auto IsKeyPressed(int key) -> bool;
+      [[nodiscard]] static auto IsKeyPressed(int key) -> bool;
       [[nodiscard]] inline static auto IsKeyUp(int key) -> bool { return !IsKeyDown(key); };
       [[nodiscard]] inline static auto IsKeyDown(int key) -> bool { return s_keyboard.keys.at(key).down; };
 

@@ -7,9 +7,9 @@ namespace TinyMinecraft {
 
     auto GetNormal(Face face) -> glm::vec3 {
       switch (face) {
-        case Face::Up:
+        case Face::Top:
           return { 0, 1, 0 };
-        case Face::Down:
+        case Face::Bottom:
           return { 0, -1, 0 };
         case Face::East:
           return { 1, 0, 0 };
@@ -29,12 +29,12 @@ namespace TinyMinecraft {
 
     auto GetVertices(Face face, float width, float height) -> std::array<glm::vec3, 4> {
       switch (face) {
-        case Face::Up:
+        case Face::Top:
           return { glm::vec3(0, 1, 0),
                   glm::vec3(0, 1, width),
                   glm::vec3(height, 1, width),
                   glm::vec3(height, 1, 0) };
-        case Face::Down:
+        case Face::Bottom:
           return { glm::vec3(0, 0, width),
                   glm::vec3(0, 0, 0),
                   glm::vec3(height, 0, 0),
@@ -63,7 +63,6 @@ namespace TinyMinecraft {
           throw std::invalid_argument("Invalid face direction.");
       }
     }
-
 
     auto GetFluidVertices(Face face, int depth, int maxDepth, Face direction, bool floating) -> std::array<glm::vec3, 4> {
       const float maxHeight = 0.8f;
@@ -124,9 +123,9 @@ namespace TinyMinecraft {
 
 
       switch (face) {
-        case Face::Up:
+        case Face::Top:
           return { southwestVert, northwestVert, northeastVert, southeastVert };
-        case Face::Down:
+        case Face::Bottom:
           return { glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 1.0f) };
         case Face::North:
           return { northwestVert, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(1.0f, 0.0f, 1.0f), northeastVert };
@@ -145,10 +144,10 @@ namespace TinyMinecraft {
 
   auto operator<<(std::ostream &os, Geometry::Face face) noexcept -> std::ostream & {
     switch (face) {
-      case Geometry::Face::Up:
-        os << "Up"; break;
-      case Geometry::Face::Down:
-        os << "Down"; break;
+      case Geometry::Face::Top:
+        os << "Top"; break;
+      case Geometry::Face::Bottom:
+        os << "Bottom"; break;
       case Geometry::Face::North:
         os << "North"; break;
       case Geometry::Face::South:

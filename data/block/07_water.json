@@ -1,0 +1,7 @@
+{
+  "name": "water",
+  "id": 7,
+  "renderType": "fluid",
+  "isSolid": false,
+  "isTranslucent": true
+}

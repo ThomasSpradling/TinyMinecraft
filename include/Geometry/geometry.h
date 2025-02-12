@@ -10,14 +10,17 @@ namespace TinyMinecraft {
 
   namespace Geometry {
 
-    enum class Face : uint8_t {
-      Up,
-      Down,
+    enum Face : uint8_t {
+      Top,
+      Bottom,
       East,
       West,
       North,
       South,
-      None
+      None,
+
+      First = Top,
+      Last = None
     };
 
     struct Rectangle : public Utils::Printable {

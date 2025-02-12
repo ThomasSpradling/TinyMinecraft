@@ -1,7 +1,7 @@
 #ifndef BIOME_H_
 #define BIOME_H_
 
-#include "World/Block.h"
+#include "World/BlockType.h"
 #include <string>
 
 namespace TinyMinecraft {
@@ -26,7 +26,7 @@ namespace TinyMinecraft {
         float minHumidity, float maxHumidity);
 
       [[nodiscard]] auto IsValid(double temperature, double humidity) const -> bool;
-      [[nodiscard]] auto GenerateBlock(int x, int y, int z, int height, double stoneMap) const -> Block;
+      [[nodiscard]] auto GenerateBlock(int x, int y, int z, int height, double stoneMap) const -> BlockType;
 
       [[nodiscard]] auto GetType() const -> BiomeType;
 

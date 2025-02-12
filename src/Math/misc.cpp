@@ -58,7 +58,7 @@ namespace TinyMinecraft {
   } else if (axis == 1) {
     int s = sign(direction.y);
     targetedBlock.y += s;
-    face = (s > 0) ? Geometry::Face::Down : Geometry::Face::Up;
+    face = (s > 0) ? Geometry::Face::Bottom : Geometry::Face::Top;
   } else {
     int s = sign(direction.z);
     targetedBlock.z += s;
